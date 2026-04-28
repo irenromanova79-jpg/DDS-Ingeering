@@ -124,6 +124,7 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
   <button onclick="printDDS()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;font-size:12px;font-weight:600;border:1.5px solid rgba(255,255,255,.25);border-radius:8px;background:rgba(255,255,255,.08);cursor:pointer;color:#e2e8f0;font-family:inherit;transition:all .15s;margin-right:4px" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.08)'">
     🖨 Печать
   </button>
+
   <div class="tabs">
     <button class="tab active" onclick="sw('bal',this)">Остатки</button>
     <button class="tab" onclick="sw('dds',this)">Детальный ДДС</button>
@@ -477,41 +478,54 @@ function buildDDS(){
   if(divTot!==0){
     const divTxns=fTxns().filter(r=>r.cat==='div');
 
-    // Разбиваем на вывод (s<0) и внесение (s>0)
-    const divOut={},divIn={};
+    // Разбиваем на вывод (s<0) и внесение (s>0), храним отдельные операции
+    const divOut={},divIn={};  // ctr → {cols, ops:[{d,acc,s}]}
     divTxns.forEach(r=>{
       const k=cKey(r,cols);if(!ks.includes(k))return;
       const c=r.ctr||'Б/к';
-      if(r.s<0){
-        if(!divOut[c])divOut[c]=Object.fromEntries(ks.map(k=>[k,0]));
-        divOut[c][k]+=r.s;
-      } else {
-        if(!divIn[c])divIn[c]=Object.fromEntries(ks.map(k=>[k,0]));
-        divIn[c][k]+=r.s;
-      }
+      const bucket=r.s<0?divOut:divIn;
+      if(!bucket[c])bucket[c]={cols:Object.fromEntries(ks.map(k=>[k,0])),ops:[]};
+      bucket[c].cols[k]+=r.s;
+      bucket[c].ops.push({d:r.d,acc:r.acc,s:r.s});
     });
-    const divOutTot=Object.values(divOut).reduce((s,v)=>s+S(v),0);
-    const divInTot=Object.values(divIn).reduce((s,v)=>s+S(v),0);
+    const divOutTot=Object.values(divOut).reduce((s,v)=>s+S(v.cols),0);
+    const divInTot=Object.values(divIn).reduce((s,v)=>s+S(v.cols),0);
 
     // Итого строка дивидендов
     const divC=mc?ks.map(k=>(d.div[k]||0)?`<td class="vn">${fm(Math.abs(d.div[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:700">${fm(Math.abs(divTot))}</td>`:`<td class="vn" style="font-weight:700">${fm(Math.abs(divTot))}</td>`;
     h+=`<tr class="r-exp r-stat-fin" onclick="tgl('dd')"><td><span class="chev-d" id="ic-dd">▶</span>Дивиденды<span class="tag" style="background:#ede9fe;color:#5b21b6">фин.</span></td>${divC}</tr>`;
 
-    // ВЫВОД дивидендов (суммы с минусом)
+    // helper: format date dd.mm
+    const fdd=d=>{const p=d.split('-');return p[2]+'.'+p[1];};
+
+    // ВЫВОД дивидендов
     if(divOutTot!==0){
-      const outC=mc?ks.map(k=>{const v=Object.values(divOut).reduce((s,cv)=>s+(cv[k]||0),0);return v?`<td class="vn">${fm(Math.abs(v))}</td>`:`<td class="vd">—</td>`;}).join('')+`<td class="vn" style="font-weight:600">${fm(Math.abs(divOutTot))}</td>`:`<td class="vn" style="font-weight:600">${fm(Math.abs(divOutTot))}</td>`;
+      const outC=mc?ks.map(k=>{const v=Object.values(divOut).reduce((s,cv)=>s+(cv.cols[k]||0),0);return v?`<td class="vn">${fm(Math.abs(v))}</td>`:`<td class="vd">—</td>`;}).join('')+`<td class="vn" style="font-weight:600">${fm(Math.abs(divOutTot))}</td>`:`<td class="vn" style="font-weight:600">${fm(Math.abs(divOutTot))}</td>`;
       h+=`<tr class="r-exp l1 hid" id="dd" onclick="tgl('dd_out')"><td style="padding-left:20px"><span class="chev-d" id="ic-dd_out">▶</span>Вывод дивидендов<span class="tag" style="background:#fee2e2;color:#991b1b">↑ выход</span></td>${outC}</tr>`;
-      Object.entries(divOut).sort((a,b)=>S(a[1])-S(b[1])).forEach(([ctr,cv])=>{
-        h+=`<tr class="l3 hid" id="dd_out"><td>${ctr}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn">${fm(Math.abs(S(cv)))}</td>`}</tr>`;
+      Object.entries(divOut).sort((a,b)=>S(a[1].cols)-S(b[1].cols)).forEach(([ctr,cv],ci)=>{
+        const cid='dout'+ci;
+        const ctrC=mc?ks.map(k=>(cv.cols[k]||0)?`<td class="vn">${fm(Math.abs(cv.cols[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:600">${fm(Math.abs(S(cv.cols)))}</td>`:`<td class="vn" style="font-weight:600">${fm(Math.abs(S(cv.cols)))}</td>`;
+        h+=`<tr class="r-exp l3 hid" id="dd_out" onclick="tgl('${cid}')"><td><span class="chev-d" id="ic-${cid}">▶</span>${ctr}</td>${ctrC}</tr>`;
+        // Детализация: дата + счёт + сумма
+        cv.ops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
+          const opCols=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`;
+          h+=`<tr class="hid" id="${cid}" style="background:#fdf4ff"><td style="padding-left:68px;font-size:11px;color:#6b7280">${fdd(op.d)}&nbsp;&nbsp;<span style="background:#ede9fe;color:#7c3aed;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opCols}</tr>`;
+        });
       });
     }
 
-    // ВНЕСЕНИЕ дивидендов (суммы с плюсом)
+    // ВНЕСЕНИЕ дивидендов
     if(divInTot!==0){
-      const inC=mc?ks.map(k=>{const v=Object.values(divIn).reduce((s,cv)=>s+(cv[k]||0),0);return v?`<td class="vp">${fm(v)}</td>`:`<td class="vd">—</td>`;}).join('')+`<td class="vp" style="font-weight:600">${fm(divInTot)}</td>`:`<td class="vp" style="font-weight:600">${fm(divInTot)}</td>`;
+      const inC=mc?ks.map(k=>{const v=Object.values(divIn).reduce((s,cv)=>s+(cv.cols[k]||0),0);return v?`<td class="vp">${fm(v)}</td>`:`<td class="vd">—</td>`;}).join('')+`<td class="vp" style="font-weight:600">${fm(divInTot)}</td>`:`<td class="vp" style="font-weight:600">${fm(divInTot)}</td>`;
       h+=`<tr class="r-exp l1 hid" id="dd" onclick="tgl('dd_in')"><td style="padding-left:20px"><span class="chev-d" id="ic-dd_in">▶</span>Внесение дивидендов<span class="tag" style="background:#dcfce7;color:#166534">↓ вход</span></td>${inC}</tr>`;
-      Object.entries(divIn).sort((a,b)=>S(b[1])-S(a[1])).forEach(([ctr,cv])=>{
-        h+=`<tr class="l3 hid" id="dd_in"><td>${ctr}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vp">${fm(cv[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp">${fm(S(cv))}</td>`:`<td class="vp">${fm(S(cv))}</td>`}</tr>`;
+      Object.entries(divIn).sort((a,b)=>S(b[1].cols)-S(a[1].cols)).forEach(([ctr,cv],ci)=>{
+        const cid='din'+ci;
+        const ctrC=mc?ks.map(k=>(cv.cols[k]||0)?`<td class="vp">${fm(cv.cols[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp" style="font-weight:600">${fm(S(cv.cols))}</td>`:`<td class="vp" style="font-weight:600">${fm(S(cv.cols))}</td>`;
+        h+=`<tr class="r-exp l3 hid" id="dd_in" onclick="tgl('${cid}')"><td><span class="chev-d" id="ic-${cid}">▶</span>${ctr}</td>${ctrC}</tr>`;
+        cv.ops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
+          const opCols=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vp" style="font-size:11px">${fm(op.s)}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp" style="font-size:11px">${fm(op.s)}</td>`:`<td class="vp" style="font-size:11px">${fm(op.s)}</td>`;
+          h+=`<tr class="hid" id="${cid}" style="background:#f0fdf4"><td style="padding-left:68px;font-size:11px;color:#6b7280">${fdd(op.d)}&nbsp;&nbsp;<span style="background:#dcfce7;color:#166534;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opCols}</tr>`;
+        });
       });
     }
   } else h+=`<tr class="l1"><td>Дивиденды</td>${mc?cols.map(()=>`<td class="vd">—</td>`).join('')+`<td class="vd">—</td>`:`<td class="vd">—</td>`}</tr>`;
@@ -724,6 +738,7 @@ function refresh(){
 
 // ── INIT ──────────────────────────────────────────────
 renderBal(BAL);buildSub();updInfo();
+
 
 function printDDS(){
   // Просто печатаем как есть на экране — никаких переключений
