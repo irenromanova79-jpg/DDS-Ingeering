@@ -406,6 +406,17 @@ function buildDDS(){
   const opNC=mc?ks.map(k=>{const v=(d.rec[k]||0)+(d.dep[k]||0)+opE.reduce((s,[,ov])=>s+(ov.tot[k]||0),0)-fotE.reduce((s,[,fv])=>s+(fv[k]||0),0);return`<td class="${v>=0?'vp':'vn'}">${v<0?'−':''}${fm(v)}</td>`;}).join('')+`<td class="${opNet>=0?'vp':'vn'}" style="font-weight:700">${opNet<0?'−':''}${fm(opNet)}</td>`:`<td class="${opNet>=0?'vp':'vn'}" style="font-weight:700">${opNet<0?'−':''}${fm(opNet)}</td>`;
   h+=`<tr class="r-sub"><td style="color:#1e40af;font-size:12.5px">Итого операционная</td>${opNC}</tr>`;
 
+  // Чистый операционный денежный поток = поступления − (ФОТ + операционные расходы)
+  const codpTot=S(d.rec)+S(d.dep)+opTot-fotTot;
+  const codpC=mc
+    ?ks.map(k=>{const v=(d.rec[k]||0)+(d.dep[k]||0)+opE.reduce((s,[,ov])=>s+(ov.tot[k]||0),0)-fotE.reduce((s,[,fv])=>s+(fv[k]||0),0);return`<td class="${v>=0?'vp':'vn'}" style="font-weight:700">${v<0?'−':''}${fm(v)}</td>`;}).join('')+`<td class="${codpTot>=0?'vp':'vn'}" style="font-weight:700;font-size:13px">${codpTot<0?'−':''}${fm(codpTot)}</td>`
+    :`<td class="${codpTot>=0?'vp':'vn'}" style="font-weight:700;font-size:13px">${codpTot<0?'−':''}${fm(codpTot)}</td>`;
+  h+=`<tr style="background:${codpTot>=0?'#f0fdf4':'#fff1f2'};border-top:2px solid ${codpTot>=0?'#86efac':'#fca5a5'}">
+    <td style="font-weight:700;font-size:12.5px;color:${codpTot>=0?'#166534':'#991b1b'};padding:8px 12px">
+      Чистый операционный денежный поток
+      <span style="font-size:10px;font-weight:500;color:#9ca3af;margin-left:6px">= Поступления − ФОТ − Операц. расходы</span>
+    </td>${codpC}</tr>`;
+
   // II. ИНВЕСТИЦИОННАЯ
   h+=`<tr class="r-inv"><td colspan="${mc?cols.length+2:2}">II. Инвестиционная деятельность</td></tr>`;
   const invTot=S(d.inv);
@@ -494,13 +505,31 @@ function updateCharts(txns){
   killCharts();
   const cols=getCols(txns);const d=agg(txns,cols);const ks=cols.map(c=>c.key);const labels=cols.map(c=>c.short);
 
-  // C1: YoY — фиксированный, не зависит от фильтра
-  const yoyL=[...MN_L.map(m=>m+"'25"),...['Янв','Фев','Мар','Апр'].map(m=>m+"'26")];
-  const n25=R25.map((r,i)=>r+E25[i]);const n26=R26.slice(0,4).map((r,i)=>r+E26[i]);
+  // C1: YoY — считаем из TXNS динамически (обновляется при refreshDDSData)
+  // Aggregate by year+month from full TXNS (not filtered)
+  const yoyRec={2025:Array(12).fill(0),2026:Array(12).fill(0)};
+  const yoyExp={2025:Array(12).fill(0),2026:Array(12).fill(0)};
+  TXNS.forEach(r=>{
+    const mi=r.m-1; if(mi<0||mi>11)return;
+    if(r.y===2025||r.y===2026){
+      if(r.cat==='rec'||r.cat==='dep') yoyRec[r.y][mi]+=r.s;
+      else if(r.cat==='opex'||r.cat==='fot'||r.cat==='inv'||r.cat==='div') yoyExp[r.y][mi]+=r.s;
+    }
+  });
+  // Build labels: months with data in 2025 + months with data in 2026
+  const has25=yoyRec[2025].map((v,i)=>v>0||yoyExp[2025][i]!==0);
+  const has26=yoyRec[2026].map((v,i)=>v>0||yoyExp[2026][i]!==0);
+  // Always show all 12 months for 2025, available months for 2026
+  const yoyL=[...MN_L.map(m=>m+"'25"),...MN_L.filter((_,i)=>has26[i]).map(m=>m+"'26")];
+  const r25=yoyRec[2025]; const e25=yoyExp[2025];
+  const r26=MN_L.map((_,i)=>has26[i]?yoyRec[2026][i]:null).filter(v=>v!==null);
+  const e26=MN_L.map((_,i)=>has26[i]?yoyExp[2026][i]:null).filter(v=>v!==null);
+  const n25=r25.map((r,i)=>r+e25[i]);
+  const n26=r26.map((r,i)=>r+(e26[i]||0));
   charts.c1=new Chart(document.getElementById('c1'),{type:'bar',data:{labels:yoyL,datasets:[
-    {label:'Пост.2025',data:[...R25,...Array(4).fill(null)],backgroundColor:'#93c5fd',borderRadius:3},
-    {label:'Пост.2026',data:[...Array(12).fill(null),...R26.slice(0,4)],backgroundColor:'#1d4ed8',borderRadius:3},
-    {type:'line',label:'ЧДП2025',data:[...n25,...Array(4).fill(null)],borderColor:'#22c55e',borderDash:[4,3],backgroundColor:'transparent',pointRadius:3,pointBackgroundColor:'#22c55e',tension:.3},
+    {label:'Пост.2025',data:[...r25,...Array(r26.length).fill(null)],backgroundColor:'#93c5fd',borderRadius:3},
+    {label:'Пост.2026',data:[...Array(12).fill(null),...r26],backgroundColor:'#1d4ed8',borderRadius:3},
+    {type:'line',label:'ЧДП2025',data:[...n25,...Array(n26.length).fill(null)],borderColor:'#22c55e',borderDash:[4,3],backgroundColor:'transparent',pointRadius:3,pointBackgroundColor:'#22c55e',tension:.3},
     {type:'line',label:'ЧДП2026',data:[...Array(12).fill(null),...n26],borderColor:'#f59e0b',borderDash:[4,3],backgroundColor:'transparent',pointRadius:4,pointBackgroundColor:'#f59e0b',tension:.3},
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw!=null?` ${Math.round(c.raw).toLocaleString('ru-RU')} руб.`:null}}},scales:{x:{ticks:{font:{size:9.5}},grid:{display:false},border:{display:false}},y:{ticks:{font:{size:9},callback:v=>Math.abs(v)>=1e6?(v/1e6).toFixed(1)+'M':Math.abs(v)>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'rgba(0,0,0,.05)'},border:{display:false}}}}});
 
