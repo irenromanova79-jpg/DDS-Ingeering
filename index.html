@@ -95,21 +95,23 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
 .lsq{width:10px;height:10px;border-radius:2px;flex-shrink:0}
 
 @media print {
+  /* Скрываем только UI-элементы, всё остальное как на экране */
   body { background: #fff !important; font-size: 11px; }
-  .hdr { position: relative !important; box-shadow: none !important; background: #1a2b4a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .toolbar { display: none !important; }
-  .rbtn, #rdds, .print-btn { display: none !important; }
-  .screen { display: block !important; padding: 8px 0 !important; }
-  .kpis { grid-template-columns: repeat(7,1fr) !important; gap: 6px !important; margin-bottom: 10px !important; }
-  .kpi { padding: 8px 10px !important; border-radius: 6px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .hdr { position: relative !important; box-shadow: none !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .tabs, .toolbar, button { display: none !important; }
+  /* Показываем только активную вкладку */
+  .screen { display: none !important; }
+  .screen.active { display: block !important; padding: 8px 0 !important; }
+  /* Сохраняем цвета */
+  .kpi { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .kpi-val { font-size: 13px !important; }
-  .tbl-wrap { box-shadow: none !important; }
-  table.dds td, table.dds th { padding: 3px 7px !important; font-size: 10px !important; }
-  .r-op td, .r-inv td, .r-fin td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .r-net td, .r-net.neg td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .dash-grid { display: none !important; }
+  .r-op td, .r-inv td, .r-fin td, .r-net td, .r-stat td, .r-stat-fin td, .r-stat-inv td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  /* Скрытые строки остаются скрытыми */
   .hid { display: none !important; }
-  @page { margin: 12mm 10mm; size: A4 landscape; }
+  /* Графики печатаем как есть */
+  .dash-grid { break-inside: avoid; }
+  .ccard { break-inside: avoid; page-break-inside: avoid; }
+  @page { margin: 10mm; size: A4 landscape; }
 }
 </style>
 </head>
@@ -474,10 +476,44 @@ function buildDDS(){
   const divTot=S(d.div);
   if(divTot!==0){
     const divTxns=fTxns().filter(r=>r.cat==='div');
-    const byCtr={};divTxns.forEach(r=>{const k=cKey(r,cols);if(!ks.includes(k))return;const c=r.ctr||'Б/к';if(!byCtr[c])byCtr[c]=Object.fromEntries(ks.map(k=>[k,0]));byCtr[c][k]+=r.s;});
+
+    // Разбиваем на вывод (s<0) и внесение (s>0)
+    const divOut={},divIn={};
+    divTxns.forEach(r=>{
+      const k=cKey(r,cols);if(!ks.includes(k))return;
+      const c=r.ctr||'Б/к';
+      if(r.s<0){
+        if(!divOut[c])divOut[c]=Object.fromEntries(ks.map(k=>[k,0]));
+        divOut[c][k]+=r.s;
+      } else {
+        if(!divIn[c])divIn[c]=Object.fromEntries(ks.map(k=>[k,0]));
+        divIn[c][k]+=r.s;
+      }
+    });
+    const divOutTot=Object.values(divOut).reduce((s,v)=>s+S(v),0);
+    const divInTot=Object.values(divIn).reduce((s,v)=>s+S(v),0);
+
+    // Итого строка дивидендов
     const divC=mc?ks.map(k=>(d.div[k]||0)?`<td class="vn">${fm(Math.abs(d.div[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:700">${fm(Math.abs(divTot))}</td>`:`<td class="vn" style="font-weight:700">${fm(Math.abs(divTot))}</td>`;
     h+=`<tr class="r-exp r-stat-fin" onclick="tgl('dd')"><td><span class="chev-d" id="ic-dd">▶</span>Дивиденды<span class="tag" style="background:#ede9fe;color:#5b21b6">фин.</span></td>${divC}</tr>`;
-    Object.entries(byCtr).sort((a,b)=>S(a[1])-S(b[1])).forEach(([ctr,cv])=>{h+=`<tr class="l2 hid" id="dd"><td>${ctr}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn">${fm(Math.abs(S(cv)))}</td>`}</tr>`;});
+
+    // ВЫВОД дивидендов (суммы с минусом)
+    if(divOutTot!==0){
+      const outC=mc?ks.map(k=>{const v=Object.values(divOut).reduce((s,cv)=>s+(cv[k]||0),0);return v?`<td class="vn">${fm(Math.abs(v))}</td>`:`<td class="vd">—</td>`;}).join('')+`<td class="vn" style="font-weight:600">${fm(Math.abs(divOutTot))}</td>`:`<td class="vn" style="font-weight:600">${fm(Math.abs(divOutTot))}</td>`;
+      h+=`<tr class="r-exp l1 hid" id="dd" onclick="tgl('dd_out')"><td style="padding-left:20px"><span class="chev-d" id="ic-dd_out">▶</span>Вывод дивидендов<span class="tag" style="background:#fee2e2;color:#991b1b">↑ выход</span></td>${outC}</tr>`;
+      Object.entries(divOut).sort((a,b)=>S(a[1])-S(b[1])).forEach(([ctr,cv])=>{
+        h+=`<tr class="l3 hid" id="dd_out"><td>${ctr}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn">${fm(Math.abs(S(cv)))}</td>`}</tr>`;
+      });
+    }
+
+    // ВНЕСЕНИЕ дивидендов (суммы с плюсом)
+    if(divInTot!==0){
+      const inC=mc?ks.map(k=>{const v=Object.values(divIn).reduce((s,cv)=>s+(cv[k]||0),0);return v?`<td class="vp">${fm(v)}</td>`:`<td class="vd">—</td>`;}).join('')+`<td class="vp" style="font-weight:600">${fm(divInTot)}</td>`:`<td class="vp" style="font-weight:600">${fm(divInTot)}</td>`;
+      h+=`<tr class="r-exp l1 hid" id="dd" onclick="tgl('dd_in')"><td style="padding-left:20px"><span class="chev-d" id="ic-dd_in">▶</span>Внесение дивидендов<span class="tag" style="background:#dcfce7;color:#166534">↓ вход</span></td>${inC}</tr>`;
+      Object.entries(divIn).sort((a,b)=>S(b[1])-S(a[1])).forEach(([ctr,cv])=>{
+        h+=`<tr class="l3 hid" id="dd_in"><td>${ctr}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vp">${fm(cv[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp">${fm(S(cv))}</td>`:`<td class="vp">${fm(S(cv))}</td>`}</tr>`;
+      });
+    }
   } else h+=`<tr class="l1"><td>Дивиденды</td>${mc?cols.map(()=>`<td class="vd">—</td>`).join('')+`<td class="vd">—</td>`:`<td class="vd">—</td>`}</tr>`;
   h+=`<tr class="r-sub"><td style="color:#5b21b6;font-size:12.5px">Итого финансовая</td>${wC(d.div,false)}</tr>`;
 
@@ -690,29 +726,7 @@ function refresh(){
 renderBal(BAL);buildSub();updInfo();
 
 function printDDS(){
-  // Show DDS tab for printing
-  const activeId = document.querySelector('.screen.active')?.id;
-  // Switch to DDS if not already there
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('dds').classList.add('active');
-  // Expand all rows for print
-  document.querySelectorAll('.hid').forEach(r=>r.setAttribute('data-was-hidden','1'));
-  document.querySelectorAll('.hid').forEach(r=>{r.style.display='';r.classList.remove('hid');});
-  document.querySelectorAll('.chev,.chev-d').forEach(c=>c.classList.add('open'));
+  // Просто печатаем как есть на экране — никаких переключений
   window.print();
-  // Restore after print
-  setTimeout(()=>{
-    document.querySelectorAll('[data-was-hidden]').forEach(r=>{
-      r.style.display='none';r.classList.add('hid');r.removeAttribute('data-was-hidden');
-    });
-    document.querySelectorAll('.chev,.chev-d').forEach(c=>c.classList.remove('open'));
-    // Restore original tab
-    if(activeId){
-      document.getElementById(activeId).classList.add('active');
-    } else {
-      document.getElementById('dds').classList.add('active');
-    }
-  },500);
 }
 </script></body></html>
