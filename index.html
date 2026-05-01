@@ -128,7 +128,7 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
     <button onclick="exportExcel()" id="xlsbtn" title="Сохранить Excel" style="display:flex;align-items:center;gap:5px;padding:7px 13px;font-size:12px;font-weight:600;border:1.5px solid rgba(120,200,120,.4);border-radius:8px;background:rgba(120,200,120,.1);cursor:pointer;color:#86efac;font-family:inherit;transition:all .15s" onmouseover="this.style.background='rgba(120,200,120,.22)'" onmouseout="this.style.background='rgba(120,200,120,.1)'">
       📊 Excel
     </button>
-    <button onclick="openAI()" title="AI-аналитика (ChatGPT)" style="display:flex;align-items:center;gap:5px;padding:7px 13px;font-size:12px;font-weight:600;border:1.5px solid rgba(16,163,127,.45);border-radius:8px;background:rgba(16,163,127,.1);cursor:pointer;color:#6ee7b7;font-family:inherit;transition:all .15s" onmouseover="this.style.background='rgba(16,163,127,.22)'" onmouseout="this.style.background='rgba(16,163,127,.1)'">
+    <button onclick="openAI()" title="AI-аналитика (Together AI)" style="display:flex;align-items:center;gap:5px;padding:7px 13px;font-size:12px;font-weight:600;border:1.5px solid rgba(16,163,127,.45);border-radius:8px;background:rgba(16,163,127,.1);cursor:pointer;color:#6ee7b7;font-family:inherit;transition:all .15s" onmouseover="this.style.background='rgba(16,163,127,.22)'" onmouseout="this.style.background='rgba(16,163,127,.1)'">
       ✦ AI-аналитика
     </button>
 
@@ -877,12 +877,12 @@ function exportExcel(){
 // ── AI АНАЛИТИКА (ChatGPT) ───────────────────────────
 function saveAIKey(){
   const k=(document.getElementById('ai-key').value||'').trim();
-  if(k){localStorage.setItem('groq_key',k);document.getElementById('ai-key-st').textContent='✓ Сохранён';}
+  if(k){localStorage.setItem('tai_key',k);document.getElementById('ai-key-st').textContent='✓ Сохранён';}
 }
 function openAI(){
   document.getElementById('aimodal').style.display='flex';
   document.getElementById('ai-period-lbl').textContent=document.getElementById('hdr-period').textContent;
-  const saved=localStorage.getItem('groq_key')||'';
+  const saved=localStorage.getItem('tai_key')||'';
   if(saved){document.getElementById('ai-key').value=saved;document.getElementById('ai-key-st').textContent='✓ Сохранён';}
 }
 function closeAI(){document.getElementById('aimodal').style.display='none';}
@@ -926,17 +926,17 @@ ${topFot.map(([p,pv])=>`• ${p}: ${f(S(pv))} руб.`).join('\n')}`;
 async function runAI(customQ){
   const btn=document.getElementById('ai-run-btn');
   const content=document.getElementById('ai-content');
-  const apiKey=(document.getElementById('ai-key').value||localStorage.getItem('groq_key')||'').trim();
+  const apiKey=(document.getElementById('ai-key').value||localStorage.getItem('ant_key')||'').trim();
 
   if(!apiKey){
     content.innerHTML=`<div style="background:#f0fdf9;border:2px solid #a7f3d0;border-radius:12px;padding:24px;text-align:center">
       <div style="font-size:32px;margin-bottom:12px">🔑</div>
-      <div style="font-weight:700;font-size:15px;color:#065f46;margin-bottom:10px">Нужен API-ключ OpenAI</div>
+      <div style="font-weight:700;font-size:15px;color:#065f46;margin-bottom:10px">Нужен API-ключ Together AI</div>
       <div style="font-size:12px;color:#6b7280;line-height:1.8">
-        1. Зайдите на <a href="https://console.groq.com/keys" target="_blank" style="color:#10a37f;font-weight:600">console.groq.com/keys</a><br>
-        2. Нажмите <strong>Create API Key</strong> → скопируйте<br>
+        1. Зайдите на <a href="https://api.together.ai/settings/api-keys" target="_blank" style="color:#10a37f;font-weight:600">api.together.ai/settings/api-keys</a><br>
+        2. Нажмите <strong>New Key</strong> → скопируйте<br>
         3. Вставьте в поле <strong>🔑 OpenAI API-ключ</strong> выше<br>
-        <span style="color:#059669;font-size:11px">Ключ сохранится в браузере · Бесплатно</span>
+        <span style="color:#059669;font-size:11px">Ключ сохранится в браузере · ~$0.01 за запрос</span>
       </div>
     </div>`;
     return;
@@ -945,7 +945,7 @@ async function runAI(customQ){
   btn.disabled=true;btn.textContent='⏳ Анализирую...';
   content.innerHTML=`<div style="display:flex;align-items:center;gap:10px;color:#10a37f;padding:20px 0">
     <span style="font-size:22px;animation:spin .9s linear infinite;display:inline-block">↻</span>
-    <div><div style="font-weight:600">Groq AI анализирует данные...</div>
+    <div><div style="font-weight:600">Claude анализирует данные...</div>
     <div style="font-size:11px;color:#94a3b8;margin-top:3px">${fTxns().length} операций за период</div></div>
   </div>`;
 
@@ -953,11 +953,11 @@ async function runAI(customQ){
   const question=customQ||'Проведи детальный анализ ДДС. Выдели ключевые тренды, риски, аномалии. Дай конкретные управленческие рекомендации. Используй цифры из данных.';
 
   try{
-    const resp=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    const resp=await fetch('https://api.together.ai/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
       body:JSON.stringify({
-        model:'llama-3.3-70b-versatile',
+        model:'meta-llama/Llama-3.3-70B-Instruct-Turbo-Free',
         max_tokens:1200,
         messages:[
           {role:'system',content:'Ты опытный финансовый аналитик. Анализируй данные ДДС российской компании. Отвечай на русском. Используй конкретные цифры. Форматируй ответ с заголовками через **жирный**, списками через •. Лаконично, до 400 слов.'},
@@ -980,7 +980,7 @@ async function runAI(customQ){
     const qLabel=customQ?`<div style="background:#f0fdf9;border-left:3px solid #10a37f;border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#065f46"><strong>Вопрос:</strong> ${customQ}</div>`:'';
     content.innerHTML=`${qLabel}<div style="line-height:1.8">${rendered}</div>
       <div style="margin-top:20px;padding-top:12px;border-top:1px solid #f1f5f9;font-size:11px;color:#94a3b8;display:flex;justify-content:space-between">
-        <span>✦ Groq (llama-3.3-70b) · ${fTxns().length} операций</span>
+        <span>✦ Claude Sonnet · ${fTxns().length} операций</span>
         <span>${document.getElementById('hdr-period').textContent}</span>
       </div>`;
 
@@ -988,8 +988,8 @@ async function runAI(customQ){
     content.innerHTML=`<div style="color:#dc2626;background:#fef2f2;border-radius:8px;padding:16px;line-height:1.7">
       <strong>Ошибка:</strong> ${e.message}<br>
       <span style="font-size:11px;color:#6b7280;margin-top:6px;display:block">
-        Проверьте: ключ начинается с <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px">gsk_</code>?
-        Получить ключ: <a href="https://console.groq.com/keys" target="_blank" style="color:#10a37f">console.groq.com/keys</a>
+        Проверьте: ключ начинается с <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px">sk-ant-</code>?
+        Получить ключ: <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#10a37f">console.anthropic.com/settings/keys</a>
       </span>
     </div>`;
   }
@@ -1022,10 +1022,10 @@ function printDDS(){
     </div>
     <!-- API Key -->
     <div style="padding:10px 22px;background:#f0fdf9;border-bottom:1px solid #d1fae5;display:flex;gap:8px;align-items:center;flex-shrink:0">
-      <span style="font-size:11px;color:#065f46;font-weight:700;white-space:nowrap">🔑 Groq API-ключ:</span>
-      <input id="ai-key" type="password" placeholder="gsk_..." style="flex:1;padding:5px 10px;border:1.5px solid #a7f3d0;border-radius:6px;font-size:12px;font-family:'Courier New',monospace;outline:none;background:#fff;min-width:0" onfocus="this.style.borderColor='#10a37f'" onblur="this.style.borderColor='#a7f3d0';saveAIKey()">
+      <span style="font-size:11px;color:#065f46;font-weight:700;white-space:nowrap">🔑 Together AI ключ:</span>
+      <input id="ai-key" type="password" placeholder="tgp_v1_..." style="flex:1;padding:5px 10px;border:1.5px solid #a7f3d0;border-radius:6px;font-size:12px;font-family:'Courier New',monospace;outline:none;background:#fff;min-width:0" onfocus="this.style.borderColor='#10a37f'" onblur="this.style.borderColor='#a7f3d0';saveAIKey()">
       <span id="ai-key-st" style="font-size:11px;white-space:nowrap;color:#059669"></span>
-      <a href="https://console.groq.com/keys" target="_blank" style="font-size:10.5px;color:#059669;white-space:nowrap;text-decoration:none;font-weight:600">Получить →</a>
+      <a href="https://api.together.ai/settings/api-keys" target="_blank" style="font-size:10.5px;color:#059669;white-space:nowrap;text-decoration:none;font-weight:600">Получить →</a>
     </div>
     <!-- Quick buttons -->
     <div style="padding:10px 22px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;gap:6px;flex-wrap:wrap;align-items:center;flex-shrink:0">
@@ -1047,7 +1047,7 @@ function printDDS(){
       <div style="text-align:center;color:#94a3b8;padding:40px 0">
         <div style="font-size:40px;margin-bottom:12px">✦</div>
         <div style="font-size:14px;font-weight:600;color:#64748b">Нажмите «Анализировать»</div>
-        <div style="font-size:12px;margin-top:6px">Groq AI проанализирует данные за выбранный период · Бесплатно</div>
+        <div style="font-size:12px;margin-top:6px">Claude проанализирует данные за выбранный период · ~$0.01 за запрос</div>
       </div>
     </div>
   </div>
