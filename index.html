@@ -128,6 +128,9 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
     <button onclick="exportExcel()" id="xlsbtn" title="Сохранить Excel" style="display:flex;align-items:center;gap:5px;padding:7px 13px;font-size:12px;font-weight:600;border:1.5px solid rgba(120,200,120,.4);border-radius:8px;background:rgba(120,200,120,.1);cursor:pointer;color:#86efac;font-family:inherit;transition:all .15s" onmouseover="this.style.background='rgba(120,200,120,.22)'" onmouseout="this.style.background='rgba(120,200,120,.1)'">
       📊 Excel
     </button>
+    <button onclick="openAI()" id="aibtn" title="AI-аналитика" style="display:flex;align-items:center;gap:5px;padding:7px 13px;font-size:12px;font-weight:600;border:1.5px solid rgba(167,139,250,.5);border-radius:8px;background:rgba(167,139,250,.12);cursor:pointer;color:#c4b5fd;font-family:inherit;transition:all .15s" onmouseover="this.style.background='rgba(167,139,250,.25)'" onmouseout="this.style.background='rgba(167,139,250,.12)'">
+      ✦ AI-аналитика
+    </button>
   </div>
 
   <div class="tabs">
@@ -413,22 +416,30 @@ function buildDDS(){
   const fotE=Object.entries(d.fot).sort((a,b)=>S(b[1])-S(a[1]));
   const fotTot=fotE.reduce((s,[,v])=>s+S(v),0);
   const fotC=mc?ks.map(k=>{const v=fotE.reduce((s,[,fv])=>s+(fv[k]||0),0);return v?`<td class="vn">${fm(v)}</td>`:`<td class="vd">—</td>`;}).join('')+`<td class="vn" style="font-weight:700">${fm(fotTot)}</td>`:`<td class="vn" style="font-weight:700">${fm(fotTot)}</td>`;
-  h+=`<tr class="r-exp" onclick="tgl('ee')"><td><span class="chev-d" id="ic-ee">▶</span>Заработная плата и ФОТ<span class="tag" style="background:#fef3c7;color:#92400e">ФОТ</span></td>${fotC}</tr>`;
-  h+=`<tr class="hid" id="ee" style="background:#f8fafc"><td style="padding-left:36px;font-size:10px;font-weight:700;color:#6b7280">Сотрудник</td>${mc?cols.map(c=>`<td style="font-size:10px;font-weight:700;color:#6b7280;background:#f8fafc">${c.short}</td>`).join('')+`<td style="font-size:10px;font-weight:700;color:#6b7280;background:#f8fafc">Итого</td>`:`<td style="font-size:10px;font-weight:700;color:#6b7280;background:#f8fafc">Итого</td>`}</tr>`;
-  fotE.forEach(([p,pv])=>{h+=`<tr class="l2 hid" id="ee"><td>${p}</td>${mc?ks.map(k=>(pv[k]||0)?`<td class="vn">${fm(pv[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:600">${fm(S(pv))}</td>`:`<td class="vn" style="font-weight:600">${fm(S(pv))}</td>`}</tr>`;});
-  h+=`<tr class="r-sub hid" id="ee"><td style="padding-left:20px">Итого ФОТ</td>${fotC}</tr>`;
-
-  // Операционные расходы → статья → контрагент
+  // Общие расходы = ФОТ + Операционные (одна объединённая строка)
   const opE=Object.entries(d.opex).sort((a,b)=>S(a[1].tot)-S(b[1].tot));
   const opTot=opE.reduce((s,[,v])=>s+S(v.tot),0);
+  const totalExpTot=fotTot+Math.abs(opTot);
+  const totalExpC=mc
+    ?ks.map(k=>{const v=fotE.reduce((s,[,fv])=>s+(fv[k]||0),0)+Math.abs(opE.reduce((s,[,ov])=>s+(ov.tot[k]||0),0));return v?`<td class="vn">${fm(v)}</td>`:`<td class="vd">—</td>`;}).join('')+`<td class="vn" style="font-weight:700">${fm(totalExpTot)}</td>`
+    :`<td class="vn" style="font-weight:700">${fm(totalExpTot)}</td>`;
+  h+=`<tr class="r-exp" onclick="tgl('ge')"><td><span class="chev-d" id="ic-ge">▶</span>Общие расходы</td>${totalExpC}</tr>`;
+
+  // Подраздел: ФОТ
+  h+=`<tr class="r-exp l1 hid" id="ge" onclick="tgl('ee')"><td style="padding-left:20px"><span class="chev-d" id="ic-ee">▶</span>Заработная плата и ФОТ<span class="tag" style="background:#fef3c7;color:#92400e">ФОТ</span></td>${fotC}</tr>`;
+  h+=`<tr class="hid" id="ee" style="background:#f8fafc"><td style="padding-left:52px;font-size:10px;font-weight:700;color:#6b7280">Сотрудник</td>${mc?cols.map(c=>`<td style="font-size:10px;font-weight:700;color:#6b7280;background:#f8fafc">${c.short}</td>`).join('')+`<td style="font-size:10px;font-weight:700;color:#6b7280;background:#f8fafc">Итого</td>`:`<td style="font-size:10px;font-weight:700;color:#6b7280;background:#f8fafc">Итого</td>`}</tr>`;
+  fotE.forEach(([p,pv])=>{h+=`<tr class="l3 hid" id="ee"><td>${p}</td>${mc?ks.map(k=>(pv[k]||0)?`<td class="vn">${fm(pv[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:600">${fm(S(pv))}</td>`:`<td class="vn" style="font-weight:600">${fm(S(pv))}</td>`}</tr>`;});
+  h+=`<tr class="r-sub hid" id="ee"><td style="padding-left:36px">Итого ФОТ</td>${fotC}</tr>`;
+
+  // Подраздел: Операционные расходы
   const opC=mc?ks.map(k=>{const v=opE.reduce((s,[,ov])=>s+(ov.tot[k]||0),0);return v?`<td class="vn">${fm(Math.abs(v))}</td>`:`<td class="vd">—</td>`;}).join('')+`<td class="vn" style="font-weight:700">${fm(Math.abs(opTot))}</td>`:`<td class="vn" style="font-weight:700">${fm(Math.abs(opTot))}</td>`;
-  h+=`<tr class="r-exp" onclick="tgl('oo')"><td><span class="chev-d" id="ic-oo">▶</span>Операционные расходы</td>${opC}</tr>`;
+  h+=`<tr class="r-exp l1 hid" id="ge" onclick="tgl('oo')"><td style="padding-left:20px"><span class="chev-d" id="ic-oo">▶</span>Операционные расходы</td>${opC}</tr>`;
   opE.forEach(([st,sv],si)=>{
     const sid='st'+si;
     const stC=mc?ks.map(k=>(sv.tot[k]||0)?`<td class="vn">${fm(Math.abs(sv.tot[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:700">${fm(Math.abs(S(sv.tot)))}</td>`:`<td class="vn" style="font-weight:700">${fm(Math.abs(S(sv.tot)))}</td>`;
-    h+=`<tr class="r-exp r-stat l1 hid" id="oo" onclick="tgl('${sid}')"><td style="padding-left:20px"><span class="chev-d" id="ic-${sid}">▶</span>${st}</td>${stC}</tr>`;
+    h+=`<tr class="r-exp r-stat l2 hid" id="oo" onclick="tgl('${sid}')"><td style="padding-left:36px"><span class="chev-d" id="ic-${sid}">▶</span>${st}</td>${stC}</tr>`;
     Object.entries(sv.ctrs).sort((a,b)=>S(a[1])-S(b[1])).forEach(([ctr,cv])=>{
-      h+=`<tr class="l3 hid" id="${sid}"><td>${ctr}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn">${fm(Math.abs(S(cv)))}</td>`}</tr>`;
+      h+=`<tr class="l3 hid" id="${sid}"><td style="padding-left:52px">${ctr}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn">${fm(Math.abs(S(cv)))}</td>`}</tr>`;
     });
   });
 
@@ -862,9 +873,183 @@ function exportExcel(){
   },100);
 }
 
+// ── AI АНАЛИТИКА ─────────────────────────────────────
+function openAI(){
+  document.getElementById('aimodal').style.display='flex';
+  document.getElementById('ai-period-lbl').textContent=document.getElementById('hdr-period').textContent;
+  runAI();
+}
+function closeAI(){document.getElementById('aimodal').style.display='none';}
+function quickAsk(q){document.getElementById('ai-custom').value=q;askCustom();}
+function askCustom(){
+  const q=document.getElementById('ai-custom').value.trim();
+  if(q)runAI(q);
+}
+
+function buildSummary(){
+  const txns=fTxns();
+  const cols=getCols(txns);
+  const d=agg(txns,cols);
+  const fotE=Object.entries(d.fot).sort((a,b)=>S(b[1])-S(a[1]));
+  const opE=Object.entries(d.opex).sort((a,b)=>S(a[1].tot)-S(b[1].tot));
+  const rec=S(d.rec)+S(d.dep);
+  const fot=fotE.reduce((s,[,v])=>s+S(v),0);
+  const opex=opE.reduce((s,[,v])=>s+S(v.tot),0);
+  const inv=S(d.inv);
+  const div=S(d.div);
+  const net=rec+opex-fot+inv+div;
+  const period=document.getElementById('hdr-period').textContent;
+
+  // Top contractors
+  const ctrTots={};
+  txns.filter(r=>r.cat==='rec').forEach(r=>{ctrTots[r.ctr||'б/к']=(ctrTots[r.ctr||'б/к']||0)+r.s;});
+  const topCtr=Object.entries(ctrTots).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  // Top opex stats
+  const topOp=opE.slice(-5).reverse();
+
+  // FOT top
+  const topFot=fotE.slice(0,5);
+
+  const f=n=>Math.abs(Math.round(n)).toLocaleString('ru-RU');
+
+  return `ФИНАНСОВЫЙ ОТЧЁТ ДДС — ${period}
+
+КЛЮЧЕВЫЕ ПОКАЗАТЕЛИ:
+• Поступления: ${f(rec)} руб.
+• Общие расходы (ФОТ + операц.): ${f(fot+Math.abs(opex))} руб.
+• ФОТ: ${f(fot)} руб.
+• Операционные расходы: ${f(Math.abs(opex))} руб.
+• Инвестиции: ${f(Math.abs(inv))} руб.
+• Дивиденды (нетто): ${f(Math.abs(div))} руб.
+• Чистый денежный поток: ${net>=0?'+':'−'}${f(net)} руб.
+
+ТОП-5 КОНТРАГЕНТОВ ПО ПОСТУПЛЕНИЯМ:
+${topCtr.map(([n,v],i)=>`${i+1}. ${n}: ${f(v)} руб.`).join('\n')}
+
+ТОП СТАТЕЙ ОПЕРАЦИОННЫХ РАСХОДОВ:
+${topOp.map(([st,sv])=>`• ${st}: ${f(Math.abs(S(sv.tot)))} руб.`).join('\n')}
+
+ФОТ ПО СОТРУДНИКАМ (топ-5):
+${topFot.map(([p,pv])=>`• ${p}: ${f(S(pv))} руб.`).join('\n')}
+
+ПЕРЕМЕЩЕНИЯ МЕЖДУ СЧЕТАМИ:
+• Приток: ${f(Object.values(d.mv_in||{}).reduce((s,v)=>s+S(v.tot),0))} руб.
+• Отток: ${f(Object.values(d.mv_out||{}).reduce((s,v)=>s+S(v.tot),0))} руб.`;
+}
+
+async function runAI(customQ){
+  const btn=document.getElementById('ai-run-btn');
+  const content=document.getElementById('ai-content');
+  btn.disabled=true;btn.textContent='⏳ Анализирую...';
+  content.innerHTML=`<div style="display:flex;flex-direction:column;gap:12px;padding:20px 0">
+    <div style="display:flex;align-items:center;gap:10px;color:#7c3aed">
+      <span style="font-size:20px;animation:spin .9s linear infinite;display:inline-block">↻</span>
+      <span style="font-weight:600">AI анализирует данные...</span>
+    </div>
+    <div style="color:#94a3b8;font-size:12px">Обрабатываю ${fTxns().length} операций за период</div>
+  </div>`;
+
+  const summary=buildSummary();
+  const question=customQ||'Проведи детальный финансовый анализ представленных данных ДДС. Выдели ключевые тренды, риски и возможности. Дай конкретные управленческие рекомендации.';
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1500,
+        system:`Ты опытный финансовый аналитик. Анализируй данные отчёта о движении денежных средств (ДДС) российской компании. 
+Отвечай на русском языке. Используй конкретные цифры из данных. 
+Форматируй ответ с заголовками через **жирный текст**, списками через •. 
+Будь лаконичен и конкретен — максимум 500 слов.`,
+        messages:[{role:'user',content:`${summary}\n\nВОПРОС: ${question}`}]
+      })
+    });
+    if(!resp.ok)throw new Error('API HTTP '+resp.status);
+    const data=await resp.json();
+    const text=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    if(!text)throw new Error('Пустой ответ от AI');
+
+    // Render markdown-like formatting
+    const rendered=text
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+      .replace(/^#{1,3}\s+(.+)$/gm,'<div style="font-weight:700;font-size:14px;color:#1d4ed8;margin:14px 0 6px">$1</div>')
+      .replace(/^•\s+(.+)$/gm,'<div style="display:flex;gap:8px;margin:4px 0"><span style="color:#7c3aed;flex-shrink:0">•</span><span>$1</span></div>')
+      .replace(/^-\s+(.+)$/gm,'<div style="display:flex;gap:8px;margin:4px 0"><span style="color:#7c3aed;flex-shrink:0">–</span><span>$1</span></div>')
+      .replace(/\n\n/g,'<br><br>')
+      .replace(/\n/g,'<br>');
+
+    const qLabel=customQ?`<div style="background:#ede9fe;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#5b21b6"><strong>Вопрос:</strong> ${customQ}</div>`:'';
+    content.innerHTML=`
+      ${qLabel}
+      <div style="line-height:1.8">${rendered}</div>
+      <div style="margin-top:20px;padding-top:14px;border-top:1px solid #f1f5f9;font-size:11px;color:#94a3b8">
+        ✦ Анализ на основе ${fTxns().length} операций · ${document.getElementById('hdr-period').textContent}
+      </div>`;
+
+  }catch(e){
+    content.innerHTML=`<div style="color:#dc2626;background:#fef2f2;border-radius:8px;padding:14px">
+      <strong>Ошибка:</strong> ${e.message}<br>
+      <span style="font-size:11px;color:#6b7280;margin-top:6px;display:block">AI-аналитика работает только на сайте claude.ai или через API с интернетом</span>
+    </div>`;
+  }
+
+  btn.disabled=false;btn.textContent='↻ Обновить анализ';
+}
+
 
 function printDDS(){
   // Просто печатаем как есть на экране — никаких переключений
   window.print();
 }
-</script></body></html>
+</script>
+<!-- AI ANALYTICS MODAL -->
+<div id="aimodal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;width:min(780px,95vw);max-height:85vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.25);overflow:hidden">
+    <!-- Modal header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;background:linear-gradient(135deg,#1a2b4a,#2d3f6b);border-radius:16px 16px 0 0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;background:linear-gradient(135deg,#7c3aed,#a78bfa);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">✦</div>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#fff">AI-аналитика</div>
+          <div id="ai-period-lbl" style="font-size:11px;color:#94a3b8"></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button onclick="runAI()" id="ai-run-btn" style="padding:7px 16px;font-size:12px;font-weight:700;border:none;border-radius:8px;background:linear-gradient(135deg,#7c3aed,#a78bfa);cursor:pointer;color:#fff;font-family:inherit;transition:all .15s">
+          ↻ Обновить анализ
+        </button>
+        <button onclick="closeAI()" style="width:32px;height:32px;border:none;background:rgba(255,255,255,.1);border-radius:8px;cursor:pointer;color:#fff;font-size:18px;line-height:1;font-family:inherit">×</button>
+      </div>
+    </div>
+    <!-- Quick ask -->
+    <div style="padding:12px 22px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;gap:8px;flex-wrap:wrap">
+      <span style="font-size:11px;color:#64748b;font-weight:600;align-self:center">Быстрый вопрос:</span>
+      <button onclick="quickAsk('Какие топ-3 риска в движении денег?')" class="qbtn">⚠ Риски</button>
+      <button onclick="quickAsk('Сравни поступления и расходы по периодам и дай прогноз')" class="qbtn">📈 Прогноз</button>
+      <button onclick="quickAsk('Какие статьи расходов аномально выросли?')" class="qbtn">🔍 Аномалии</button>
+      <button onclick="quickAsk('Дай рекомендации по оптимизации денежного потока')" class="qbtn">💡 Рекомендации</button>
+      <button onclick="quickAsk('Оцени структуру ФОТ и дивидендов')" class="qbtn">👥 ФОТ и дивиденды</button>
+    </div>
+    <style>
+      .qbtn{padding:5px 10px;font-size:11px;font-weight:600;border:1px solid #e2e8f0;border-radius:6px;background:#fff;cursor:pointer;color:#374151;font-family:inherit;transition:all .12s}
+      .qbtn:hover{background:#ede9fe;border-color:#a78bfa;color:#5b21b6}
+    </style>
+    <!-- Custom question -->
+    <div style="padding:10px 22px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;gap:8px">
+      <input id="ai-custom" type="text" placeholder="Свой вопрос по данным..." style="flex:1;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-family:inherit;outline:none" onkeydown="if(event.key==='Enter')askCustom()" onfocus="this.style.borderColor='#a78bfa'" onblur="this.style.borderColor='#e2e8f0'">
+      <button onclick="askCustom()" style="padding:8px 14px;font-size:12px;font-weight:600;border:none;border-radius:8px;background:#7c3aed;cursor:pointer;color:#fff;font-family:inherit">Спросить</button>
+    </div>
+    <!-- Content -->
+    <div id="ai-content" style="flex:1;overflow-y:auto;padding:22px;font-size:13px;line-height:1.7;color:#1e293b">
+      <div style="text-align:center;color:#94a3b8;padding:40px 0">
+        <div style="font-size:36px;margin-bottom:12px">✦</div>
+        <div style="font-size:14px;font-weight:600;color:#64748b">Нажмите «Обновить анализ»</div>
+        <div style="font-size:12px;margin-top:6px">AI проанализирует данные за выбранный период</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>
