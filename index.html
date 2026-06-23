@@ -330,8 +330,8 @@ function fTxns(){const{from,to}=getRange();return TXNS.filter(r=>r.y===pYear&&r.
 function buildSub(){
   const el=document.getElementById('psub');
   const yOpts=[2025,2026].map(y=>`<option value="${y}"${y===pYear?' selected':''}>${y}</option>`).join('');
-  const yH=`<label>Год</label><select onchange="pYear=+this.value;onYearChange();refresh()">${yOpts}</select>`;
-  const dMin=`${pYear}-01-01`,dMax=pYear===2025?'2025-12-31':'2026-04-26';
+  const yH=`<label>Год</label><select onchange="pYear=+this.value;onYearChange();buildSub();refresh()">${yOpts}</select>`;
+  const dMin=`${pYear}-01-01`,dMax=`${pYear}-12-31`;
   if(pMode==='day') el.innerHTML=yH+`&ensp;<label>Дата</label><input type="date" value="${pDateFrom}" min="${dMin}" max="${dMax}" onchange="pDateFrom=this.value;pDateTo=this.value;refresh()">`;
   else if(pMode==='week'){const opts=gWks(pYear).map(w=>`<option value="${w}"${w===pWeek?' selected':''}>Нед.${w}</option>`).join('');el.innerHTML=yH+`&ensp;<label>Неделя</label><select onchange="pWeek=+this.value;refresh()">${opts}</select>`;}
   else if(pMode==='month'){const opts=gMos(pYear).map(m=>`<option value="${m}"${m===pMonth?' selected':''}>  ${MN_F[m]}</option>`).join('');el.innerHTML=yH+`&ensp;<label>Месяц</label><select onchange="pMonth=+this.value;refresh()">${opts}</select>`;}
@@ -743,21 +743,25 @@ async function refreshDDSData(){
       const cols=pRow(lines[i]);
       if(cols.length<10){skipped++;continue;}
       const ds=pDate(cols[0]);if(!ds){skipped++;continue;}
-      const year=parseInt(cols[3])||0;
+      const dateYear=parseInt(ds.slice(0,4))||0;
+      let year=parseInt(cols[3])||0;
+      // Если год в колонке некорректен (напр. 1899 — ошибка ввода) — берём год из даты
+      if(year!==2025&&year!==2026)year=dateYear;
       const suma=pNum(cols[4]);
       if(!suma||(year!==2025&&year!==2026)){skipped++;continue;}
       const month=parseInt(cols[1])||parseInt(ds.slice(5,7))||0;
       const week=parseInt(cols[2])||0;
       const op=(cols[5]||'').trim();
       const acc=ACC_MAP[(cols[6]||'').trim()]||(cols[6]||'').trim();
-      const stat=(cols[9]||'').trim();
+      const stat=normStat((cols[9]||'').trim());
       const ctr=(cols[10]||'').trim();
-      const fot=(cols[11]||'').trim();
+      let fot=(cols[11]||'').trim();
+      if(!fot&&stat==='Заработная плата')fot=(cols[10]||'').trim()||'Без имени';
       let cat;
       if(op==='Дивиденды')cat='div';
       else if(op==='Расход'&&INVEST.has(stat))cat='inv';
       else if(op==='Расход'&&DIV_STATS.has(stat))cat='div';
-      else if(op==='Расход'&&stat==='Заработная плата'&&fot)cat='fot';
+      else if(op==='Расход'&&stat==='Заработная плата')cat='fot';
       else if(op==='Расход'&&stat&&stat.includes('Перемещение'))cat='mv_out';
       else if(op==='Расход')cat='opex';
       else if(op==='Поступление'&&stat==='Доход по депозиту')cat='dep';
@@ -770,7 +774,9 @@ async function refreshDDSData(){
     if(parsed===0)throw new Error(`Ни одна строка не распознана. Строк всего: ${lines.length}, пропущено: ${skipped}. Проверьте доступ к таблице.`);
     TXNS.length=0;newT.forEach(t=>TXNS.push(t));
     document.getElementById('pinfo').textContent=`Обновлено: ${parsed} операций`;
-    refresh();
+    // Если в выбранном году есть данные за более поздние месяцы — переключаемся на последний
+    if(pMode==='month'){const ms=gMos(pYear);if(ms.length&&!ms.includes(pMonth))pMonth=ms[ms.length-1];}
+    buildSub();refresh();
   }catch(e){
     document.getElementById('pinfo').textContent='Ошибка обновления';
     alert('Ошибка:\n'+e.message+'\n\nПроверьте:\n1. Таблица открыта для просмотра (Настройки доступа → Все с ссылкой → Читатель)\n2. Лист называется «Свод по счетам»');
@@ -792,7 +798,12 @@ function refresh(){
   if(id==='dash'){renderKPIs('kpis2',txns);updateCharts(txns);}
 }
 
+// ── ПЕРЕИМЕНОВАНИЕ СТАТЕЙ (отображение, не трогает Google) ──
+const STAT_RENAME={'Ремонт авто':'Ремонт и обслуживание авто'};
+function normStat(s){s=(s||'').trim();return STAT_RENAME[s]||s;}
+
 // ── INIT ──────────────────────────────────────────────
+TXNS.forEach(t=>{t.stat=normStat(t.stat);});
 renderBal(BALANCE);buildSub();updInfo();
 
 // ── ЭКСПОРТ В EXCEL ──────────────────────────────────
