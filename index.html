@@ -333,16 +333,17 @@ function buildSub(){
   const yH=`<label>Год</label><select onchange="pYear=+this.value;onYearChange();buildSub();refresh()">${yOpts}</select>`;
   const dMin=`${pYear}-01-01`,dMax=`${pYear}-12-31`;
   if(pMode==='day') el.innerHTML=yH+`&ensp;<label>Дата</label><input type="date" value="${pDateFrom}" min="${dMin}" max="${dMax}" onchange="pDateFrom=this.value;pDateTo=this.value;refresh()">`;
-  else if(pMode==='week'){const opts=gWks(pYear).map(w=>`<option value="${w}"${w===pWeek?' selected':''}>Нед.${w}</option>`).join('');el.innerHTML=yH+`&ensp;<label>Неделя</label><select onchange="pWeek=+this.value;refresh()">${opts}</select>`;}
-  else if(pMode==='month'){const opts=gMos(pYear).map(m=>`<option value="${m}"${m===pMonth?' selected':''}>  ${MN_F[m]}</option>`).join('');el.innerHTML=yH+`&ensp;<label>Месяц</label><select onchange="pMonth=+this.value;refresh()">${opts}</select>`;}
+  else if(pMode==='week'){const aw=gWks(pYear);const maxw=aw.length?Math.max(53,...aw):53;const opts=Array.from({length:maxw},(_,i)=>i+1).map(w=>`<option value="${w}"${w===pWeek?' selected':''}>Нед.${w}</option>`).join('');el.innerHTML=yH+`&ensp;<label>Неделя</label><select onchange="pWeek=+this.value;refresh()">${opts}</select>`;}
+  else if(pMode==='month'){const opts=[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>`<option value="${m}"${m===pMonth?' selected':''}>  ${MN_F[m]}</option>`).join('');el.innerHTML=yH+`&ensp;<label>Месяц</label><select onchange="pMonth=+this.value;refresh()">${opts}</select>`;}
   else if(pMode==='year')el.innerHTML=yH;
   else el.innerHTML=yH+`&ensp;<label>С</label><input type="date" value="${pDateFrom}" min="${dMin}" max="${dMax}" onchange="pDateFrom=this.value;refresh()"> <span class="period-sep">—</span> <label>По</label><input type="date" value="${pDateTo}" min="${dMin}" max="${dMax}" onchange="pDateTo=this.value;refresh()">`;
 }
 function onYearChange(){
-  const ms=gMos(pYear);if(ms.length)pMonth=ms[ms.length-1];
-  const ws=gWks(pYear);if(ws.length)pWeek=ws[ws.length-1];
-  pDateFrom=pYear===2025?'2025-11-01':'2026-04-01';
-  pDateTo=pYear===2025?'2025-11-30':'2026-04-26';
+  const ms=gMos(pYear);if(ms.length&&!ms.includes(pMonth))pMonth=ms[ms.length-1];
+  const ws=gWks(pYear);if(ws.length&&!ws.includes(pWeek))pWeek=ws[ws.length-1];
+  // Дату не зажимаем в апрель — оставляем как есть, только переносим год
+  if(pDateFrom)pDateFrom=`${pYear}`+pDateFrom.slice(4);
+  if(pDateTo)pDateTo=`${pYear}`+pDateTo.slice(4);
 }
 function setPMode(m,btn){pMode=m;document.querySelectorAll('.ppill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');buildSub();refresh();}
 function updInfo(){
