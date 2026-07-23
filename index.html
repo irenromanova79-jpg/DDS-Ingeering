@@ -6,126 +6,177 @@
 <title>ДДС · 2025-2026</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#0f1923;font-size:13px}
-.hdr{position:sticky;top:0;z-index:100;background:#1a2b4a;box-shadow:0 2px 8px rgba(0,0,0,.3)}
-.hdr-top{display:flex;align-items:center;justify-content:space-between;padding:13px 22px}
-.hdr-brand{display:flex;align-items:center;gap:9px}
-.hdr-dot{width:9px;height:9px;background:#3b82f6;border-radius:50%;box-shadow:0 0 6px #3b82f6}
-.hdr-title{font-size:15px;font-weight:600;color:#fff}
-.hdr-period{font-size:11px;color:#94a3b8;background:rgba(255,255,255,.08);padding:3px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.12)}
-.tabs{display:flex;padding:0 22px;border-top:1px solid rgba(255,255,255,.08)}
-.tab{padding:9px 20px;font-size:13px;font-weight:500;border:none;background:none;cursor:pointer;color:#94a3b8;border-bottom:2px solid transparent;font-family:inherit;transition:all .15s}
-.tab.active{color:#60a5fa;border-bottom-color:#3b82f6}
-.tab:hover:not(.active){color:#cbd5e1}
-.toolbar{display:flex;align-items:center;gap:10px;padding:10px 22px;background:#fff;border-bottom:2px solid #e2e8f0;flex-wrap:wrap}
-.period-pills{display:flex;gap:2px;background:#f1f5f9;border-radius:8px;padding:3px;border:1px solid #e2e8f0}
-.ppill{padding:5px 14px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;border-radius:6px;color:#64748b;font-family:inherit;transition:all .15s}
-.ppill.active{background:#1d4ed8;color:#fff;box-shadow:0 2px 6px rgba(29,78,216,.35)}
+:root{
+  --ix-green:#00E38A; --ix-green-d:#00B874; --ix-bg:#1C2622; --ix-card:#26312C;
+  --ix-line:#33403A; --ix-line2:#44534C; --ix-txt:#F2F2F2; --ix-mut:#9fb0a8;
+  --ix-red:#ff6b6b; --ix-amber:#fbbf24; --ix-cyan:#22d3ee; --ix-purple:#b79aff;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:var(--ix-bg);color:var(--ix-txt);font-size:13px}
+
+/* ── ШАПКА ── */
+.hdr{position:sticky;top:0;z-index:100;background:#19231F;border-bottom:1px solid var(--ix-line);box-shadow:0 2px 14px rgba(0,0,0,.5)}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;padding:11px 22px;gap:16px}
+.hdr-brand{display:flex;align-items:center;gap:12px;min-width:0}
+.ix-logo{flex-shrink:0;display:block}
+.ix-name{display:flex;flex-direction:column;line-height:1.05}
+.ix-name b{font-size:19px;font-weight:800;letter-spacing:.14em;color:#fff}
+.ix-name i{font-style:normal;font-size:9px;letter-spacing:.06em;color:var(--ix-green);font-weight:600}
+.hdr-div{width:1px;height:30px;background:var(--ix-line2);flex-shrink:0}
+.hdr-title{font-size:14px;font-weight:600;color:var(--ix-txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr-period{font-size:11px;color:var(--ix-green);background:rgba(0,227,138,.09);padding:4px 11px;border-radius:20px;border:1px solid rgba(0,227,138,.25);white-space:nowrap;font-weight:600}
+.tabs{display:flex;padding:0 22px;border-top:1px solid var(--ix-line)}
+.tab{padding:9px 20px;font-size:13px;font-weight:500;border:none;background:none;cursor:pointer;color:var(--ix-mut);border-bottom:2px solid transparent;font-family:inherit;transition:all .15s}
+.tab.active{color:var(--ix-green);border-bottom-color:var(--ix-green)}
+.tab:hover:not(.active){color:var(--ix-txt)}
+
+/* ── ПАНЕЛЬ ── */
+.toolbar{display:flex;align-items:center;gap:10px;padding:10px 22px;background:var(--ix-card);border-bottom:1px solid var(--ix-line);flex-wrap:wrap}
+.period-pills{display:flex;gap:2px;background:var(--ix-bg);border-radius:8px;padding:3px;border:1px solid var(--ix-line2)}
+.ppill{padding:5px 14px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;border-radius:6px;color:var(--ix-mut);font-family:inherit;transition:all .15s}
+.ppill:hover:not(.active){color:var(--ix-txt)}
+.ppill.active{background:var(--ix-green);color:#06120d;box-shadow:0 2px 10px rgba(0,227,138,.3)}
 .period-sub{display:flex;align-items:center;gap:8px;font-size:12px;flex-wrap:wrap}
-.period-sub select,.period-sub input[type=date]{padding:5px 9px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:12px;font-family:inherit;color:#0f1923;background:#fff;cursor:pointer;font-weight:500}
-.period-sub label{color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-.period-sep{color:#cbd5e1}
-.period-info{margin-left:auto;font-size:11px;color:#64748b;background:#f8fafc;padding:4px 10px;border-radius:12px;border:1px solid #e2e8f0;font-weight:500}
+.period-sub select,.period-sub input[type=date]{padding:5px 9px;border:1px solid var(--ix-line2);border-radius:6px;font-size:12px;font-family:inherit;color:var(--ix-txt);background:var(--ix-bg);cursor:pointer;font-weight:500}
+.period-sub select:focus,.period-sub input[type=date]:focus{outline:none;border-color:var(--ix-green)}
+.period-sub input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1) saturate(4) hue-rotate(100deg)}
+.period-sub label{color:var(--ix-mut);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.period-sep{color:var(--ix-line2)}
+.period-info{margin-left:auto;font-size:11px;color:var(--ix-mut);background:var(--ix-bg);padding:4px 10px;border-radius:12px;border:1px solid var(--ix-line2);font-weight:500}
 .screen{display:none;padding:18px 22px}
 .screen.active{display:block}
+
+/* ── KPI ── */
 .kpis{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:18px}
-.kpi{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;border-left:4px solid #e2e8f0}
-.kpi.kpi-rec{border-left-color:#1d4ed8}.kpi.kpi-exp{border-left-color:#dc2626}
-.kpi.kpi-div{border-left-color:#7c3aed}.kpi.kpi-net{border-left-color:#059669}
-.kpi.kpi-fot{border-left-color:#d97706}.kpi.kpi-inv{border-left-color:#0891b2}
-.kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:6px}
+.kpi{background:var(--ix-card);border:1px solid var(--ix-line);border-radius:12px;padding:14px 16px;border-left:3px solid var(--ix-line2)}
+.kpi.kpi-rec{border-left-color:var(--ix-green)}.kpi.kpi-exp{border-left-color:var(--ix-red)}
+.kpi.kpi-div{border-left-color:var(--ix-purple)}.kpi.kpi-net{border-left-color:var(--ix-green)}
+.kpi.kpi-fot{border-left-color:var(--ix-amber)}.kpi.kpi-inv{border-left-color:var(--ix-cyan)}
+.kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ix-mut);margin-bottom:6px}
 .kpi-val{font-size:17px;font-weight:700;font-family:'Courier New',monospace;line-height:1.1}
-.kpi-sub{font-size:10px;color:#94a3b8;margin-top:3px;font-weight:500}
-.c-bl{color:#1d4ed8}.c-gn{color:#059669}.c-rd{color:#dc2626}.c-pu{color:#7c3aed}.c-am{color:#d97706}.c-cy{color:#0891b2}
-.tbl-wrap{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:auto;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.kpi-sub{font-size:10px;color:#8b9a93;margin-top:3px;font-weight:500}
+.c-bl{color:var(--ix-green)}.c-gn{color:var(--ix-green)}.c-rd{color:var(--ix-red)}
+.c-pu{color:var(--ix-purple)}.c-am{color:var(--ix-amber)}.c-cy{color:var(--ix-cyan)}
+
+/* ── ТАБЛИЦА ── */
+.tbl-wrap{background:var(--ix-card);border:1px solid var(--ix-line);border-radius:12px;overflow:auto}
 table.dds{width:100%;border-collapse:collapse;font-size:12px}
-table.dds th{padding:9px 12px;text-align:right;font-size:10.5px;font-weight:700;color:#475569;background:#f8fafc;border-bottom:2px solid #e2e8f0;white-space:nowrap}
+table.dds th{padding:9px 12px;text-align:right;font-size:10.5px;font-weight:700;color:var(--ix-mut);background:var(--ix-bg);border-bottom:1px solid var(--ix-line2);white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
 table.dds th:first-child{text-align:left;min-width:250px}
-table.dds td{padding:5px 12px;text-align:right;border-bottom:1px solid #f1f5f9;font-family:'Courier New',monospace;font-size:11.5px;white-space:nowrap}
+table.dds td{padding:5px 12px;text-align:right;border-bottom:1px solid var(--ix-line);font-family:'Courier New',monospace;font-size:11.5px;white-space:nowrap;color:var(--ix-txt)}
 table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
-.r-op td{background:#1d4ed8;color:#fff;font-weight:700;font-size:11.5px;padding:9px 12px;border-bottom:none}
-.r-inv td{background:#0891b2;color:#fff;font-weight:700;font-size:11.5px;padding:9px 12px;border-bottom:none}
-.r-fin td{background:#7c3aed;color:#fff;font-weight:700;font-size:11.5px;padding:9px 12px;border-bottom:none}
-.r-tot td{font-weight:700;background:#f0f7ff;border-top:2px solid #bfdbfe;border-bottom:2px solid #bfdbfe;font-size:12.5px}
-.r-net td{font-weight:700;background:#1d4ed8;color:#fff;font-size:14px;border:none}
-.r-net.neg td{background:#dc2626}
-.r-sub td{font-weight:600;color:#374151;background:#f8fafc;border-bottom:1px solid #e2e8f0}
-.r-stat td{background:#eff6ff;font-weight:600;font-size:11.5px;color:#1e40af;border-bottom:1px solid #dbeafe}
-.r-stat-fin td{background:#f5f3ff;font-weight:600;font-size:11.5px;color:#5b21b6;border-bottom:1px solid #ede9fe}
-.r-stat-inv td{background:#ecfeff;font-weight:600;font-size:11.5px;color:#0e7490;border-bottom:1px solid #cffafe}
-.r-exp{cursor:pointer}.r-exp:hover td{filter:brightness(.97)}
-.chev{display:inline-block;font-size:9px;margin-right:6px;transition:transform .15s;color:rgba(255,255,255,.7)}
-.chev-d{display:inline-block;font-size:9px;margin-right:6px;transition:transform .15s;color:#94a3b8}
+.r-op td{background:linear-gradient(90deg,#00E38A,#00B874);color:#06120d;font-weight:800;font-size:11.5px;padding:9px 12px;border-bottom:none}
+.r-inv td{background:linear-gradient(90deg,#0e7c66,#0a5f4e);color:#eafff7;font-weight:800;font-size:11.5px;padding:9px 12px;border-bottom:none}
+.r-fin td{background:linear-gradient(90deg,#4a3a7a,#3a2d5e);color:#f0eaff;font-weight:800;font-size:11.5px;padding:9px 12px;border-bottom:none}
+.r-tot td{font-weight:700;background:rgba(0,227,138,.05);border-top:1px solid rgba(0,227,138,.2);border-bottom:1px solid rgba(0,227,138,.2);font-size:12.5px}
+.r-net td{font-weight:800;background:var(--ix-green);color:#06120d;font-size:14px;border:none}
+.r-net.neg td{background:#c0392b;color:#fff}
+.r-sub td{font-weight:600;color:var(--ix-txt);background:#2B3630;border-bottom:1px solid var(--ix-line2)}
+.r-stat td{background:rgba(0,227,138,.045);font-weight:600;font-size:11.5px;color:var(--ix-green);border-bottom:1px solid var(--ix-line)}
+.r-stat-fin td{background:rgba(167,139,250,.06);font-weight:600;font-size:11.5px;color:var(--ix-purple);border-bottom:1px solid var(--ix-line)}
+.r-stat-inv td{background:rgba(34,211,238,.055);font-weight:600;font-size:11.5px;color:var(--ix-cyan);border-bottom:1px solid var(--ix-line)}
+.r-exp{cursor:pointer}.r-exp:hover td{filter:brightness(1.35)}
+.chev{display:inline-block;font-size:9px;margin-right:6px;transition:transform .15s;color:rgba(6,18,13,.6)}
+.chev-d{display:inline-block;font-size:9px;margin-right:6px;transition:transform .15s;color:var(--ix-green)}
 .chev.open,.chev-d.open{transform:rotate(90deg)}
-.l1 td:first-child{padding-left:20px;color:#374151;font-weight:500}
-.l2 td:first-child{padding-left:36px;color:#4b5563}
-.l3 td:first-child{padding-left:52px;color:#6b7280;font-size:11.5px}
-.vp{color:#15803d;font-weight:600}.vn{color:#b91c1c;font-weight:600}.vd{color:#9ca3af}
+.l1 td:first-child{padding-left:20px;color:var(--ix-txt);font-weight:500}
+.l2 td:first-child{padding-left:36px;color:#c3d0ca}
+.l3 td:first-child{padding-left:52px;color:var(--ix-mut);font-size:11.5px}
+.vp{color:var(--ix-green);font-weight:600}.vn{color:var(--ix-red);font-weight:600}.vd{color:#75857d}
 .tag{display:inline-block;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:5px;font-weight:700;vertical-align:middle}
+
+/* ── ОСТАТКИ ── */
 .bal-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
-.bal-title{font-size:15px;font-weight:700;margin-bottom:3px}
-.bal-ts{font-size:11px;color:#64748b;font-weight:500}
-.rbtn{display:flex;align-items:center;gap:6px;padding:8px 16px;font-size:12px;font-weight:700;border:2px solid #1d4ed8;border-radius:8px;background:#fff;cursor:pointer;color:#1d4ed8;font-family:inherit;transition:all .15s}
-.rbtn:hover:not(:disabled){background:#1d4ed8;color:#fff}
+.bal-title{font-size:15px;font-weight:700;margin-bottom:3px;color:var(--ix-txt)}
+.bal-ts{font-size:11px;color:var(--ix-mut);font-weight:500}
+.rbtn{display:flex;align-items:center;gap:6px;padding:8px 16px;font-size:12px;font-weight:700;border:1px solid var(--ix-green);border-radius:8px;background:rgba(0,227,138,.08);cursor:pointer;color:var(--ix-green);font-family:inherit;transition:all .15s}
+.rbtn:hover:not(:disabled){background:var(--ix-green);color:#06120d;box-shadow:0 0 16px rgba(0,227,138,.35)}
 .rbtn:disabled{opacity:.4;cursor:default}
 .spin{animation:spin .9s linear infinite;display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
-.bal-block{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;margin-bottom:12px}
-.brow{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f1f5f9}
+.bal-block{background:var(--ix-card);border:1px solid var(--ix-line);border-radius:12px;overflow:hidden;margin-bottom:12px}
+.brow{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--ix-line)}
 .brow:last-child{border-bottom:none}
-.brow.btot{background:linear-gradient(135deg,#1d4ed8,#3b82f6);padding:16px 18px}
-.brow.bsec{background:#f8fafc;border-left:3px solid #3b82f6}
-.brow.bbank{background:#f8fafc;border-left:3px solid #93c5fd}
+.brow.btot{background:linear-gradient(120deg,#00E38A,#00B874);padding:16px 18px}
+.brow.bsec{background:#2B3630;border-left:3px solid var(--ix-green)}
+.brow.bbank{background:#2B3630;border-left:3px solid rgba(0,227,138,.35)}
 .brow.bacc{padding-left:32px}
-.brow.bacc .blbl{color:#64748b;font-size:12px}
-.blbl{font-size:13px;font-weight:600;color:#1e293b}
+.brow.bacc .blbl{color:var(--ix-mut);font-size:12px;font-weight:500}
+.blbl{font-size:13px;font-weight:600;color:var(--ix-txt)}
 .bval{font-weight:700;font-family:'Courier New',monospace;font-size:13px}
-.bval-tot{font-size:22px;font-weight:700;color:#fff;font-family:'Courier New',monospace}
-.blbl-tot{font-size:14px;font-weight:700;color:rgba(255,255,255,.85)}
-.err-b{background:#fef2f2;color:#dc2626;border:2px solid #fca5a5;border-radius:8px;padding:9px 14px;font-size:12px;margin-bottom:12px;display:none;font-weight:500}
-.footer-note{display:flex;align-items:center;gap:8px;font-size:11px;color:#64748b;padding:8px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-weight:500}
-.fdot{width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0;box-shadow:0 0 4px #22c55e}
+.bval-tot{font-size:22px;font-weight:800;color:#06120d;font-family:'Courier New',monospace}
+.blbl-tot{font-size:14px;font-weight:700;color:rgba(6,18,13,.72)}
+.err-b{background:rgba(255,107,107,.1);color:var(--ix-red);border:1px solid rgba(255,107,107,.4);border-radius:8px;padding:9px 14px;font-size:12px;margin-bottom:12px;display:none;font-weight:500}
+.footer-note{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ix-mut);padding:8px 12px;background:var(--ix-card);border:1px solid var(--ix-line);border-radius:8px;font-weight:500}
+.fdot{width:7px;height:7px;border-radius:50%;background:var(--ix-green);flex-shrink:0;box-shadow:0 0 6px var(--ix-green)}
+
+/* ── ГРАФИКИ ── */
 .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.ccard{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.ccard{background:var(--ix-card);border:1px solid var(--ix-line);border-radius:12px;padding:18px 20px}
 .ccard.wide{grid-column:1/-1}
-.ctitle{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:12px;display:flex;align-items:center;gap:6px}
-.ctitle::before{content:'';display:block;width:3px;height:14px;background:#3b82f6;border-radius:2px}
-.leg{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;font-size:11px;color:#475569;font-weight:500}
+.ctitle{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ix-mut);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.ctitle::before{content:'';display:block;width:3px;height:14px;background:var(--ix-green);border-radius:2px}
+.leg{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;font-size:11px;color:var(--ix-mut);font-weight:500}
 .li{display:flex;align-items:center;gap:5px}
 .lsq{width:10px;height:10px;border-radius:2px;flex-shrink:0}
 
+/* ── ПЕЧАТЬ: светлая версия для экономии чернил ── */
 @media print {
-  /* Скрываем только UI-элементы, всё остальное как на экране */
-  body { background: #fff !important; font-size: 11px; }
-  .hdr { position: relative !important; box-shadow: none !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .tabs, .toolbar, button { display: none !important; }
-  /* Показываем только активную вкладку */
-  .screen { display: none !important; }
-  .screen.active { display: block !important; padding: 8px 0 !important; }
-  /* Сохраняем цвета */
-  .kpi { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .kpi-val { font-size: 13px !important; }
-  .r-op td, .r-inv td, .r-fin td, .r-net td, .r-stat td, .r-stat-fin td, .r-stat-inv td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  /* Строки печатаются как на экране — свёрнутые скрыты, раскрытые видны */
-  /* .hid управляется через inline style из JS, не через класс */
-  /* Графики печатаем как есть */
-  .dash-grid { break-inside: avoid; }
-  .ccard { break-inside: avoid; page-break-inside: avoid; }
-  @page { margin: 10mm; size: A4 landscape; }
+  body{background:#fff!important;color:#111!important;font-size:11px}
+  .hdr{position:relative!important;box-shadow:none!important;background:#19231F!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .tabs,.toolbar,button{display:none!important}
+  .screen{display:none!important}
+  .screen.active{display:block!important;padding:8px 0!important}
+  .tbl-wrap,.kpi,.ccard,.bal-block,.footer-note{background:#fff!important;border-color:#d0d0d0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  table.dds th{background:#f4f4f4!important;color:#333!important;border-bottom-color:#ccc!important}
+  table.dds td{border-bottom-color:#ececec!important;color:#111!important}
+  .kpi-lbl,.ctitle,.bal-ts,.period-info{color:#555!important}
+  .kpi-val{font-size:13px!important}
+  .l1 td:first-child,.l2 td:first-child{color:#222!important}
+  .l3 td:first-child{color:#555!important}
+  .r-sub td{background:#f4f4f4!important;color:#111!important}
+  .r-tot td{background:#f7f7f7!important;color:#111!important;border-color:#ccc!important}
+  .r-stat td,.r-stat-fin td,.r-stat-inv td{background:#f0f0f0!important;color:#111!important}
+  .r-op td,.r-inv td,.r-fin td,.r-net td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .vd{color:#999!important}
+  .blbl,.bal-title{color:#111!important}
+  .brow{border-bottom-color:#eee!important}
+  .brow.bsec,.brow.bbank{background:#f5f5f5!important}
+  .brow.btot{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .chev-d{color:#888!important}
+  .dash-grid{break-inside:avoid}
+  .ccard{break-inside:avoid;page-break-inside:avoid}
+  @page{margin:10mm;size:A4 landscape}
 }
+
 </style>
 </head>
 <body>
 <div class="hdr">
   <div class="hdr-top">
-    <div class="hdr-brand"><div class="hdr-dot"></div><div class="hdr-title">Отчёт о движении денежных средств · 2025–2026</div></div>
+    <div class="hdr-brand">
+      <svg class="ix-logo" width="34" height="34" viewBox="0 0 100 100" aria-label="IRIX">
+        <defs>
+          <linearGradient id="ixA" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0" stop-color="#00B874"/><stop offset="1" stop-color="#00E38A"/>
+          </linearGradient>
+          <linearGradient id="ixB" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#00E38A"/><stop offset="1" stop-color="#00794f"/>
+          </linearGradient>
+        </defs>
+        <polygon points="3,97 3,55 60,3 97,3" fill="url(#ixA)"/>
+        <polygon points="3,3 3,45 55,97 97,97" fill="url(#ixB)"/>
+      </svg>
+      <div class="ix-name"><b>IRIX</b><i>Irina Romanova</i></div>
+      <div class="hdr-div"></div>
+      <div class="hdr-title">Отчёт о движении денежных средств · 2025–2026</div>
+    </div>
     <div id="hdr-period" class="hdr-period">—</div>
   </div>
   <div style="display:flex;align-items:center;gap:6px">
-    <button onclick="printDDS()" title="Печать / Сохранить PDF" style="display:flex;align-items:center;gap:5px;padding:7px 13px;font-size:12px;font-weight:600;border:1.5px solid rgba(255,255,255,.25);border-radius:8px;background:rgba(255,255,255,.08);cursor:pointer;color:#e2e8f0;font-family:inherit;transition:all .15s" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.08)'">
+    <button onclick="printDDS()" title="Печать / Сохранить PDF" style="display:flex;align-items:center;gap:5px;padding:7px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:8px;background:rgba(255,255,255,.04);cursor:pointer;color:#c3d0ca;font-family:inherit;transition:all .15s" onmouseover="this.style.background='rgba(0,227,138,.14)';this.style.color='#00E38A';this.style.borderColor='#00E38A'" onmouseout="this.style.background='rgba(255,255,255,.04)';this.style.color='#c3d0ca';this.style.borderColor='#44534C'">
       🖨 PDF
     </button>
-    <button onclick="exportExcel()" id="xlsbtn" title="Сохранить Excel" style="display:flex;align-items:center;gap:5px;padding:7px 13px;font-size:12px;font-weight:600;border:1.5px solid rgba(120,200,120,.4);border-radius:8px;background:rgba(120,200,120,.1);cursor:pointer;color:#86efac;font-family:inherit;transition:all .15s" onmouseover="this.style.background='rgba(120,200,120,.22)'" onmouseout="this.style.background='rgba(120,200,120,.1)'">
+    <button onclick="exportExcel()" id="xlsbtn" title="Сохранить Excel" style="display:flex;align-items:center;gap:5px;padding:7px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:8px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit;transition:all .15s" onmouseover="this.style.background='#00E38A';this.style.color='#06120d'" onmouseout="this.style.background='rgba(0,227,138,.12)';this.style.color='#00E38A'">
       📊 Excel
     </button>
 
@@ -148,7 +199,7 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
   </div>
   <div class="period-sub" id="psub"></div>
   <div class="period-info" id="pinfo">—</div>
-  <button id="rdds" onclick="refreshDDSData()" style="display:flex;align-items:center;gap:5px;padding:5px 12px;font-size:12px;font-weight:600;border:1.5px solid #059669;border-radius:6px;background:#fff;cursor:pointer;color:#059669;font-family:inherit;margin-left:4px;transition:all .15s" onmouseover="this.style.background='#059669';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='#059669'">
+  <button id="rdds" onclick="refreshDDSData()" style="display:flex;align-items:center;gap:5px;padding:5px 12px;font-size:12px;font-weight:600;border:1px solid #00E38A;border-radius:6px;background:rgba(0,227,138,.1);cursor:pointer;color:#00E38A;font-family:inherit;margin-left:4px;transition:all .15s" onmouseover="this.style.background='#059669';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='#059669'">
     <span id="rdds-ico">⟳</span>&nbsp;Обновить данные
   </button>
 </div>
@@ -159,7 +210,15 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
   </div>
   <div class="err-b" id="berr"></div>
   <div class="bal-block" id="balblock"></div>
-  <div class="footer-note"><div class="fdot"></div><span>Google Sheets · таблица должна быть открыта для просмотра («Все с ссылкой — Читатель»)</span></div>
+  <div class="footer-note"><div class="fdot"></div><span>Google Sheets · таблица должна быть открыта для просмотра («Все с ссылкой — Читатель»)</span>
+  <span style="margin-left:auto;display:flex;align-items:center;gap:7px;white-space:nowrap">
+    <svg width="15" height="15" viewBox="0 0 100 100" style="flex-shrink:0">
+      <polygon points="3,97 3,55 60,3 97,3" fill="#00B874"/>
+      <polygon points="3,3 3,45 55,97 97,97" fill="#00E38A"/>
+    </svg>
+    <b style="color:#00E38A;letter-spacing:.1em;font-weight:800">IRIX</b>
+    <span style="color:#8b9a93">· умные приложения для бизнеса</span>
+  </span></div>
 </div>
 <div id="dds" class="screen">
   <div class="kpis" id="kpis1"></div>
@@ -171,19 +230,19 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
     <div class="ccard wide">
       <div class="ctitle">Поступления 2025 (все месяцы) + 2026 (факт)</div>
       <div class="leg">
-        <div class="li"><div class="lsq" style="background:#93c5fd"></div>Поступления 2025</div>
-        <div class="li"><div class="lsq" style="background:#1d4ed8"></div>Поступления 2026</div>
-        <div class="li"><div class="lsq" style="background:#22c55e"></div>ЧДП 2025</div>
-        <div class="li"><div class="lsq" style="background:#f59e0b"></div>ЧДП 2026</div>
+        <div class="li"><div class="lsq" style="background:#2f6d5a"></div>Поступления 2025</div>
+        <div class="li"><div class="lsq" style="background:#00E38A"></div>Поступления 2026</div>
+        <div class="li"><div class="lsq" style="background:#5eead4"></div>ЧДП 2025</div>
+        <div class="li"><div class="lsq" style="background:#fbbf24"></div>ЧДП 2026</div>
       </div>
       <div style="position:relative;height:220px"><canvas id="c1"></canvas></div>
     </div>
     <div class="ccard">
       <div class="ctitle">Динамика потоков за период</div>
       <div class="leg">
-        <div class="li"><div class="lsq" style="background:#1d4ed8"></div>Поступления</div>
-        <div class="li"><div class="lsq" style="background:#fca5a5"></div>Расходы</div>
-        <div class="li"><div class="lsq" style="background:#22c55e"></div>ЧДП</div>
+        <div class="li"><div class="lsq" style="background:#00B874"></div>Поступления</div>
+        <div class="li"><div class="lsq" style="background:#ff6b6b"></div>Расходы</div>
+        <div class="li"><div class="lsq" style="background:#fbbf24"></div>ЧДП</div>
       </div>
       <div style="position:relative;height:300px"><canvas id="c2"></canvas></div>
     </div>
@@ -452,8 +511,8 @@ function buildDDS(){
   h+=`<tr class="r-exp" onclick="tgl('ge')"><td><span class="chev-d" id="ic-ge">▶</span>Общие расходы</td>${totalExpC}</tr>`;
 
   // Подраздел: ФОТ
-  h+=`<tr class="r-exp l1 hid" id="ge" onclick="tgl('ee')"><td style="padding-left:20px"><span class="chev-d" id="ic-ee">▶</span>Заработная плата и ФОТ<span class="tag" style="background:#fef3c7;color:#92400e">ФОТ</span></td>${fotC}</tr>`;
-  h+=`<tr class="hid" id="ee" style="background:#f8fafc"><td style="padding-left:52px;font-size:10px;font-weight:700;color:#6b7280">Сотрудник</td>${mc?cols.map(c=>`<td style="font-size:10px;font-weight:700;color:#6b7280;background:#f8fafc">${c.short}</td>`).join('')+`<td style="font-size:10px;font-weight:700;color:#6b7280;background:#f8fafc">Итого</td>`:`<td style="font-size:10px;font-weight:700;color:#6b7280;background:#f8fafc">Итого</td>`}</tr>`;
+  h+=`<tr class="r-exp l1 hid" id="ge" onclick="tgl('ee')"><td style="padding-left:20px"><span class="chev-d" id="ic-ee">▶</span>Заработная плата и ФОТ<span class="tag" style="background:rgba(251,191,36,.16);color:#fbbf24">ФОТ</span></td>${fotC}</tr>`;
+  h+=`<tr class="hid" id="ee" style="background:#2B3630"><td style="padding-left:52px;font-size:10px;font-weight:700;color:#8a9a92">Сотрудник</td>${mc?cols.map(c=>`<td style="font-size:10px;font-weight:700;color:#8a9a92;background:#2B3630">${c.short}</td>`).join('')+`<td style="font-size:10px;font-weight:700;color:#8a9a92;background:#2B3630">Итого</td>`:`<td style="font-size:10px;font-weight:700;color:#8a9a92;background:#2B3630">Итого</td>`}</tr>`;
   fotE.forEach(([p,pv],ei)=>{
     const eid='fe'+ei;
     const eops=(d.fot_ops&&d.fot_ops[p])||[];
@@ -464,7 +523,7 @@ function buildDDS(){
       eops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
         const fdd=x=>{const q=x.split('-');return q[2]+'.'+q[1];};
         const oC=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`;
-        h+=`<tr class="hid" id="${eid}" data-par="ee" style="background:#fafafa"><td style="padding-left:52px;font-size:11px;color:#6b7280">${fdd(op.d)}&nbsp;<span style="background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${oC}</tr>`;
+        h+=`<tr class="hid" id="${eid}" data-par="ee" style="background:#1F2A25"><td style="padding-left:52px;font-size:11px;color:#8a9a92">${fdd(op.d)}&nbsp;<span style="background:rgba(251,191,36,.16);color:#fbbf24;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${oC}</tr>`;
       });
     } else {
       h+=`<tr class="l3 hid" id="ee" data-par="ge"><td>${p}</td>${pC}</tr>`;
@@ -490,7 +549,7 @@ function buildDDS(){
         ops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
           const fdd=d=>{const p=d.split('-');return p[2]+'.'+p[1];};
           const opC=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`;
-          h+=`<tr class="hid" id="${did}" data-par="${sid}" style="background:#fafafa"><td style="padding-left:68px;font-size:11px;color:#6b7280">${fdd(op.d)}&nbsp;<span style="background:#fee2e2;color:#b91c1c;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opC}</tr>`;
+          h+=`<tr class="hid" id="${did}" data-par="${sid}" style="background:#1F2A25"><td style="padding-left:68px;font-size:11px;color:#8a9a92">${fdd(op.d)}&nbsp;<span style="background:rgba(255,107,107,.16);color:#ff8f8f;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opC}</tr>`;
         });
       } else {
         h+=`<tr class="l3 hid" id="${sid}" data-par="oo"><td style="padding-left:52px">${ctr}</td>${ctrC}</tr>`;
@@ -523,7 +582,7 @@ function buildDDS(){
     Object.entries(invSt).forEach(([st,sv],si)=>{
       const sid='iv'+si;
       const stC=mc?ks.map(k=>(sv.tot[k]||0)?`<td class="vn">${fm(Math.abs(sv.tot[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:700">${fm(Math.abs(S(sv.tot)))}</td>`:`<td class="vn" style="font-weight:700">${fm(Math.abs(S(sv.tot)))}</td>`;
-      h+=`<tr class="r-exp r-stat-inv l1" onclick="tgl('${sid}')"><td><span class="chev-d" id="ic-${sid}">▶</span>${st}<span class="tag" style="background:#cffafe;color:#0e7490">инвест.</span></td>${stC}</tr>`;
+      h+=`<tr class="r-exp r-stat-inv l1" onclick="tgl('${sid}')"><td><span class="chev-d" id="ic-${sid}">▶</span>${st}<span class="tag" style="background:rgba(34,211,238,.16);color:#22d3ee">инвест.</span></td>${stC}</tr>`;
       Object.entries(sv.ctrs).forEach(([ctr,cv])=>{h+=`<tr class="l3 hid" id="${sid}"><td>${ctr}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn">${fm(Math.abs(S(cv)))}</td>`}</tr>`;});
     });
   } else h+=`<tr class="l1"><td>Инвестиционные операции</td>${mc?cols.map(()=>`<td class="vd">—</td>`).join('')+`<td class="vd">—</td>`:`<td class="vd">—</td>`}</tr>`;
@@ -565,7 +624,7 @@ function buildDDS(){
 
     // Итого строка дивидендов
     const divC=mc?ks.map(k=>(d.div[k]||0)?`<td class="vn">${fm(Math.abs(d.div[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:700">${fm(Math.abs(divTot))}</td>`:`<td class="vn" style="font-weight:700">${fm(Math.abs(divTot))}</td>`;
-    h+=`<tr class="r-exp r-stat-fin" onclick="tgl('dd')"><td><span class="chev-d" id="ic-dd">▶</span>Дивиденды<span class="tag" style="background:#ede9fe;color:#5b21b6">фин.</span></td>${divC}</tr>`;
+    h+=`<tr class="r-exp r-stat-fin" onclick="tgl('dd')"><td><span class="chev-d" id="ic-dd">▶</span>Дивиденды<span class="tag" style="background:rgba(183,154,255,.18);color:#b79aff">фин.</span></td>${divC}</tr>`;
 
     // helper: format date dd.mm
     const fdd=d=>{const p=d.split('-');return p[2]+'.'+p[1];};
@@ -573,7 +632,7 @@ function buildDDS(){
     // ВЫВОД дивидендов
     if(divOutTot!==0){
       const outC=mc?ks.map(k=>{const v=Object.values(divOut).reduce((s,cv)=>s+(cv.cols[k]||0),0);return v?`<td class="vn">${fm(Math.abs(v))}</td>`:`<td class="vd">—</td>`;}).join('')+`<td class="vn" style="font-weight:600">${fm(Math.abs(divOutTot))}</td>`:`<td class="vn" style="font-weight:600">${fm(Math.abs(divOutTot))}</td>`;
-      h+=`<tr class="r-exp l1 hid" id="dd" onclick="tgl('dd_out')"><td style="padding-left:20px"><span class="chev-d" id="ic-dd_out">▶</span>Вывод дивидендов<span class="tag" style="background:#fee2e2;color:#991b1b">↑ выход</span></td>${outC}</tr>`;
+      h+=`<tr class="r-exp l1 hid" id="dd" onclick="tgl('dd_out')"><td style="padding-left:20px"><span class="chev-d" id="ic-dd_out">▶</span>Вывод дивидендов<span class="tag" style="background:rgba(255,107,107,.16);color:#ff8f8f">↑ выход</span></td>${outC}</tr>`;
       Object.entries(divOut).sort((a,b)=>S(a[1].cols)-S(b[1].cols)).forEach(([ctr,cv],ci)=>{
         const cid='dout'+ci;
         const ctrC=mc?ks.map(k=>(cv.cols[k]||0)?`<td class="vn">${fm(Math.abs(cv.cols[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:600">${fm(Math.abs(S(cv.cols)))}</td>`:`<td class="vn" style="font-weight:600">${fm(Math.abs(S(cv.cols)))}</td>`;
@@ -581,7 +640,7 @@ function buildDDS(){
         // Детализация: дата + счёт + сумма
         cv.ops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
           const opCols=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`;
-          h+=`<tr class="hid" id="${cid}" style="background:#fdf4ff"><td style="padding-left:68px;font-size:11px;color:#6b7280">${fdd(op.d)}&nbsp;&nbsp;<span style="background:#ede9fe;color:#7c3aed;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opCols}</tr>`;
+          h+=`<tr class="hid" id="${cid}" style="background:#fdf4ff"><td style="padding-left:68px;font-size:11px;color:#8a9a92">${fdd(op.d)}&nbsp;&nbsp;<span style="background:rgba(183,154,255,.18);color:#b79aff;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opCols}</tr>`;
         });
       });
     }
@@ -596,7 +655,7 @@ function buildDDS(){
         h+=`<tr class="r-exp l3 hid" id="dd_in" onclick="tgl('${cid}')"><td><span class="chev-d" id="ic-${cid}">▶</span>${ctr}</td>${ctrC}</tr>`;
         cv.ops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
           const opCols=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vp" style="font-size:11px">${fm(op.s)}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp" style="font-size:11px">${fm(op.s)}</td>`:`<td class="vp" style="font-size:11px">${fm(op.s)}</td>`;
-          h+=`<tr class="hid" id="${cid}" style="background:#f0fdf4"><td style="padding-left:68px;font-size:11px;color:#6b7280">${fdd(op.d)}&nbsp;&nbsp;<span style="background:#dcfce7;color:#166534;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opCols}</tr>`;
+          h+=`<tr class="hid" id="${cid}" style="background:#f0fdf4"><td style="padding-left:68px;font-size:11px;color:#8a9a92">${fdd(op.d)}&nbsp;&nbsp;<span style="background:#dcfce7;color:#166534;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opCols}</tr>`;
         });
       });
     }
@@ -610,7 +669,7 @@ function buildDDS(){
   const mvOutTot=mvOutByAcc.reduce((s,[,v])=>s+S(v.tot),0);
   const mvNet=mvInTot+mvOutTot;
 
-  h+=`<tr style="background:#f8fafc"><td colspan="${mc?cols.length+2:2}" style="padding:9px 12px;font-weight:700;font-size:11.5px;color:#374151;letter-spacing:.02em;border-bottom:1px solid #e2e8f0">IV. Перемещения между счетами <span style="font-size:10px;font-weight:500;color:#9ca3af">(не влияют на чистый поток)</span></td></tr>`;
+  h+=`<tr style="background:#2B3630"><td colspan="${mc?cols.length+2:2}" style="padding:9px 12px;font-weight:700;font-size:11.5px;color:#374151;letter-spacing:.02em;border-bottom:1px solid #e2e8f0">IV. Перемещения между счетами <span style="font-size:10px;font-weight:500;color:#9ca3af">(не влияют на чистый поток)</span></td></tr>`;
 
   // Приток
   const mvInTotC=mc?ks.map(k=>{const v=mvInByAcc.reduce((s,[,av])=>s+(av.tot[k]||0),0);return v?`<td class="vp">${fm(v)}</td>`:`<td class="vd">—</td>`;}).join('')+`<td class="vp" style="font-weight:600">${fm(mvInTot)}</td>`:`<td class="vp" style="font-weight:600">${fm(mvInTot)}</td>`;
@@ -626,7 +685,7 @@ function buildDDS(){
 
   // Отток
   const mvOutTotC=mc?ks.map(k=>{const v=mvOutByAcc.reduce((s,[,av])=>s+(av.tot[k]||0),0);return v?`<td class="vn">${fm(Math.abs(v))}</td>`:`<td class="vd">—</td>`;}).join('')+`<td class="vn" style="font-weight:600">${fm(Math.abs(mvOutTot))}</td>`:`<td class="vn" style="font-weight:600">${fm(Math.abs(mvOutTot))}</td>`;
-  h+=`<tr class="r-exp" onclick="tgl('mvo')"><td><span class="chev-d" id="ic-mvo">▶</span>Перемещение — Отток<span class="tag" style="background:#fee2e2;color:#991b1b">↑ выход</span></td>${mvOutTotC}</tr>`;
+  h+=`<tr class="r-exp" onclick="tgl('mvo')"><td><span class="chev-d" id="ic-mvo">▶</span>Перемещение — Отток<span class="tag" style="background:rgba(255,107,107,.16);color:#ff8f8f">↑ выход</span></td>${mvOutTotC}</tr>`;
   mvOutByAcc.forEach(([acc,av],ai)=>{
     const aC=mc?ks.map(k=>(av.tot[k]||0)?`<td class="vn">${fm(Math.abs(av.tot[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:500">${fm(Math.abs(S(av.tot)))}</td>`:`<td class="vn" style="font-weight:500">${fm(Math.abs(S(av.tot)))}</td>`;
     h+=`<tr class="l1 hid" id="mvo" style="background:#fff1f2"><td style="padding-left:20px">${acc}</td>${aC}</tr>`;
@@ -669,6 +728,17 @@ function hideKids(par){
 }
 
 // ── ГРАФИКИ ───────────────────────────────────────────
+// Тёмная тема IRIX для Chart.js
+if(window.Chart){
+  Chart.defaults.color='#8a9a92';
+  Chart.defaults.borderColor='rgba(255,255,255,.06)';
+  Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif";
+  Chart.defaults.plugins.tooltip.backgroundColor='#19231F';
+  Chart.defaults.plugins.tooltip.titleColor='#F2F2F2';
+  Chart.defaults.plugins.tooltip.bodyColor='#c3d0ca';
+  Chart.defaults.plugins.tooltip.borderColor='#00E38A';
+  Chart.defaults.plugins.tooltip.borderWidth=1;
+}
 const charts={};
 function killCharts(){Object.values(charts).forEach(c=>{try{c.destroy();}catch(e){}});}
 
@@ -698,10 +768,10 @@ function updateCharts(txns){
   const n25=r25.map((r,i)=>r+e25[i]);
   const n26=r26.map((r,i)=>r+(e26[i]||0));
   charts.c1=new Chart(document.getElementById('c1'),{type:'bar',data:{labels:yoyL,datasets:[
-    {label:'Пост.2025',data:[...r25,...Array(r26.length).fill(null)],backgroundColor:'#93c5fd',borderRadius:3},
-    {label:'Пост.2026',data:[...Array(12).fill(null),...r26],backgroundColor:'#1d4ed8',borderRadius:3},
-    {type:'line',label:'ЧДП2025',data:[...n25,...Array(n26.length).fill(null)],borderColor:'#22c55e',borderDash:[4,3],backgroundColor:'transparent',pointRadius:3,pointBackgroundColor:'#22c55e',tension:.3},
-    {type:'line',label:'ЧДП2026',data:[...Array(12).fill(null),...n26],borderColor:'#f59e0b',borderDash:[4,3],backgroundColor:'transparent',pointRadius:4,pointBackgroundColor:'#f59e0b',tension:.3},
+    {label:'Пост.2025',data:[...r25,...Array(r26.length).fill(null)],backgroundColor:'#2f6d5a',borderRadius:3},
+    {label:'Пост.2026',data:[...Array(12).fill(null),...r26],backgroundColor:'#00E38A',borderRadius:3},
+    {type:'line',label:'ЧДП2025',data:[...n25,...Array(n26.length).fill(null)],borderColor:'#5eead4',borderDash:[4,3],backgroundColor:'transparent',pointRadius:3,pointBackgroundColor:'#5eead4',tension:.3},
+    {type:'line',label:'ЧДП2026',data:[...Array(12).fill(null),...n26],borderColor:'#fbbf24',borderDash:[4,3],backgroundColor:'transparent',pointRadius:4,pointBackgroundColor:'#fbbf24',tension:.3},
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw!=null?` ${Math.round(c.raw).toLocaleString('ru-RU')} руб.`:null}}},scales:{x:{ticks:{font:{size:9.5}},grid:{display:false},border:{display:false}},y:{ticks:{font:{size:9},callback:v=>Math.abs(v)>=1e6?(v/1e6).toFixed(1)+'M':Math.abs(v)>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'rgba(0,0,0,.05)'},border:{display:false}}}}});
 
   // C2: динамика потоков
@@ -709,14 +779,14 @@ function updateCharts(txns){
   const expA=ks.map(k=>Object.values(d.opex).reduce((s,v)=>s+(v.tot[k]||0),0)-Object.values(d.fot).reduce((s,fv)=>s+(fv[k]||0),0));
   const netA=ks.map((_,i)=>recA[i]+expA[i]);
   charts.c2=new Chart(document.getElementById('c2'),{type:'bar',data:{labels,datasets:[
-    {label:'Поступления',data:recA,backgroundColor:'#3b82f6',borderRadius:4},
-    {label:'Расходы',data:expA,backgroundColor:'#fca5a5',borderRadius:4},
-    {type:'line',label:'ЧДП',data:netA,borderColor:'#22c55e',borderDash:[4,3],backgroundColor:'transparent',pointRadius:4,pointBackgroundColor:'#22c55e',tension:.3},
+    {label:'Поступления',data:recA,backgroundColor:'#00B874',borderRadius:4},
+    {label:'Расходы',data:expA,backgroundColor:'#ff6b6b',borderRadius:4},
+    {type:'line',label:'ЧДП',data:netA,borderColor:'#fbbf24',borderDash:[4,3],backgroundColor:'transparent',pointRadius:4,pointBackgroundColor:'#fbbf24',tension:.3},
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw!=null?` ${Math.abs(Math.round(c.raw)).toLocaleString('ru-RU')} руб.`:null}}},scales:{x:{ticks:{font:{size:10}},grid:{display:false},border:{display:false}},y:{ticks:{font:{size:9},callback:v=>Math.abs(v)>=1e6?(v/1e6).toFixed(1)+'M':Math.abs(v)>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'rgba(0,0,0,.05)'},border:{display:false}}}}});
 
   // C3: структура расходов (без дивидендов)
   const stT={};txns.filter(r=>r.cat==='opex'||r.cat==='fot'||r.cat==='inv').forEach(r=>{const s=r.cat==='fot'?'ФОТ':r.cat==='inv'?'Инвестиции':r.stat;stT[s]=(stT[s]||0)+Math.abs(r.s);});
-  const CLRS=['#1d4ed8','#3b82f6','#60a5fa','#93c5fd','#f97316','#fbbf24','#22c55e','#a78bfa','#d1d5db'];
+  const CLRS=['#00E38A','#00B874','#5eead4','#2f6d5a','#fb923c','#fbbf24','#22d3ee','#b79aff','#3d5049'];
   const exI=Object.entries(stT).sort((a,b)=>b[1]-a[1]);const tot3=exI.reduce((s,[,v])=>s+v,0);
   document.getElementById('exleg').innerHTML=exI.slice(0,6).map(([l,v],i)=>`<div class="li"><div class="lsq" style="background:${CLRS[i]}"></div>${l} (${Math.round(v/tot3*100)}%)</div>`).join('');
   charts.c3=new Chart(document.getElementById('c3'),{type:'doughnut',data:{labels:exI.map(([l])=>l),datasets:[{data:exI.map(([,v])=>v),backgroundColor:CLRS,borderWidth:0,hoverBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${Math.round(c.raw).toLocaleString('ru-RU')} руб. (${Math.round(c.raw/tot3*100)}%)`}}}}});
@@ -724,7 +794,7 @@ function updateCharts(txns){
   // C4: топ контрагентов
   const cT={};txns.filter(r=>r.cat==='rec').forEach(r=>{cT[r.ctr||'—']=(cT[r.ctr||'—']||0)+r.s;});
   const top=Object.entries(cT).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  charts.c4=new Chart(document.getElementById('c4'),{type:'bar',data:{labels:top.map(([n])=>n.length>28?n.slice(0,28)+'…':n),datasets:[{data:top.map(([,v])=>v),backgroundColor:top.map((_,i)=>i===0?'#1d4ed8':i<3?'#3b82f6':i<6?'#60a5fa':'#93c5fd'),borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${Math.round(c.raw).toLocaleString('ru-RU')} руб.`}}},scales:{x:{ticks:{font:{size:9.5},callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':(v/1e3).toFixed(0)+'K'},grid:{display:false},border:{display:false}},y:{ticks:{font:{size:10.5}},grid:{display:false},border:{display:false}}}}});
+  charts.c4=new Chart(document.getElementById('c4'),{type:'bar',data:{labels:top.map(([n])=>n.length>28?n.slice(0,28)+'…':n),datasets:[{data:top.map(([,v])=>v),backgroundColor:top.map((_,i)=>i===0?'#00E38A':i<3?'#00B874':i<6?'#5eead4':'#2f6d5a'),borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${Math.round(c.raw).toLocaleString('ru-RU')} руб.`}}},scales:{x:{ticks:{font:{size:9.5},callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':(v/1e3).toFixed(0)+'K'},grid:{display:false},border:{display:false}},y:{ticks:{font:{size:10.5}},grid:{display:false},border:{display:false}}}}});
 }
 
 // ── ВКЛАДКИ ───────────────────────────────────────────
