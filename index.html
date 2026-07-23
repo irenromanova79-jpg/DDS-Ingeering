@@ -358,13 +358,13 @@ const fm=n=>Math.abs(Math.round(n)).toLocaleString('ru-RU');
 function agg(txns,cols){
   const ks=cols.map(c=>c.key);
   const zero=()=>Object.fromEntries(ks.map(k=>[k,0]));
-  const res={rec:zero(),dep:zero(),inv:zero(),div:zero(),rec_by_acc:{},opex:{},fot:{},mv_in:{},mv_out:{},opex_ops:{}};
+  const res={rec:zero(),dep:zero(),inv:zero(),div:zero(),rec_by_acc:{},opex:{},fot:{},mv_in:{},mv_out:{},opex_ops:{},fot_ops:{}};
   txns.forEach(r=>{
     const k=cKey(r,cols);if(!ks.includes(k))return;
     if(r.cat==='rec'){res.rec[k]+=r.s;const a=r.acc;if(!res.rec_by_acc[a])res.rec_by_acc[a]={tot:zero(),ctrs:{}};res.rec_by_acc[a].tot[k]+=r.s;const c=r.ctr||'Б/к';if(!res.rec_by_acc[a].ctrs[c])res.rec_by_acc[a].ctrs[c]=zero();res.rec_by_acc[a].ctrs[c][k]+=r.s;}
     else if(r.cat==='dep'){res.dep[k]+=r.s;}
     else if(r.cat==='opex'){if(r.stat==='Дивиденды'){res.div[k]+=r.s;return;}if(r.stat&&r.stat.includes('Перемещение'))return;const st=r.stat;const c=r.ctr||'Б/к';if(!res.opex[st])res.opex[st]={tot:zero(),ctrs:{}};res.opex[st].tot[k]+=r.s;if(!res.opex[st].ctrs[c])res.opex[st].ctrs[c]=zero();res.opex[st].ctrs[c][k]+=r.s;const opkey=st+'||'+c;if(!res.opex_ops[opkey])res.opex_ops[opkey]=[];res.opex_ops[opkey].push({d:r.d,s:r.s,acc:r.acc});}
-    else if(r.cat==='fot'){const p=r.fot||'Прочие';if(!res.fot[p])res.fot[p]=zero();res.fot[p][k]+=Math.abs(r.s);}
+    else if(r.cat==='fot'){const p=r.fot||'Прочие';if(!res.fot[p])res.fot[p]=zero();res.fot[p][k]+=Math.abs(r.s);if(!res.fot_ops[p])res.fot_ops[p]=[];res.fot_ops[p].push({d:r.d,s:r.s,acc:r.acc||'—'});}
     else if(r.cat==='inv'){res.inv[k]+=r.s;}
     else if(r.cat==='div'){res.div[k]+=r.s;}
     else if(r.cat==='mv_in'){if(!res.mv_in[r.acc])res.mv_in[r.acc]={tot:zero(),ctrs:{}};res.mv_in[r.acc].tot[k]+=r.s;const c=r.ctr||'б/к';if(!res.mv_in[r.acc].ctrs[c])res.mv_in[r.acc].ctrs[c]=zero();res.mv_in[r.acc].ctrs[c][k]+=r.s;}
@@ -454,8 +454,23 @@ function buildDDS(){
   // Подраздел: ФОТ
   h+=`<tr class="r-exp l1 hid" id="ge" onclick="tgl('ee')"><td style="padding-left:20px"><span class="chev-d" id="ic-ee">▶</span>Заработная плата и ФОТ<span class="tag" style="background:#fef3c7;color:#92400e">ФОТ</span></td>${fotC}</tr>`;
   h+=`<tr class="hid" id="ee" style="background:#f8fafc"><td style="padding-left:52px;font-size:10px;font-weight:700;color:#6b7280">Сотрудник</td>${mc?cols.map(c=>`<td style="font-size:10px;font-weight:700;color:#6b7280;background:#f8fafc">${c.short}</td>`).join('')+`<td style="font-size:10px;font-weight:700;color:#6b7280;background:#f8fafc">Итого</td>`:`<td style="font-size:10px;font-weight:700;color:#6b7280;background:#f8fafc">Итого</td>`}</tr>`;
-  fotE.forEach(([p,pv])=>{h+=`<tr class="l3 hid" id="ee"><td>${p}</td>${mc?ks.map(k=>(pv[k]||0)?`<td class="vn">${fm(pv[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:600">${fm(S(pv))}</td>`:`<td class="vn" style="font-weight:600">${fm(S(pv))}</td>`}</tr>`;});
-  h+=`<tr class="r-sub hid" id="ee"><td style="padding-left:36px">Итого ФОТ</td>${fotC}</tr>`;
+  fotE.forEach(([p,pv],ei)=>{
+    const eid='fe'+ei;
+    const eops=(d.fot_ops&&d.fot_ops[p])||[];
+    const hasD=eops.length>0;
+    const pC=mc?ks.map(k=>(pv[k]||0)?`<td class="vn">${fm(pv[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:600">${fm(S(pv))}</td>`:`<td class="vn" style="font-weight:600">${fm(S(pv))}</td>`;
+    if(hasD){
+      h+=`<tr class="r-exp l3 hid" id="ee" data-par="ge" onclick="tgl('${eid}')"><td><span class="chev-d" id="ic-${eid}">▶</span>${p}</td>${pC}</tr>`;
+      eops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
+        const fdd=x=>{const q=x.split('-');return q[2]+'.'+q[1];};
+        const oC=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`;
+        h+=`<tr class="hid" id="${eid}" data-par="ee" style="background:#fafafa"><td style="padding-left:52px;font-size:11px;color:#6b7280">${fdd(op.d)}&nbsp;<span style="background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${oC}</tr>`;
+      });
+    } else {
+      h+=`<tr class="l3 hid" id="ee" data-par="ge"><td>${p}</td>${pC}</tr>`;
+    }
+  });
+  h+=`<tr class="r-sub hid" id="ee" data-par="ge"><td style="padding-left:36px">Итого ФОТ</td>${fotC}</tr>`;
 
   // Подраздел: Операционные расходы
   const opC=mc?ks.map(k=>{const v=opE.reduce((s,[,ov])=>s+(ov.tot[k]||0),0);return v?`<td class="vn">${fm(Math.abs(v))}</td>`:`<td class="vd">—</td>`;}).join('')+`<td class="vn" style="font-weight:700">${fm(Math.abs(opTot))}</td>`:`<td class="vn" style="font-weight:700">${fm(Math.abs(opTot))}</td>`;
@@ -463,7 +478,7 @@ function buildDDS(){
   opE.forEach(([st,sv],si)=>{
     const sid='st'+si;
     const stC=mc?ks.map(k=>(sv.tot[k]||0)?`<td class="vn">${fm(Math.abs(sv.tot[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:700">${fm(Math.abs(S(sv.tot)))}</td>`:`<td class="vn" style="font-weight:700">${fm(Math.abs(S(sv.tot)))}</td>`;
-    h+=`<tr class="r-exp r-stat l2 hid" id="oo" onclick="tgl('${sid}')"><td style="padding-left:36px"><span class="chev-d" id="ic-${sid}">▶</span>${st}</td>${stC}</tr>`;
+    h+=`<tr class="r-exp r-stat l2 hid" id="oo" data-par="ge" onclick="tgl('${sid}')"><td style="padding-left:36px"><span class="chev-d" id="ic-${sid}">▶</span>${st}</td>${stC}</tr>`;
     Object.entries(sv.ctrs).sort((a,b)=>S(a[1])-S(b[1])).forEach(([ctr,cv],ci)=>{
       const did='d'+si+'_'+ci;
       const opKey=st+'||'+ctr;
@@ -471,14 +486,14 @@ function buildDDS(){
       const hasDays=ops.length>0;
       const ctrC=mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:${hasDays?600:400}">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn" style="font-weight:${hasDays?600:400}">${fm(Math.abs(S(cv)))}</td>`;
       if(hasDays){
-        h+=`<tr class="r-exp l3 hid" id="${sid}" onclick="tgl('${did}')"><td style="padding-left:52px"><span class="chev-d" id="ic-${did}">▶</span>${ctr}</td>${ctrC}</tr>`;
+        h+=`<tr class="r-exp l3 hid" id="${sid}" data-par="oo" onclick="tgl('${did}')"><td style="padding-left:52px"><span class="chev-d" id="ic-${did}">▶</span>${ctr}</td>${ctrC}</tr>`;
         ops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
           const fdd=d=>{const p=d.split('-');return p[2]+'.'+p[1];};
           const opC=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`;
-          h+=`<tr class="hid" id="${did}" style="background:#fafafa"><td style="padding-left:68px;font-size:11px;color:#6b7280">${fdd(op.d)}&nbsp;<span style="background:#fee2e2;color:#b91c1c;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opC}</tr>`;
+          h+=`<tr class="hid" id="${did}" data-par="${sid}" style="background:#fafafa"><td style="padding-left:68px;font-size:11px;color:#6b7280">${fdd(op.d)}&nbsp;<span style="background:#fee2e2;color:#b91c1c;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opC}</tr>`;
         });
       } else {
-        h+=`<tr class="l3 hid" id="${sid}"><td style="padding-left:52px">${ctr}</td>${ctrC}</tr>`;
+        h+=`<tr class="l3 hid" id="${sid}" data-par="oo"><td style="padding-left:52px">${ctr}</td>${ctrC}</tr>`;
       }
     });
   });
@@ -634,11 +649,23 @@ function buildDDS(){
 }
 
 function tgl(id){
-  const rows=[...document.querySelectorAll('#'+id)];
+  const rows=[...document.querySelectorAll('[id="'+id+'"]')];
   const icon=document.getElementById('ic-'+id);
   const any=rows.some(r=>r.style.display!=='none');
   rows.forEach(r=>r.style.display=any?'none':'');
   if(icon)icon.classList.toggle('open',!any);
+  if(any)hideKids(id);
+}
+function hideKids(par){
+  const kids=[...document.querySelectorAll('[data-par="'+par+'"]')];
+  if(!kids.length)return;
+  const ids=new Set();
+  kids.forEach(r=>{r.style.display='none';if(r.id&&r.id!==par)ids.add(r.id);});
+  ids.forEach(cid=>{
+    const ic=document.getElementById('ic-'+cid);
+    if(ic)ic.classList.remove('open');
+    hideKids(cid);
+  });
 }
 
 // ── ГРАФИКИ ───────────────────────────────────────────
