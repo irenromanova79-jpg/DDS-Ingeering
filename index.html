@@ -316,11 +316,11 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
 
   <div id="pf-v-mans" style="display:none">
     <div class="ccard">
-      <div class="ctitle">Справочник менеджеров</div>
+      <div class="ctitle">Справочник менеджеров — заполняется вручную</div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
         <input id="pf-mans-new" placeholder="Фамилия И." onkeydown="if(event.key==='Enter')pfManAdd()" style="padding:5px 9px;border:1px solid #44534C;border-radius:6px;background:#1C2622;color:#F2F2F2;font-family:inherit;font-size:12px;width:220px">
         <button onclick="pfManAdd()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit">+&nbsp;Добавить</button>
-        <button onclick="pfMansRebuild()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">↻&nbsp;Пересобрать из таблицы</button>
+        <button onclick="pfMansClear()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">✕&nbsp;Очистить справочник</button>
         <span style="font-size:11.5px;color:#9fb0a8">имя должно совпадать со столбцом «Менеджер» листа «Свод по счетам»</span>
       </div>
       <div id="pf-cols" style="font-size:11.5px;color:#9fb0a8;margin-bottom:14px;line-height:1.6"></div>
@@ -331,7 +331,7 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
 
   <div id="pf-v-plan" style="display:none">
     <div class="ccard">
-      <div class="ctitle">План по менеджерам — хранится в приложении</div>
+      <div class="ctitle">План по менеджерам — выбираем из справочника, храним в приложении</div>
       <div class="period-sub" id="pf-ed-sel" style="margin-bottom:12px"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
         <button onclick="pfEdSave()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit">✓&nbsp;Сохранить</button>
@@ -339,11 +339,8 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
         <button onclick="pfEdFromSheet()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">↓&nbsp;Подтянуть из листа «План»</button>
         <button onclick="pfEdClear()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">✕&nbsp;Удалить план месяца</button>
         <button onclick="pfEdWipe()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">🗑&nbsp;Удалить план целиком</button>
-        <button onclick="pfMansRebuild()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">↻&nbsp;Пересобрать справочник</button>
-        <span style="flex:1"></span>
-        <input id="pf-ed-newman" placeholder="Добавить менеджера" onkeydown="if(event.key==='Enter')pfEdAddMan()" style="padding:5px 9px;border:1px solid #44534C;border-radius:6px;background:#1C2622;color:#F2F2F2;font-family:inherit;font-size:12px;width:190px">
-        <button onclick="pfEdAddMan()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">+</button>
       </div>
+      <div class="period-sub" id="pf-ed-add" style="margin-bottom:14px;padding:10px 12px;border:1px solid #33403A;border-radius:8px;background:rgba(255,255,255,.02)"></div>
       <table class="dds" id="pf-ed-tbl"></table>
       <div id="pf-ed-hint" style="font-size:11.5px;color:#9fb0a8;margin-top:12px;line-height:1.6"></div>
       <div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap">
@@ -1130,7 +1127,7 @@ function exportExcel(){
 // Менеджеры — справочник в приложении, пополняется вручную
 // ══════════════════════════════════════════════════════
 const PF_SID='1-mIST6Tzn_s7nKEIHoQV2GPLpk7cTus9RAgZxVi-GZQ';
-const PF_K_PLAN='irixplan:plan', PF_K_MANS='irixplan:mans';
+const PF_K_PLAN='irixplan:plan', PF_K_MANS='irixplan:mans2';
 const PF_COL=['#00E38A','#22d3ee','#fbbf24','#b79aff','#ff6b6b','#7dd3fc','#a3e635','#f472b6','#facc15','#34d399'];
 const PF_NOMAN='— без менеджера —';
 
@@ -1271,14 +1268,14 @@ async function pfLoad(withPlan){
     }
     PF.sheetPlans=sp;
 
-    /* первое наполнение справочника и плана */
-    if(!PF.mans.length)pfSeedMans();
-    if(withPlan||!Object.keys(PF.plan).length){
-      sp.forEach(p=>{const k=p.y+'-'+p.m;if(!PF.plan[k])PF.plan[k]={};if(PF.plan[k][p.man]==null&&p.sum>0)PF.plan[k][p.man]=p.sum;});
-      pfSavePlanLS();
-    }
-
     PF.loaded=true;
+    /* открываемся на последнем месяце, где есть поступления */
+    if(!PF._perSet&&out.length){
+      const last=out.map(r=>r.d).sort().pop();
+      PF.y=+last.slice(0,4);PF.m=+last.slice(5,7);PF.day=last;
+      PF.from=last.slice(0,8)+'01';PF.to=last;
+      PF._perSet=true;
+    }
     if(!PF._edSet){
       const keys=[].concat(sp.map(p=>p.y*100+p.m),pfPlanMonths().map(k=>{const a=k.split('-');return +a[0]*100+ +a[1];}));
       if(keys.length){const last=Math.max.apply(null,keys);PF.edY=Math.floor(last/100);PF.edM=last%100;}
@@ -1373,6 +1370,11 @@ function pfBar(){
   else if(PF.mode==='month')el.innerHTML=yS+'&ensp;'+mS;
   else if(PF.mode==='year')el.innerHTML=yS;
   else el.innerHTML='<label>С</label><input type="date" value="'+PF.from+'" onchange="PF.from=this.value;pfRender()"> <span class="period-sep">—</span> <label>По</label><input type="date" value="'+PF.to+'" onchange="PF.to=this.value;pfRender()">';
+}
+function pfGoView(v){
+  const idx={exec:0,days:1,mans:2,plan:3}[v];
+  const btns=document.querySelectorAll('#pf-views .ppill');
+  if(btns[idx])pfSetView(v,btns[idx]);
 }
 function pfSetMode(m,btn){
   PF.mode=m;
@@ -1580,10 +1582,11 @@ function pfSeedMans(){
   pfSaveMansLS();
   return PF.mans.length;
 }
-function pfMansRebuild(){
-  if(!PF.loaded){pfToast('Сначала нажмите «Обновить факт».','warn');return;}
-  const n=pfSeedMans();PF.editBuf=null;
-  pfToast('Справочник пересобран из таблицы: '+n+' имён.','ok');
+function pfMansClear(){
+  if(!PF.mans.length){pfToast('Справочник и так пуст.','warn');return;}
+  if(!confirm('Очистить справочник менеджеров ('+PF.mans.length+')? План по месяцам при этом останется.'))return;
+  PF.mans=[];pfSaveMansLS();PF.editBuf=null;
+  pfToast('Справочник очищен. Добавьте менеджеров заново.','warn');
   if(PF.view==='plan')pfPlanView(); else pfMansView();
 }
 
@@ -1599,7 +1602,7 @@ function pfMansView(){
       +'<td>'+(cnt[m]||0)+'</td><td class="c-gn">'+pfF(sum[m]||0)+'</td><td>'+pm+'</td>'
       +'<td><button onclick="pfManDel('+i+')" style="padding:2px 9px;font-size:11px;border:1px solid #44534C;border-radius:5px;background:transparent;color:#ff6b6b;cursor:pointer;font-family:inherit">удалить</button></td></tr>';
   });
-  if(!PF.mans.length)h+='<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--ix-mut)">Справочник пуст. Добавьте менеджера ниже или нажмите «Обновить факт» — имена подтянутся из таблицы.</td></tr>';
+  if(!PF.mans.length)h+='<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--ix-mut)">Справочник пуст. Впишите фамилию в поле выше и нажмите «Добавить» — или возьмите готовые имена из таблицы кнопками ниже.</td></tr>';
   h+='</tbody>';
   document.getElementById('pf-mans-tbl').innerHTML=h;
 
@@ -1612,7 +1615,7 @@ function pfMansView(){
   const box=document.getElementById('pf-unknown');
   if(unknown.length){
     box.style.display='';
-    box.innerHTML='<div class="ctitle" style="margin-top:4px">В поступлениях есть, в справочнике нет</div>'
+    box.innerHTML='<div class="ctitle" style="margin-top:4px">Имена из столбца «Менеджер» таблицы — нажмите, чтобы добавить в справочник</div>'
       +unknown.map(m=>'<button onclick="pfManAdd(\''+pfQ(m)+'\')" style="margin:0 6px 6px 0;padding:4px 11px;font-size:12px;border:1px solid rgba(0,227,138,.45);border-radius:20px;background:rgba(0,227,138,.1);color:#00E38A;cursor:pointer;font-family:inherit">+ '+pfE(m)+' <span style="color:#9fb0a8">('+cnt[m]+')</span></button>').join('')
       +'<div style="font-size:11.5px;color:#9fb0a8;margin-top:6px">Имена сверяются символ в символ: «Сурин А.» и «Сурин А» — разные люди.</div>';
   }else box.style.display='none';
@@ -1652,11 +1655,25 @@ function pfPlanView(){
     +'<select onchange="PF.edY=+this.value;PF.editBuf=null;pfPlanView()">'+ys.map(y=>'<option value="'+y+'"'+(y===PF.edY?' selected':'')+'>'+y+'</option>').join('')+'</select>';
 
   const key=PF.edY+'-'+PF.edM,saved=PF.plan[key]||{};
-  if(!PF.editBuf){
-    PF.editBuf={};
-    (PF.mans.length?PF.mans:pfMansAll().filter(m=>m!==PF_NOMAN)).forEach(m=>{PF.editBuf[m]=saved[m]||0;});
-    Object.keys(saved).forEach(m=>{if(PF.editBuf[m]==null)PF.editBuf[m]=saved[m];});
+  /* в таблице только то, что уже сохранено на этот месяц, плюс добавленное в этом сеансе */
+  if(!PF.editBuf){PF.editBuf={};Object.keys(saved).forEach(m=>PF.editBuf[m]=saved[m]);}
+
+  /* строка добавления: менеджер выбирается из справочника */
+  const free=PF.mans.filter(m=>PF.editBuf[m]==null);
+  const add=document.getElementById('pf-ed-add');
+  if(!PF.mans.length){
+    add.innerHTML='<div style="color:#fbbf24;font-size:12.5px">Справочник менеджеров пуст. '
+      +'<button onclick="pfGoView(\'mans\')" style="padding:3px 10px;font-size:12px;border:1px solid rgba(0,227,138,.45);border-radius:6px;background:rgba(0,227,138,.1);color:#00E38A;cursor:pointer;font-family:inherit">Перейти в справочник</button> и добавьте туда менеджеров.</div>';
+  }else{
+    add.innerHTML='<label>Менеджер</label>'
+      +'<select id="pf-add-man" style="min-width:200px">'
+      +(free.length?free.map(m=>'<option value="'+pfE(m)+'">'+pfE(m)+'</option>').join('')
+                   :'<option value="">— все уже в плане —</option>')+'</select>'
+      +'<label>План на месяц, ₽</label>'
+      +'<input type="number" id="pf-add-sum" step="1000" value="" placeholder="0" style="width:150px;text-align:right;padding:5px 9px;border:1px solid #44534C;border-radius:6px;background:#1C2622;color:#F2F2F2;font-family:\'Courier New\',monospace;font-size:12px" onkeydown="if(event.key===\'Enter\')pfEdAdd()">'
+      +'<button onclick="pfEdAdd()" '+(free.length?'':'disabled ')+'style="padding:5px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit">+&nbsp;Добавить в план</button>';
   }
+
   const nd=pfDim(PF.edY,PF.edM),wd=pfWd(new Date(PF.edY,PF.edM-1,1),new Date(PF.edY,PF.edM-1,nd));
   const perDay=PF.prorate==='work'?wd:nd;
   const mans=Object.keys(PF.editBuf).sort((a,b)=>{
@@ -1672,15 +1689,28 @@ function pfPlanView(){
     const st=saved[m]==null?'<span style="color:#22d3ee">не сохранён</span>'
       :Math.round(saved[m])===Math.round(v)?'<span style="color:#00E38A">да</span>'
       :'<span style="color:#fbbf24">есть правки</span>';
-    h+='<tr><td>'+pfE(m)+'</td>'
+    const known=PF.mans.indexOf(m)>=0;
+    h+='<tr><td>'+pfE(m)+(known?'':' <span style="color:#fbbf24" title="нет в справочнике">•</span>')+'</td>'
       +'<td><input type="number" step="1000" value="'+v+'" data-man="'+pfE(m)+'" oninput="pfEdIn(this)" style="width:100%;text-align:right;padding:4px 8px;border:1px solid #44534C;border-radius:6px;background:#1C2622;color:#F2F2F2;font-family:\'Courier New\',monospace;font-size:12px"></td>'
       +'<td style="color:#9fb0a8">'+pfF(v/perDay)+'</td><td>'+st+'</td>'
       +'<td style="color:#9fb0a8">'+(sh?pfF(sh.sum):'—')+'</td>'
-      +'<td><button onclick="pfEdDelMan(\''+pfQ(m)+'\')" title="убрать менеджера" style="padding:1px 8px;font-size:13px;border:1px solid #44534C;border-radius:5px;background:transparent;color:#ff6b6b;cursor:pointer;font-family:inherit">×</button></td></tr>';
+      +'<td><button onclick="pfEdDelMan(\''+pfQ(m)+'\')" title="убрать из плана" style="padding:1px 8px;font-size:13px;border:1px solid #44534C;border-radius:5px;background:transparent;color:#ff6b6b;cursor:pointer;font-family:inherit">×</button></td></tr>';
   });
+  if(!mans.length)h+='<tr><td colspan="6" style="padding:22px;text-align:center;color:var(--ix-mut)">На '+MN_F[PF.edM]+' '+PF.edY+' плана пока нет. Выберите менеджера выше, впишите сумму и нажмите «Добавить в план».</td></tr>';
   h+='</tbody><tfoot><tr style="font-weight:700"><td>Итого за месяц</td><td id="pf-ed-tot">'+pfF(tot)+'</td><td>'+pfF(tot/perDay)+'</td><td></td><td></td><td></td></tr></tfoot>';
   document.getElementById('pf-ed-tbl').innerHTML=h;
-  document.getElementById('pf-ed-hint').innerHTML='В месяце '+nd+' календарных и '+wd+' рабочих дней. Дневной план получается делением на '+(PF.prorate==='work'?'рабочие':'календарные')+' дни — способ переключается в шапке вкладки. План хранится в этом браузере: сделайте «Выгрузить в файл», если работаете с нескольких компьютеров.';
+  document.getElementById('pf-ed-hint').innerHTML='В месяце '+nd+' календарных и '+wd+' рабочих дней; дневной план — это месячный, делённый на '+(PF.prorate==='work'?'рабочие':'календарные')+' дни. План живёт в этом браузере: «Выгрузить в файл» — если работаете с нескольких компьютеров.';
+}
+/* добавить строку плана по выбору из справочника */
+function pfEdAdd(){
+  const sm=document.getElementById('pf-add-man'),si=document.getElementById('pf-add-sum');
+  if(!sm||!sm.value){pfToast('Выберите менеджера из справочника.','warn');return;}
+  const man=sm.value,sum=+si.value||0;
+  if(!PF.editBuf)PF.editBuf={};
+  PF.editBuf[man]=sum;
+  si.value='';
+  pfToast('«'+pfE(man)+'» добавлен в план на '+MN_F[PF.edM]+' '+PF.edY+(sum?' — '+pfF(sum)+' ₽':'')+'. Нажмите «Сохранить».','ok');
+  pfPlanView();
 }
 function pfEdIn(el){
   PF.editBuf[el.getAttribute('data-man')]=+el.value||0;
@@ -1726,9 +1756,8 @@ function pfEdDelMan(m){
   const key=PF.edY+'-'+PF.edM;
   if(PF.editBuf)delete PF.editBuf[m];
   if(PF.plan[key]){delete PF.plan[key][m];if(!Object.keys(PF.plan[key]).length)delete PF.plan[key];}
-  const i=PF.mans.indexOf(m);if(i>=0)PF.mans.splice(i,1);
-  pfSavePlanLS();pfSaveMansLS();
-  pfToast('«'+pfE(m)+'» убран из справочника и из плана этого месяца.','warn');
+  pfSavePlanLS();
+  pfToast('«'+pfE(m)+'» убран из плана на '+MN_F[PF.edM]+' '+PF.edY+'. В справочнике он остался.','warn');
   pfPlanView();
 }
 /* стереть весь план по всем месяцам */
@@ -1739,14 +1768,6 @@ function pfEdWipe(){
   PF.plan={};pfSavePlanLS();PF.editBuf=null;
   pfToast('План удалён полностью: очищено месяцев — '+n+'.','warn');
   pfPlanView();
-}
-function pfEdAddMan(){
-  const el=document.getElementById('pf-ed-newman'),v=el.value.trim();
-  if(!v)return;
-  if(PF.mans.indexOf(v)<0){PF.mans.push(v);pfSaveMansLS();}
-  if(!PF.editBuf)PF.editBuf={};
-  if(PF.editBuf[v]==null)PF.editBuf[v]=0;
-  el.value='';pfToast('«'+pfE(v)+'» добавлен. Впишите сумму и нажмите «Сохранить».','ok');pfPlanView();
 }
 function pfPlanExport(){
   const data={plan:PF.plan,mans:PF.mans,at:new Date().toISOString()};
