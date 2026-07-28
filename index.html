@@ -1174,6 +1174,7 @@ function exportExcel(){
 // Менеджеры — справочник в приложении, пополняется вручную
 // ══════════════════════════════════════════════════════
 const PF_SID='1-mIST6Tzn_s7nKEIHoQV2GPLpk7cTus9RAgZxVi-GZQ';
+const PF_PLAN_GID='397917950'; /* gid листа «План Менеджеры» — надёжнее, чем искать по названию */
 const PF_K_PLAN='irixplan:plan', PF_K_MANS='irixplan:mans2', PF_K_BRIDGE='irixplan:bridge';
 const PF_COL=['#00E38A','#22d3ee','#fbbf24','#b79aff','#ff6b6b','#7dd3fc','#a3e635','#f472b6','#facc15','#34d399'];
 const PF_NOMAN='— без менеджера —';
@@ -1277,12 +1278,13 @@ function pfParsePlan(txt){
   }
   return sp;
 }
-/* перечитать только лист «План» */
+/* перечитать только лист «План» — по gid, это надёжнее названия (не зависит от пробелов/переименований) */
 async function pfReloadPlan(){
-  try{
-    const r=await fetch('https://docs.google.com/spreadsheets/d/'+PF_SID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent('План Менеджеры')+'&cb='+Date.now(),{cache:'no-store'});
-    if(r.ok)PF.sheetPlans=pfParsePlan(await r.text());
-  }catch(e){}
+  const r=await fetch('https://docs.google.com/spreadsheets/d/'+PF_SID+'/gviz/tq?tqx=out:csv&gid='+PF_PLAN_GID+'&cb='+Date.now(),{cache:'no-store'});
+  if(!r.ok)throw new Error('HTTP '+r.status+' при чтении листа «План Менеджеры».');
+  const txt=await r.text();
+  if(/^\s*</.test(txt))throw new Error('Google вернул не таблицу, а страницу входа/ошибки — доступ к таблице закрыт. Проверьте: Файл → Настройки доступа → «Все, у кого есть ссылка — Читатель».');
+  PF.sheetPlans=pfParsePlan(txt);
 }
 /* запрос к мосту Apps Script — через JSONP, чтобы не упираться в запреты браузера */
 function pfBridge(params,ok,err){
@@ -1311,7 +1313,7 @@ async function pfLoad(withPlan){
     if(!rf.ok)throw new Error('HTTP '+rf.status+' на листе «Свод по счетам». Таблица должна быть открыта «Все, у кого есть ссылка — Читатель».');
     const factTxt=await rf.text();
     let planTxt='';
-    try{const rp=await fetch(u('План Менеджеры'),{cache:'no-store'});if(rp.ok)planTxt=await rp.text();}catch(e){}
+    try{const rp=await fetch('https://docs.google.com/spreadsheets/d/'+PF_SID+'/gviz/tq?tqx=out:csv&gid='+PF_PLAN_GID+'&cb='+Date.now(),{cache:'no-store'});if(rp.ok)planTxt=await rp.text();}catch(e){}
 
     /* факт — столбцы ищем по заголовкам, буквы только как запасной вариант */
     const rows=pfCsv(factTxt),out=[];let noMan=0,noManSum=0;
@@ -1982,7 +1984,7 @@ function pfEdSave(){
   pfBridge({action:'save',payload:JSON.stringify({year:PF.edY,month:PF.edM,items:items})},
     async res=>{
       const r=res.res||{};
-      await pfReloadPlan();
+      try{await pfReloadPlan();}catch(e){}
       PF.editBuf=null;
       pfToast('✓ Записано в лист «План»: обновлено '+(r.updated||0)+', добавлено '+(r.added||0)
         +(r.cleared?', убрано '+r.cleared:'')+'. Теперь план виден с любого компьютера.','ok');
