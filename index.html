@@ -120,6 +120,36 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
 .lsq{width:10px;height:10px;border-radius:2px;flex-shrink:0}
 
 /* ── ПЕЧАТЬ: светлая версия для экономии чернил ── */
+
+/* ── План/факт: закреплённая шапка таблиц ── */
+#pf-v-days .tbl-wrap,#pf-v-exec .tbl-wrap{max-height:calc(100vh - 250px)}
+#pf-v-days table.dds thead th,#pf-v-exec table.dds thead th{position:sticky;top:0;z-index:6;background:#1C2622;box-shadow:inset 0 -1px 0 #44534C}
+#pf-v-days table.dds tbody td:nth-child(1),#pf-v-days table.dds tfoot td:nth-child(1){position:sticky;left:0;z-index:4;background:#26312C}
+#pf-v-days table.dds tbody td:nth-child(2),#pf-v-days table.dds tfoot td:nth-child(2){position:sticky;left:26px;z-index:4;background:#26312C}
+#pf-v-days table.dds thead th:nth-child(1){left:0;z-index:7}
+#pf-v-days table.dds thead th:nth-child(2){left:26px;z-index:7}
+#pf-v-days table.dds tfoot td{position:sticky;bottom:0;background:#232e29;z-index:5}
+#pf-print-head{display:none}
+/* строки детализации дня */
+#pf-v-days tr.pf-det td{background:#20292500;font-size:11px;padding-top:3px;padding-bottom:3px;border-bottom:1px dotted #2c3a34}
+#pf-v-days tr.pf-det:hover td{background:rgba(255,255,255,.03)}
+#pf-v-days tr.pf-det td.pf-det-name{text-align:left;font-family:inherit;color:#9fb0a8;max-width:420px;white-space:normal;line-height:1.35;background:#26312C}
+#pf-v-days tr.pf-det td:nth-child(1),#pf-v-days tr.pf-det td:nth-child(2){background:#26312C}
+@media print{
+  body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #pf-v-days .tbl-wrap,#pf-v-exec .tbl-wrap{max-height:none!important;overflow:visible!important;border:none!important}
+  #plan table.dds thead th,#plan table.dds tbody td,#plan table.dds tfoot td{position:static!important;box-shadow:none!important}
+  #plan table.dds tbody td,#plan table.dds tfoot td{background:#fff!important}
+  #plan table.dds thead th{background:#f4f4f4!important}
+  #plan table.dds thead{display:table-header-group}
+  #plan table.dds tr,#plan .ccard{break-inside:avoid}
+  #pf-views,#pf-pills,#pf-sub,#pf-opts,#pf-cum,#pf-ed-add,#pf-toast,#pf-msg,#pf-ed-hint,#pf-cols,#pf-unknown,#pf-bridge,#plan .pf-hint{display:none!important}
+  #plan table.dds thead th:first-child,#plan table.dds tbody td:first-child,#plan table.dds tfoot td:first-child{display:none}
+  #pf-print-head{display:block!important;margin-bottom:12px}
+  #pf-print-head h2{font-size:15px;margin:0 0 4px;color:#111}
+  #pf-print-head div{font-size:10.5px;color:#555;line-height:1.5}
+}
+
 @media print {
   body{background:#fff!important;color:#111!important;font-size:11px}
   .hdr{position:relative!important;box-shadow:none!important;background:#19231F!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -291,11 +321,20 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
     <div class="period-info" id="pf-info" style="margin-left:auto">факт не загружен</div>
   </div>
   <div id="pf-msg" style="display:none"></div>
+  <div id="pf-print-head"></div>
 
   <div id="pf-v-exec">
     <div class="kpis" id="pf-kpis" style="grid-template-columns:repeat(5,1fr)"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span class="pf-hint" style="font-size:11px;color:#9fb0a8">строка менеджера раскрывается по контрагентам — щёлкните по треугольнику</span>
+      <span style="margin-left:auto;display:flex;gap:8px">
+        <button onclick="pfPrint(0)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">🖨&nbsp;Печать</button>
+        <button onclick="pfPrint(1)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">📄&nbsp;PDF</button>
+        <button onclick="pfXlsx()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit">📊&nbsp;Excel</button>
+        <button onclick="pfCsvOut()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">↓&nbsp;CSV</button>
+      </span>
+    </div>
     <div class="tbl-wrap"><table class="dds" id="pf-tbl"></table></div>
-    <div style="font-size:11.5px;color:#9fb0a8;margin-top:10px">Строка менеджера раскрывается по контрагентам за выбранный период — щёлкните по треугольнику.</div>
   </div>
 
   <div id="pf-v-days" style="display:none">
@@ -308,8 +347,13 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
         <button class="ppill active" onclick="pfCum(0,this)">За день</button>
         <button class="ppill" onclick="pfCum(1,this)">Нарастающим итогом</button>
       </div>
-      <span style="font-size:11px;color:#9fb0a8">строки — дни месяца, столбцы — менеджеры; день раскрывается по контрагентам</span>
-      <button onclick="pfCsvOut()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit;margin-left:auto">↓&nbsp;CSV</button>
+      <span class="pf-hint" style="font-size:11px;color:#9fb0a8">строки — дни месяца, столбцы — менеджеры; день раскрывается по контрагентам</span>
+      <span style="margin-left:auto;display:flex;gap:8px">
+        <button onclick="pfPrint(0)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">🖨&nbsp;Печать</button>
+        <button onclick="pfPrint(1)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">📄&nbsp;PDF</button>
+        <button onclick="pfXlsx()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit">📊&nbsp;Excel</button>
+        <button onclick="pfCsvOut()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">↓&nbsp;CSV</button>
+      </span>
     </div>
     <div class="tbl-wrap"><table class="dds" id="pf-dyn"></table></div>
   </div>
@@ -331,7 +375,8 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
 
   <div id="pf-v-plan" style="display:none">
     <div class="ccard">
-      <div class="ctitle">План по менеджерам — выбираем из справочника, храним в приложении</div>
+      <div class="ctitle">План по менеджерам</div>
+      <div id="pf-bridge" class="period-sub" style="margin-bottom:12px;padding:9px 12px;border:1px solid #33403A;border-radius:8px;background:rgba(255,255,255,.02)"></div>
       <div class="period-sub" id="pf-ed-sel" style="margin-bottom:12px"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
         <button onclick="pfEdSave()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit">✓&nbsp;Сохранить</button>
@@ -1127,7 +1172,7 @@ function exportExcel(){
 // Менеджеры — справочник в приложении, пополняется вручную
 // ══════════════════════════════════════════════════════
 const PF_SID='1-mIST6Tzn_s7nKEIHoQV2GPLpk7cTus9RAgZxVi-GZQ';
-const PF_K_PLAN='irixplan:plan', PF_K_MANS='irixplan:mans2';
+const PF_K_PLAN='irixplan:plan', PF_K_MANS='irixplan:mans2', PF_K_BRIDGE='irixplan:bridge';
 const PF_COL=['#00E38A','#22d3ee','#fbbf24','#b79aff','#ff6b6b','#7dd3fc','#a3e635','#f472b6','#facc15','#34d399'];
 const PF_NOMAN='— без менеджера —';
 
@@ -1142,6 +1187,8 @@ const PF={rows:[],sheetPlans:[],loaded:false,busy:false,view:'exec',mode:'month'
 
 try{PF.plan=JSON.parse(localStorage.getItem(PF_K_PLAN)||localStorage.getItem('irixplan:ov')||'{}');}catch(e){PF.plan={};}
 try{PF.mans=JSON.parse(localStorage.getItem(PF_K_MANS)||'[]');}catch(e){PF.mans=[];}
+try{PF.bridge=JSON.parse(localStorage.getItem(PF_K_BRIDGE)||'{}');}catch(e){PF.bridge={};}
+function pfShared(){return !!(PF.bridge&&PF.bridge.url);}
 function pfSavePlanLS(){try{localStorage.setItem(PF_K_PLAN,JSON.stringify(PF.plan));}catch(e){}}
 function pfSaveMansLS(){try{localStorage.setItem(PF_K_MANS,JSON.stringify(PF.mans));}catch(e){}}
 
@@ -1202,6 +1249,55 @@ function pfToast(text,kind){
   el.style.display='block';
 }
 
+
+/* разбор листа «План» из CSV */
+function pfParsePlan(txt){
+  const sp=[];
+  if(!txt||/^\s*</.test(txt))return sp;
+  const pr=pfCsv(txt);
+  let phr=0;
+  for(let i=0;i<Math.min(4,pr.length);i++){
+    const c=(pr[i]||[]).map(pfNorm);
+    if(c.some(x=>x.indexOf('менеджер')>=0)){phr=i;break;}
+  }
+  const PH=pr[phr]||[];
+  const pD=pfFindCol(PH,['дата'],0),pM=pfFindCol(PH,['месяц'],1),pY=pfFindCol(PH,['год'],2),
+        pMan=pfFindCol(PH,['менеджер'],3),pS=pfFindCol(PH,['сумма-план','сумма план','сумма','план'],4);
+  for(let i=phr+1;i<pr.length;i++){
+    const c=pr[i];if(!c||c.length<3)continue;
+    const man=(c[pMan]||'').trim();if(!man)continue;
+    let y=0,mo=0;const ds=pfDate(c[pD]);
+    if(ds&&+ds.slice(0,4)>1900){y=+ds.slice(0,4);mo=+ds.slice(5,7);}
+    else{y=Math.round(pfNum(c[pY]));mo=Math.round(pfNum(c[pM]));}
+    if(y<1900||mo<1||mo>12)continue;
+    const sum=pfNum(c[pS]);if(sum<=0)continue;
+    sp.push({y:y,m:mo,man:man,sum:sum});
+  }
+  return sp;
+}
+/* перечитать только лист «План» */
+async function pfReloadPlan(){
+  try{
+    const r=await fetch('https://docs.google.com/spreadsheets/d/'+PF_SID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent('План Менеджеры')+'&cb='+Date.now(),{cache:'no-store'});
+    if(r.ok)PF.sheetPlans=pfParsePlan(await r.text());
+  }catch(e){}
+}
+/* запрос к мосту Apps Script — через JSONP, чтобы не упираться в запреты браузера */
+function pfBridge(params,ok,err){
+  if(!pfShared()){err&&err('Адрес сервиса записи не задан');return;}
+  const cb='pfcb'+Date.now()+Math.floor(Math.random()*1000);
+  const q=Object.keys(params).map(k=>k+'='+encodeURIComponent(params[k])).join('&');
+  const url=PF.bridge.url+(PF.bridge.url.indexOf('?')>=0?'&':'?')+q
+    +(PF.bridge.key?'&key='+encodeURIComponent(PF.bridge.key):'')+'&callback='+cb;
+  const sc=document.createElement('script');
+  let done=false;
+  const fin=()=>{if(sc.parentNode)sc.parentNode.removeChild(sc);try{delete window[cb];}catch(e){window[cb]=undefined;}};
+  window[cb]=res=>{done=true;fin();if(res&&res.ok)ok&&ok(res);else err&&err((res&&res.error)||'сервис вернул ошибку');};
+  sc.onerror=()=>{if(!done){fin();err&&err('сервис недоступен — проверьте адрес и что развёртывание открыто «для всех»');}};
+  setTimeout(()=>{if(!done){fin();err&&err('сервис не ответил за 20 секунд');}},20000);
+  sc.src=url;document.body.appendChild(sc);
+}
+
 /* ── загрузка факта (и плана-источника) из Sheets ── */
 async function pfLoad(withPlan){
   if(PF.busy)return; PF.busy=true;
@@ -1213,7 +1309,7 @@ async function pfLoad(withPlan){
     if(!rf.ok)throw new Error('HTTP '+rf.status+' на листе «Свод по счетам». Таблица должна быть открыта «Все, у кого есть ссылка — Читатель».');
     const factTxt=await rf.text();
     let planTxt='';
-    try{const rp=await fetch(u('План'),{cache:'no-store'});if(rp.ok)planTxt=await rp.text();}catch(e){}
+    try{const rp=await fetch(u('План Менеджеры'),{cache:'no-store'});if(rp.ok)planTxt=await rp.text();}catch(e){}
 
     /* факт — столбцы ищем по заголовкам, буквы только как запасной вариант */
     const rows=pfCsv(factTxt),out=[];let noMan=0,noManSum=0;
@@ -1226,46 +1322,29 @@ async function pfLoad(withPlan){
     const H=rows[hr]||[];
     const iD=pfFindCol(H,['дата'],0), iS=pfFindCol(H,['сумма руб','сумма'],4),
           iO=pfFindCol(H,['операция'],5), iA=pfFindCol(H,['статьи','статья'],9),
-          iK=pfFindCol(H,['контрагент'],10), iM=pfFindCol(H,['менеджер'],-1);
-    PF.cols={d:iD,s:iS,o:iO,a:iA,k:iK,m:iM};
+          iK=pfFindCol(H,['контрагент'],10), iM=pfFindCol(H,['менеджер'],-1),
+          iC=pfFindCol(H,['компания','счет','счёт','юр лицо','юрлицо','организация','аккаунт'],-1);
+    PF.cols={d:iD,s:iS,o:iO,a:iA,k:iK,m:iM,c:iC};
     PF.head=H.map((x,i)=>({l:pfL(i),t:String(x||'').trim()})).filter(x=>x.t);
     let manWarn='';
     if(iM<0)manWarn='В листе «Свод по счетам» не нашёлся столбец с заголовком «Менеджер» — все поступления сложены в строку «'+PF_NOMAN+'». Вот какие заголовки прочитались: '
       +PF.head.map(x=>x.l+' — '+pfE(x.t)).join(' · ')+'.';
+    if(iC<0)manWarn+=(manWarn?' ':'')+'Столбец с компанией/счётом («Компания», «Счет» и т.п.) не найден — детализация по дням будет группироваться по контрагенту вместо компании.';
     for(let i=hr+1;i<rows.length;i++){
       const c=rows[i];if(!c||c.length<3)continue;
       const ds=pfDate(c[iD]);if(!ds)continue;
       const s=pfNum(c[iS]);if(s<=0)continue;
       const man=iM<0?'':(c[iM]||'').trim();
       if(!man){noMan++;noManSum+=s;}
-      out.push({d:ds,s:s,op:(c[iO]||'').trim(),st:(c[iA]||'').trim(),ctr:(c[iK]||'').trim()||'без контрагента',man:man||PF_NOMAN});
+      const ctrV=(c[iK]||'').trim()||'без контрагента';
+      const coV=iC<0?ctrV:((c[iC]||'').trim()||'без компании');
+      out.push({d:ds,s:s,op:(c[iO]||'').trim(),st:(c[iA]||'').trim(),ctr:ctrV,man:man||PF_NOMAN,co:coV});
     }
     if(!out.length)throw new Error('Из листа «Свод по счетам» не распознана ни одна строка.');
     PF.rows=out;
 
-    /* план из листа — источник для импорта */
-    const sp=[];
-    if(planTxt&&!/^\s*</.test(planTxt)){
-      const pr=pfCsv(planTxt);
-      let phr=0;
-      for(let i=0;i<Math.min(4,pr.length);i++){
-        const c=(pr[i]||[]).map(pfNorm);
-        if(c.some(x=>x.indexOf('менеджер')>=0)){phr=i;break;}
-      }
-      const PH=pr[phr]||[];
-      const pD=pfFindCol(PH,['дата'],0),pM=pfFindCol(PH,['месяц'],1),pY=pfFindCol(PH,['год'],2),
-            pMan=pfFindCol(PH,['менеджер'],3),pS=pfFindCol(PH,['сумма-план','сумма план','сумма','план'],4);
-      for(let i=phr+1;i<pr.length;i++){
-        const c=pr[i];if(!c||c.length<3)continue;
-        const man=(c[pMan]||'').trim();if(!man)continue;
-        let y=0,mo=0;const ds=pfDate(c[pD]);
-        if(ds&&+ds.slice(0,4)>1900){y=+ds.slice(0,4);mo=+ds.slice(5,7);}
-        else{y=Math.round(pfNum(c[pY]));mo=Math.round(pfNum(c[pM]));}
-        if(y<1900||mo<1||mo>12)continue;
-        const sum=pfNum(c[pS]);if(sum<=0)continue;
-        sp.push({y:y,m:mo,man:man,sum:sum});
-      }
-    }
+    /* план из листа таблицы */
+    const sp=pfParsePlan(planTxt);
     PF.sheetPlans=sp;
 
     PF.loaded=true;
@@ -1302,9 +1381,27 @@ function pfMsg(html,kind){
 }
 
 /* ── план и менеджеры ── */
+function pfSheetPlanOf(y,m,man){
+  for(let i=0;i<PF.sheetPlans.length;i++){
+    const p=PF.sheetPlans[i];
+    if(p.y===y&&p.m===m&&p.man===man)return p.sum;
+  }
+  return null;
+}
+/* если настроена запись в таблицу — главная там; иначе главный местный план,
+   а лист используется там, где местного нет */
 function pfPlanOf(y,m,man){
   const k=y+'-'+m;
-  return (PF.plan[k]&&PF.plan[k][man]!=null)?PF.plan[k][man]:0;
+  const loc=(PF.plan[k]&&PF.plan[k][man]!=null)?PF.plan[k][man]:null;
+  const sh=pfSheetPlanOf(y,m,man);
+  if(pfShared())return sh!=null?sh:(loc!=null?loc:0);
+  return loc!=null?loc:(sh!=null?sh:0);
+}
+function pfPlanMonthsAll(){
+  const s={};
+  Object.keys(PF.plan).forEach(k=>s[k]=1);
+  PF.sheetPlans.forEach(p=>s[p.y+'-'+p.m]=1);
+  return Object.keys(s);
 }
 function pfPlanMonths(){return Object.keys(PF.plan);}
 function pfFacts(){
@@ -1316,6 +1413,7 @@ function pfMansAll(){
   const s={};PF.mans.forEach(m=>s[m]=1);
   pfFacts().forEach(r=>s[r.man]=1);
   pfPlanMonths().forEach(k=>Object.keys(PF.plan[k]).forEach(m=>s[m]=1));
+  PF.sheetPlans.forEach(p=>s[p.man]=1);
   const arr=Object.keys(s);
   arr.sort((a,b)=>{
     const ia=PF.mans.indexOf(a),ib=PF.mans.indexOf(b);
@@ -1508,7 +1606,7 @@ function pfDays(){
     h+='<td style="font-weight:700">'+(tv?pfF(tv):'<span style="color:#3f4b45">·</span>')+'</td>'
       +'<td style="color:#9fb0a8">'+(pv?pfF(pv):'—')+'</td>'
       +'<td style="font-weight:700;color:'+(pc==null?'#5d6b64':pc>=100?'#00E38A':pc>=80?'#fbbf24':'#ff6b6b')+'">'+(pc==null?'—':pc.toFixed(0)+' %')+'</td></tr>';
-    if(op)h+='<tr><td></td><td colspan="'+(D.mans.length+3)+'" style="padding:0 12px 12px">'+pfDayDetail(dt)+'</td></tr>';
+    if(op)h+=pfDayRows(dt,D);
   }
   h+='</tbody><tfoot>';
   let grand=0;
@@ -1530,15 +1628,34 @@ function pfDays(){
   pfChart(D,planM);
 }
 function pfTogDay(d){PF.exp[d]=!PF.exp[d];pfDays();}
-function pfDayDetail(dt){
+/* строки-детализация внутри той же таблицы: слева контрагент, сумма — под колонкой своего менеджера */
+function pfDayRows(dt,D){
   const iso=pfIso(dt),rows=pfFacts().filter(r=>r.d===iso);
-  if(!rows.length)return '<div style="color:#5d6b64;font-size:11.5px;padding:6px 0">в этот день поступлений нет</div>';
-  rows.sort((a,b)=>b.s-a.s);
-  const tot=rows.reduce((s,r)=>s+r.s,0);
-  let h='<div style="border:1px solid #33403A;border-radius:8px;overflow:hidden"><table class="dds" style="font-size:11.5px"><thead><tr><th>Контрагент</th><th>Менеджер</th><th>Статья</th><th>Сумма</th><th>Доля дня</th></tr></thead><tbody>';
-  rows.forEach(r=>{h+='<tr><td>'+pfE(r.ctr)+'</td><td style="text-align:right">'+pfE(r.man)+'</td><td style="color:#9fb0a8">'+pfE(r.st)+'</td><td class="c-gn">'+pfF(r.s)+'</td><td>'+(r.s/tot*100).toFixed(1)+' %</td></tr>';});
-  h+='<tr style="font-weight:700"><td>Итого за день</td><td></td><td></td><td class="c-gn">'+pfF(tot)+'</td><td>100 %</td></tr>';
-  return h+'</tbody></table></div>';
+  const span=D.mans.length+3;
+  if(!rows.length)return '<tr class="pf-det"><td></td><td colspan="'+span+'" style="color:#5d6b64;font-size:11px;padding:4px 12px 8px">в этот день поступлений нет</td></tr>';
+  /* одна компания/счёт за день — одна строка (несколько платежей и контрагентов складываются) */
+  const agg={};
+  rows.forEach(r=>{
+    const co=r.co||'без компании';
+    const k=co+'|'+r.man;
+    if(!agg[k])agg[k]={co:co,man:r.man,s:0,n:0,st:{},ctr:{}};
+    agg[k].s+=r.s;agg[k].n++;agg[k].st[r.st]=1;agg[k].ctr[r.ctr]=(agg[k].ctr[r.ctr]||0)+r.s;
+  });
+  const list=Object.keys(agg).map(k=>agg[k]).sort((a,b)=>b.s-a.s);
+  const tot=list.reduce((x,r)=>x+r.s,0);
+  let h='';
+  list.forEach(r=>{
+    const st=Object.keys(r.st).join(', ');
+    const ctrList=Object.keys(r.ctr).sort((a,b)=>r.ctr[b]-r.ctr[a]).join(', ');
+    h+='<tr class="pf-det" title="'+pfE(ctrList)+(st?' · '+pfE(st):'')+'">'
+      +'<td></td>'
+      +'<td class="pf-det-name" title="'+pfE(ctrList)+'">↳ '+pfE(r.co)+(r.n>1?' <span style="color:#5d6b64">('+r.n+' плат.)</span>':'')+'</td>';
+    D.mans.forEach(mn=>{
+      h+='<td>'+(mn===r.man?'<span class="c-gn">'+pfF(r.s)+'</span>':'<span style="color:#3f4b45">·</span>')+'</td>';
+    });
+    h+='<td>'+pfF(r.s)+'</td><td style="color:#5d6b64">'+(tot?(r.s/tot*100).toFixed(1)+' %':'')+'</td><td></td></tr>';
+  });
+  return h;
 }
 function pfChart(D,planM){
   const cv=document.getElementById('pf-canvas');if(!cv||typeof Chart==='undefined')return;
@@ -1560,28 +1677,97 @@ function pfChart(D,planM){
               y:{ticks:{color:'#9fb0a8',font:{size:10},callback:v=>pfF(v/1000)+'k'},grid:{color:'#33403A'}}}}});
 }
 function pfCum(v,btn){PF.cum=v;document.querySelectorAll('#pf-cum .ppill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');pfDays();}
-function pfCsvOut(){
-  const D=pfMatrix(),rows=[['День'].concat(D.mans,['Итого','План на день'])];
+/* ══ ВЫГРУЗКИ И ПЕЧАТЬ ══ */
+/* данные текущего вида в виде массива строк — один источник для CSV, Excel и печати */
+function pfAoaDays(){
+  const D=pfMatrix(),cum=PF.cum;
+  const head=['День'].concat(D.mans,['Факт, всего','План','% выполнения']);
+  const rows=[head];
+  const run={};D.mans.forEach(m=>run[m]=0);
+  let rt=0,rp=0;
   for(let d=1;d<=D.nd;d++){
-    const dt=new Date(D.y,D.m-1,d),r=[pfP2(d)+'.'+pfP2(D.m)+'.'+D.y];
-    D.mans.forEach(mn=>r.push(Math.round(D.mx[mn][d])));
-    r.push(Math.round(D.tot[d]),Math.round(pfPlanIn(dt,dt)));rows.push(r);
+    const dt=new Date(D.y,D.m-1,d),dp=pfPlanIn(dt,dt);
+    rt+=D.tot[d];rp+=dp;
+    const r=[pfP2(d)+'.'+pfP2(D.m)+'.'+D.y];
+    D.mans.forEach(m=>{run[m]+=D.mx[m][d];r.push(Math.round(cum?run[m]:D.mx[m][d]));});
+    const tv=cum?rt:D.tot[d],pv=cum?rp:dp;
+    r.push(Math.round(tv),Math.round(pv),pv>0?Math.round(tv/pv*100):'');
+    rows.push(r);
   }
+  const planM=pfPlanIn(D.from,D.to);
+  let grand=0;
+  const f1=['Факт за месяц'];D.mans.forEach(m=>{const v=D.mx[m].reduce((x,y)=>x+y,0);grand+=v;f1.push(Math.round(v));});
+  f1.push(Math.round(grand),Math.round(planM),planM?Math.round(grand/planM*100):'');
+  const f2=['План на месяц'];D.mans.forEach(m=>f2.push(Math.round(pfPlanOf(D.y,D.m,m))));
+  f2.push(Math.round(planM),'','');
+  const f3=['% выполнения'];D.mans.forEach(m=>{
+    const pl=pfPlanOf(D.y,D.m,m),fa=D.mx[m].reduce((x,y)=>x+y,0);
+    f3.push(pl>0?Math.round(fa/pl*100):'');
+  });
+  f3.push(planM?Math.round(grand/planM*100):'','','');
+  rows.push([],f1,f2,f3);
+  return {rows:rows,title:'План/факт по дням — '+MN_F[D.m]+' '+D.y,name:'По дням'};
+}
+function pfAoaExec(){
+  const [from,to]=pfRange(),R=pfFacts();
+  const rows=[['Менеджер','План','Факт','Отклонение','% выполнения','Доля факта']];
+  let tp=0,tf=0;
+  const list=pfMansAll().map(m=>({man:m,plan:pfPlanIn(from,to,m),fact:pfFactIn(from,to,m,R)}))
+    .filter(x=>x.plan>0.5||x.fact>0.5);
+  list.forEach(x=>{tp+=x.plan;tf+=x.fact;});
+  list.sort((a,b)=>b.fact-a.fact);
+  list.forEach(x=>rows.push([x.man,Math.round(x.plan),Math.round(x.fact),Math.round(x.fact-x.plan),
+    x.plan>0?Math.round(x.fact/x.plan*100):'',tf?+(x.fact/tf*100).toFixed(1):'']));
+  rows.push(['ИТОГО ПО ВСЕМ',Math.round(tp),Math.round(tf),Math.round(tf-tp),tp?Math.round(tf/tp*100):'',100]);
+  const dl=pfIso(from).split('-').reverse().join('.')+(pfIso(from)===pfIso(to)?'':' — '+pfIso(to).split('-').reverse().join('.'));
+  return {rows:rows,title:'Выполнение плана по менеджерам — '+dl,name:'По менеджерам'};
+}
+function pfSrcLabel(){
+  return PF.src==='buyer'?'поступления от покупателей':PF.src==='in'?'все поступления':'все строки с суммой плюс';
+}
+
+/* CSV текущего вида */
+function pfCsvOut(){
+  const A=PF.view==='days'?pfAoaDays():pfAoaExec();
+  const csv=A.rows.map(r=>r.map(c=>c===''||c==null?'':c).join(';')).join('\n');
   const a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent('\ufeff'+rows.map(r=>r.join(';')).join('\n'));
-  a.download='план-факт_'+D.y+'-'+pfP2(D.m)+'.csv';a.click();
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent('\ufeff'+csv);
+  a.download='план-факт_'+PF.y+'-'+pfP2(PF.m)+'.csv';a.click();
+  pfToast('CSV сохранён.','ok');
 }
 
-
-/* собрать справочник заново: имена из столбца «Менеджер» + из листа «План» */
-function pfSeedMans(){
-  const s={};
-  PF.sheetPlans.forEach(p=>s[p.man]=1);
-  PF.rows.forEach(r=>{if(r.man!==PF_NOMAN)s[r.man]=1;});
-  PF.mans=Object.keys(s).sort((a,b)=>a.localeCompare(b,'ru'));
-  pfSaveMansLS();
-  return PF.mans.length;
+/* Excel: оба листа сразу */
+function pfXlsx(){
+  if(typeof XLSX==='undefined'){
+    pfToast('Библиотека Excel не загрузилась (нужен интернет) — сохраняю CSV.','warn');
+    pfCsvOut();return;
+  }
+  try{
+    const wb=XLSX.utils.book_new();
+    [pfAoaDays(),pfAoaExec()].forEach(A=>{
+      const ws=XLSX.utils.aoa_to_sheet([[A.title],['Факт: '+pfSrcLabel()+' · сформировано '+new Date().toLocaleString('ru-RU')],[]].concat(A.rows));
+      ws['!cols']=A.rows[0].map((c,i)=>({wch:i===0?16:15}));
+      XLSX.utils.book_append_sheet(wb,ws,A.name);
+    });
+    XLSX.writeFile(wb,'план-факт_'+PF.y+'-'+pfP2(PF.m)+'.xlsx');
+    pfToast('Файл Excel сохранён — два листа: «По дням» и «По менеджерам».','ok');
+  }catch(e){pfToast('Не удалось собрать Excel: '+e.message+'. Сохраняю CSV.','err');pfCsvOut();}
 }
+
+/* Печать / PDF: печатается только открытый раздел вкладки */
+function pfPrint(asPdf){
+  const A=PF.view==='days'?pfAoaDays():pfAoaExec();
+  const h=document.getElementById('pf-print-head');
+  if(h)h.innerHTML='<h2>'+pfE(A.title)+'</h2>'
+    +'<div>Факт: '+pfSrcLabel()+' (лист «Свод по счетам»)'
+    +(PF.view==='days'&&PF.cum?' · нарастающим итогом':'')
+    +' · дневной план делится на '+(PF.prorate==='work'?'рабочие':'календарные')+' дни</div>'
+    +'<div>Сформировано '+new Date().toLocaleString('ru-RU')+'</div>';
+  pfToast(asPdf?'В окне печати выберите принтер «Сохранить как PDF».':'Печатается открытый раздел вкладки.','ok');
+  setTimeout(()=>window.print(),350);
+}
+
+/* очистить справочник целиком */
 function pfMansClear(){
   if(!PF.mans.length){pfToast('Справочник и так пуст.','warn');return;}
   if(!confirm('Очистить справочник менеджеров ('+PF.mans.length+')? План по месяцам при этом останется.'))return;
@@ -1655,8 +1841,12 @@ function pfPlanView(){
     +'<select onchange="PF.edY=+this.value;PF.editBuf=null;pfPlanView()">'+ys.map(y=>'<option value="'+y+'"'+(y===PF.edY?' selected':'')+'>'+y+'</option>').join('')+'</select>';
 
   const key=PF.edY+'-'+PF.edM,saved=PF.plan[key]||{};
-  /* в таблице только то, что уже сохранено на этот месяц, плюс добавленное в этом сеансе */
-  if(!PF.editBuf){PF.editBuf={};Object.keys(saved).forEach(m=>PF.editBuf[m]=saved[m]);}
+  /* строки: сохранённые локально + те, что уже стоят в листе «План» */
+  if(!PF.editBuf){
+    PF.editBuf={};
+    PF.sheetPlans.forEach(p=>{if(p.y===PF.edY&&p.m===PF.edM)PF.editBuf[p.man]=p.sum;});
+    Object.keys(saved).forEach(m=>{if(!pfShared()||PF.editBuf[m]==null)PF.editBuf[m]=saved[m];});
+  }
 
   /* строка добавления: менеджер выбирается из справочника */
   const free=PF.mans.filter(m=>PF.editBuf[m]==null);
@@ -1681,14 +1871,16 @@ function pfPlanView(){
     if(ia>=0&&ib>=0)return ia-ib; if(ia>=0)return -1; if(ib>=0)return 1;
     return a.localeCompare(b,'ru');
   });
-  let h='<thead><tr><th>Менеджер</th><th style="width:170px">План на месяц, ₽</th><th style="width:130px">В среднем в день</th><th style="width:120px">Сохранено</th><th style="width:140px">В листе «План»</th><th style="width:44px"></th></tr></thead><tbody>';
+  let h='<thead><tr><th>Менеджер</th><th style="width:170px">План на месяц, ₽</th><th style="width:130px">В среднем в день</th><th style="width:150px">Где сохранён</th><th style="width:140px">В таблице</th><th style="width:44px"></th></tr></thead><tbody>';
   let tot=0;
   mans.forEach(m=>{
     const v=PF.editBuf[m]||0;tot+=v;
     const sh=PF.sheetPlans.filter(p=>p.y===PF.edY&&p.m===PF.edM&&p.man===m)[0];
-    const st=saved[m]==null?'<span style="color:#22d3ee">не сохранён</span>'
-      :Math.round(saved[m])===Math.round(v)?'<span style="color:#00E38A">да</span>'
-      :'<span style="color:#fbbf24">есть правки</span>';
+    const inSheet=sh&&Math.round(sh.sum)===Math.round(v);
+    const inLocal=saved[m]!=null&&Math.round(saved[m])===Math.round(v);
+    const st=inSheet?'<span style="color:#00E38A">в таблице</span>'
+      :inLocal?'<span style="color:#9fb0a8">этот компьютер</span>'
+      :'<span style="color:#fbbf24">не сохранён</span>';
     const known=PF.mans.indexOf(m)>=0;
     h+='<tr><td>'+pfE(m)+(known?'':' <span style="color:#fbbf24" title="нет в справочнике">•</span>')+'</td>'
       +'<td><input type="number" step="1000" value="'+v+'" data-man="'+pfE(m)+'" oninput="pfEdIn(this)" style="width:100%;text-align:right;padding:4px 8px;border:1px solid #44534C;border-radius:6px;background:#1C2622;color:#F2F2F2;font-family:\'Courier New\',monospace;font-size:12px"></td>'
@@ -1699,8 +1891,60 @@ function pfPlanView(){
   if(!mans.length)h+='<tr><td colspan="6" style="padding:22px;text-align:center;color:var(--ix-mut)">На '+MN_F[PF.edM]+' '+PF.edY+' плана пока нет. Выберите менеджера выше, впишите сумму и нажмите «Добавить в план».</td></tr>';
   h+='</tbody><tfoot><tr style="font-weight:700"><td>Итого за месяц</td><td id="pf-ed-tot">'+pfF(tot)+'</td><td>'+pfF(tot/perDay)+'</td><td></td><td></td><td></td></tr></tfoot>';
   document.getElementById('pf-ed-tbl').innerHTML=h;
+  pfBridgeBox();
   document.getElementById('pf-ed-hint').innerHTML='В месяце '+nd+' календарных и '+wd+' рабочих дней; дневной план — это месячный, делённый на '+(PF.prorate==='work'?'рабочие':'календарные')+' дни. План живёт в этом браузере: «Выгрузить в файл» — если работаете с нескольких компьютеров.';
 }
+
+/* ── настройка записи в таблицу ── */
+function pfBridgeBox(){
+  const el=document.getElementById('pf-bridge');if(!el)return;
+  const on=pfShared();
+  if(!PF.bridgeOpen){
+    el.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+      +'<span style="font-size:12px;color:'+(on?'#00E38A':'#fbbf24')+'">'
+      +(on?'● План пишется в Google Таблицу — его видно с любого компьютера'
+          :'● План хранится только в этом браузере')+'</span>'
+      +'<button onclick="PF.bridgeOpen=1;pfBridgeBox()" style="padding:4px 11px;font-size:12px;border:1px solid #44534C;border-radius:6px;background:transparent;color:#F2F2F2;cursor:pointer;font-family:inherit">'
+      +(on?'Изменить':'Настроить запись в таблицу')+'</button>'
+      +(on?'<button onclick="pfBridgePing()" style="padding:4px 11px;font-size:12px;border:1px solid #44534C;border-radius:6px;background:transparent;color:#9fb0a8;cursor:pointer;font-family:inherit">Проверить связь</button>':'')
+      +'</div>';
+    return;
+  }
+  el.innerHTML='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+    +'<label>Адрес сервиса записи</label>'
+    +'<input id="pf-bridge-url" value="'+pfE(PF.bridge.url||'')+'" placeholder="https://script.google.com/macros/s/…/exec" style="flex:1;min-width:320px;padding:5px 9px;border:1px solid #44534C;border-radius:6px;background:#1C2622;color:#F2F2F2;font-family:inherit;font-size:12px">'
+    +'<label>Ключ</label>'
+    +'<input id="pf-bridge-key" value="'+pfE(PF.bridge.key||'')+'" placeholder="если задавали" style="width:120px;padding:5px 9px;border:1px solid #44534C;border-radius:6px;background:#1C2622;color:#F2F2F2;font-family:inherit;font-size:12px">'
+    +'<button onclick="pfBridgeSave()" style="padding:5px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit">Применить адрес</button>'
+    +'<button onclick="pfBridgePing()" style="padding:5px 13px;font-size:12px;border:1px solid #44534C;border-radius:7px;background:transparent;color:#F2F2F2;cursor:pointer;font-family:inherit">Проверить связь</button>'
+    +'<button onclick="pfBridgeOff()" style="padding:5px 13px;font-size:12px;border:1px solid #44534C;border-radius:7px;background:transparent;color:#ff6b6b;cursor:pointer;font-family:inherit">Отключить</button>'
+    +'<button onclick="PF.bridgeOpen=0;pfBridgeBox()" style="padding:5px 11px;font-size:12px;border:1px solid #44534C;border-radius:7px;background:transparent;color:#9fb0a8;cursor:pointer;font-family:inherit">Свернуть</button>'
+    +'</div><div style="font-size:11.5px;color:#9fb0a8;margin-top:8px;line-height:1.6">Адрес выдаёт Google после публикации скрипта записи (инструкция приложена к файлу). Пока он не задан, план сохраняется только в этом браузере.</div>';
+}
+function pfBridgeSave(){
+  const u=(document.getElementById('pf-bridge-url').value||'').trim();
+  const k=(document.getElementById('pf-bridge-key').value||'').trim();
+  if(u&&!/^https:\/\/script\.google\.com\//.test(u)){pfToast('Адрес должен начинаться с https://script.google.com/','warn');return;}
+  PF.bridge={url:u,key:k};
+  try{localStorage.setItem(PF_K_BRIDGE,JSON.stringify(PF.bridge));}catch(e){}
+  PF.editBuf=null;PF.bridgeOpen=0;
+  pfToast(u?'Адрес сохранён — теперь план будет записываться в таблицу. Проверьте связь кнопкой «Проверить связь».':'Адрес убран — план снова хранится только в этом браузере.','ok');
+  pfPlanView();
+}
+function pfBridgePing(){
+  if(!pfShared()){pfToast('Сначала впишите адрес и нажмите «Применить адрес».','warn');return;}
+  pfToast('Проверяю связь…','ok');
+  pfBridge({action:'ping'},res=>pfToast('✓ Связь есть, лист «'+(res.sheet||'План')+'» доступен для записи.','ok'),
+    e=>pfToast('Связи нет: '+e,'err'));
+}
+function pfBridgeOff(){
+  PF.bridge={};
+  try{localStorage.removeItem(PF_K_BRIDGE);}catch(e){}
+  PF.editBuf=null;PF.bridgeOpen=0;
+  pfToast('Запись в таблицу отключена.','warn');
+  pfPlanView();
+}
+
 /* добавить строку плана по выбору из справочника */
 function pfEdAdd(){
   const sm=document.getElementById('pf-add-man'),si=document.getElementById('pf-add-sum');
@@ -1720,13 +1964,31 @@ function pfEdIn(el){
 function pfEdSave(){
   const key=PF.edY+'-'+PF.edM;
   PF.plan[key]={};
-  let saved0n=0,saved0s=0;
-  Object.keys(PF.editBuf).forEach(m=>{if(PF.editBuf[m]>0){PF.plan[key][m]=PF.editBuf[m];saved0n++;saved0s+=PF.editBuf[m];}});
-  const saved0=saved0n===0;
-  if(saved0)delete PF.plan[key];
+  const items=[];let n=0,sum=0;
+  Object.keys(PF.editBuf).forEach(m=>{
+    const v=PF.editBuf[m]||0;
+    items.push({man:m,sum:v});
+    if(v>0){PF.plan[key][m]=v;n++;sum+=v;}
+  });
+  if(!n)delete PF.plan[key];
   pfSavePlanLS();
-  pfToast(saved0?'Все суммы нулевые — сохранять нечего. Впишите план и нажмите «Сохранить» ещё раз.':'✓ План на '+MN_F[PF.edM]+' '+PF.edY+' сохранён: '+saved0n+' менеджеров, '+pfF(saved0s)+' ₽. Уже учитывается в расчётах.',saved0?'warn':'ok');
-  pfPlanView();
+  if(!n){pfToast('Все суммы нулевые — сохранять нечего. Впишите план и нажмите «Сохранить» ещё раз.','warn');pfPlanView();return;}
+
+  if(!pfShared()){
+    pfToast('✓ План на '+MN_F[PF.edM]+' '+PF.edY+' сохранён: '+n+' менеджеров, '+pfF(sum)+' ₽. Хранится в этом браузере — чтобы вести план с других компьютеров, настройте запись в таблицу (кнопка «Запись в таблицу» вверху).','ok');
+    pfPlanView();return;
+  }
+  pfToast('Записываю в Google Таблицу…','ok');
+  pfBridge({action:'save',payload:JSON.stringify({year:PF.edY,month:PF.edM,items:items})},
+    async res=>{
+      const r=res.res||{};
+      await pfReloadPlan();
+      PF.editBuf=null;
+      pfToast('✓ Записано в лист «План»: обновлено '+(r.updated||0)+', добавлено '+(r.added||0)
+        +(r.cleared?', убрано '+r.cleared:'')+'. Теперь план виден с любого компьютера.','ok');
+      pfPlanView();
+    },
+    e=>{pfToast('В таблицу записать не удалось: '+e+'. План остался сохранён в этом браузере.','err');pfPlanView();});
 }
 function pfEdPrev(){
   const py=PF.edM===1?PF.edY-1:PF.edY,pm=PF.edM===1?12:PF.edM-1;
