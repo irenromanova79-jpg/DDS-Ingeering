@@ -187,6 +187,7 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
     <button class="tab active" onclick="sw('bal',this)">Остатки</button>
     <button class="tab" onclick="sw('dds',this)">Детальный ДДС</button>
     <button class="tab" onclick="sw('dash',this)">Дашборд</button>
+    <button class="tab" onclick="sw('plan',this)">План/факт</button>
   </div>
 </div>
 <div class="toolbar" id="toolbar" style="display:none">
@@ -254,6 +255,99 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
     <div class="ccard wide">
       <div class="ctitle">Топ контрагентов по поступлениям</div>
       <div style="position:relative;height:260px"><canvas id="c4"></canvas></div>
+    </div>
+  </div>
+</div>
+<div id="plan" class="screen">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+    <div class="period-pills" id="pf-views">
+      <button class="ppill active" onclick="pfSetView('exec',this)">Выполнение</button>
+      <button class="ppill" onclick="pfSetView('days',this)">По дням</button>
+      <button class="ppill" onclick="pfSetView('mans',this)">Менеджеры</button>
+      <button class="ppill" onclick="pfSetView('plan',this)">План</button>
+    </div>
+    <div class="period-pills" id="pf-pills">
+      <button class="ppill" onclick="pfSetMode('day',this)">День</button>
+      <button class="ppill active" onclick="pfSetMode('month',this)">Месяц</button>
+      <button class="ppill" onclick="pfSetMode('year',this)">Год</button>
+      <button class="ppill" onclick="pfSetMode('custom',this)">Период</button>
+    </div>
+    <div class="period-sub" id="pf-sub"></div>
+    <button id="pf-rbtn" onclick="pfLoad()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit;display:flex;align-items:center;gap:5px;margin-left:auto"><span>⟳</span>&nbsp;Обновить факт</button>
+  </div>
+  <div class="period-sub" id="pf-opts" style="margin-bottom:14px">
+    <label>Факт считаем как</label>
+    <select onchange="PF.src=this.value;pfRender()">
+      <option value="buyer">поступления от покупателей</option>
+      <option value="in">все поступления</option>
+      <option value="all">все строки с суммой плюс</option>
+    </select>
+    <label>Дневной план</label>
+    <select onchange="PF.prorate=this.value;pfRender()">
+      <option value="cal">делить на календарные дни</option>
+      <option value="work">делить на рабочие дни</option>
+      <option value="full">не делить (весь месяц)</option>
+    </select>
+    <div class="period-info" id="pf-info" style="margin-left:auto">факт не загружен</div>
+  </div>
+  <div id="pf-msg" style="display:none"></div>
+
+  <div id="pf-v-exec">
+    <div class="kpis" id="pf-kpis" style="grid-template-columns:repeat(5,1fr)"></div>
+    <div class="tbl-wrap"><table class="dds" id="pf-tbl"></table></div>
+    <div style="font-size:11.5px;color:#9fb0a8;margin-top:10px">Строка менеджера раскрывается по контрагентам за выбранный период — щёлкните по треугольнику.</div>
+  </div>
+
+  <div id="pf-v-days" style="display:none">
+    <div class="ccard" style="margin-bottom:16px">
+      <div class="ctitle" id="pf-dyn-title">Накопленный факт против плана</div>
+      <div style="position:relative;height:270px"><canvas id="pf-canvas"></canvas></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      <div class="period-pills" id="pf-cum">
+        <button class="ppill active" onclick="pfCum(0,this)">За день</button>
+        <button class="ppill" onclick="pfCum(1,this)">Нарастающим итогом</button>
+      </div>
+      <span style="font-size:11px;color:#9fb0a8">строки — дни месяца, столбцы — менеджеры; день раскрывается по контрагентам</span>
+      <button onclick="pfCsvOut()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit;margin-left:auto">↓&nbsp;CSV</button>
+    </div>
+    <div class="tbl-wrap"><table class="dds" id="pf-dyn"></table></div>
+  </div>
+
+  <div id="pf-v-mans" style="display:none">
+    <div class="ccard">
+      <div class="ctitle">Справочник менеджеров</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+        <input id="pf-mans-new" placeholder="Фамилия И." onkeydown="if(event.key==='Enter')pfManAdd()" style="padding:5px 9px;border:1px solid #44534C;border-radius:6px;background:#1C2622;color:#F2F2F2;font-family:inherit;font-size:12px;width:220px">
+        <button onclick="pfManAdd()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit">+&nbsp;Добавить</button>
+        <span style="font-size:11.5px;color:#9fb0a8">имя должно совпадать с тем, что стоит в столбце «Менеджер» листа «Свод по счетам»</span>
+      </div>
+      <table class="dds" id="pf-mans-tbl"></table>
+      <div id="pf-unknown" style="display:none;margin-top:16px"></div>
+    </div>
+  </div>
+
+  <div id="pf-v-plan" style="display:none">
+    <div class="ccard">
+      <div class="ctitle">План по менеджерам — хранится в приложении</div>
+      <div class="period-sub" id="pf-ed-sel" style="margin-bottom:12px"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
+        <button onclick="pfEdSave()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit">✓&nbsp;Сохранить</button>
+        <button onclick="pfEdPrev()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">⧉&nbsp;Взять прошлый месяц</button>
+        <button onclick="pfEdFromSheet()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">↓&nbsp;Подтянуть из листа «План»</button>
+        <button onclick="pfEdClear()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">✕&nbsp;Удалить план месяца</button>
+        <span style="flex:1"></span>
+        <input id="pf-ed-newman" placeholder="Добавить менеджера" onkeydown="if(event.key==='Enter')pfEdAddMan()" style="padding:5px 9px;border:1px solid #44534C;border-radius:6px;background:#1C2622;color:#F2F2F2;font-family:inherit;font-size:12px;width:190px">
+        <button onclick="pfEdAddMan()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">+</button>
+      </div>
+      <table class="dds" id="pf-ed-tbl"></table>
+      <div id="pf-ed-hint" style="font-size:11.5px;color:#9fb0a8;margin-top:12px;line-height:1.6"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap">
+        <button onclick="pfPlanExport()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">⬇&nbsp;Выгрузить план в файл</button>
+        <label style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit;display:inline-flex;align-items:center">⬆&nbsp;Загрузить из файла
+          <input type="file" accept="application/json" onchange="pfPlanImport(this)" style="display:none">
+        </label>
+      </div>
     </div>
   </div>
 </div>
@@ -865,7 +959,7 @@ async function refreshDDSData(){
       else if(op==='Поступление'&&stat==='Доход по депозиту')cat='dep';
       else if(op==='Поступление')cat='rec';
       else{skipped++;continue;}
-      newT.push({d:ds,y:year,m:month,w:week,s:suma,cat,acc,stat,ctr,fot});
+      newT.push({d:ds,y:year,m:month,w:week,s:suma,cat,acc,stat,ctr,fot,man:(cols[12]||'').trim()});
       parsed++;
     }
 
@@ -888,6 +982,7 @@ function sw(id,btn){
   document.getElementById(id).classList.add('active');btn.classList.add('active');
   document.getElementById('toolbar').style.display=(id==='dds'||id==='dash')?'flex':'none';
   if(id==='dds'||id==='dash')refresh();
+  if(id==='plan'){ if(!PF.loaded&&!PF.busy)pfLoad(); else pfRender(); }
 }
 function refresh(){
   const txns=fTxns();updInfo();
@@ -1022,6 +1117,552 @@ function exportExcel(){
   },100);
 }
 
+
+
+// ══════════════════════════════════════════════════════
+// ПЛАН / ФАКТ ПО МЕНЕДЖЕРАМ  (v2)
+// Факт      — лист «Свод по счетам»: A Дата | E Сумма | F Операция | J Статьи | K Контрагент | M Менеджер
+// План      — хранится в приложении (localStorage), можно подтянуть из листа «План»
+// Менеджеры — справочник в приложении, пополняется вручную
+// ══════════════════════════════════════════════════════
+const PF_SID='1-mIST6Tzn_s7nKEIHoQV2GPLpk7cTus9RAgZxVi-GZQ';
+const PF_K_PLAN='irixplan:plan', PF_K_MANS='irixplan:mans';
+const PF_COL=['#00E38A','#22d3ee','#fbbf24','#b79aff','#ff6b6b','#7dd3fc','#a3e635','#f472b6','#facc15','#34d399'];
+const PF_NOMAN='— без менеджера —';
+
+function pfTodayIso(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate();}
+function pfMonthStartIso(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-01';}
+
+const PF={rows:[],sheetPlans:[],loaded:false,busy:false,view:'exec',mode:'month',
+  y:new Date().getFullYear(),m:new Date().getMonth()+1,
+  day:pfTodayIso(),from:pfMonthStartIso(),to:pfTodayIso(),
+  prorate:'cal',src:'buyer',cum:0,chart:null,sort:{k:'fact',dir:-1},
+  plan:{},mans:[],exp:{},expMan:{},edY:new Date().getFullYear(),edM:new Date().getMonth()+1,editBuf:null};
+
+try{PF.plan=JSON.parse(localStorage.getItem(PF_K_PLAN)||localStorage.getItem('irixplan:ov')||'{}');}catch(e){PF.plan={};}
+try{PF.mans=JSON.parse(localStorage.getItem(PF_K_MANS)||'[]');}catch(e){PF.mans=[];}
+function pfSavePlanLS(){try{localStorage.setItem(PF_K_PLAN,JSON.stringify(PF.plan));}catch(e){}}
+function pfSaveMansLS(){try{localStorage.setItem(PF_K_MANS,JSON.stringify(PF.mans));}catch(e){}}
+
+/* ── мелочи ── */
+const pfP2=n=>n<10?'0'+n:''+n;
+const pfF=n=>Math.round(n||0).toLocaleString('ru-RU');
+const pfIso=d=>d.getFullYear()+'-'+pfP2(d.getMonth()+1)+'-'+pfP2(d.getDate());
+const pfPI=s=>{const p=String(s).split('-');return new Date(+p[0],+p[1]-1,+p[2]);};
+const pfDim=(y,m)=>new Date(y,m,0).getDate();
+const pfE=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const pfQ=s=>String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+const pfNum=s=>{const n=parseFloat(String(s==null?'':s).replace(/[\s\u00a0"']/g,'').replace(',','.'));return isFinite(n)?n:0;};
+const pfNorm=s=>String(s==null?'':s).replace(/\u00a0/g,' ').replace(/ё/gi,'е').trim().toLowerCase().replace(/\s+/g,' ');
+function pfWd(a,b){let n=0;const d=new Date(a.getTime());while(d<=b){const w=d.getDay();if(w>=1&&w<=5)n++;d.setDate(d.getDate()+1);}return n;}
+function pfDate(s){
+  if(!s)return null; s=String(s).trim().replace(/["']/g,''); if(!s||s==='-')return null;
+  let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m)return m[1]+'-'+m[2]+'-'+m[3];
+  m=s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/); if(m)return m[3]+'-'+pfP2(+m[2])+'-'+pfP2(+m[1]);
+  m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); if(m)return m[3]+'-'+pfP2(+m[1])+'-'+pfP2(+m[2]);
+  m=s.match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})/); if(m)return m[1]+'-'+pfP2(+m[2]+1)+'-'+pfP2(+m[3]);
+  if(/^\d{5}$/.test(s)){const dt=new Date(new Date(1899,11,30).getTime()+parseInt(s)*864e5);return pfIso(dt);}
+  return null;
+}
+function pfCsv(t){
+  const rows=[];let row=[],c='',q=false;
+  for(let i=0;i<t.length;i++){const ch=t[i];
+    if(q){ if(ch==='"'){ if(t[i+1]==='"'){c+='"';i++;} else q=false; } else c+=ch; }
+    else if(ch==='"')q=true;
+    else if(ch===','){row.push(c);c='';}
+    else if(ch==='\n'){row.push(c);rows.push(row);row=[];c='';}
+    else if(ch!=='\r')c+=ch;
+  }
+  if(c!==''||row.length){row.push(c);rows.push(row);}
+  return rows;
+}
+
+/* ── загрузка факта (и плана-источника) из Sheets ── */
+async function pfLoad(withPlan){
+  if(PF.busy)return; PF.busy=true;
+  const btn=document.getElementById('pf-rbtn'); if(btn){btn.disabled=true;btn.innerHTML='<span>⟳</span>&nbsp;Загрузка...';}
+  pfMsg('');
+  const u=sh=>'https://docs.google.com/spreadsheets/d/'+PF_SID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent(sh)+'&cb='+Date.now();
+  try{
+    const rf=await fetch(u('Свод по счетам'),{cache:'no-store'});
+    if(!rf.ok)throw new Error('HTTP '+rf.status+' на листе «Свод по счетам». Таблица должна быть открыта «Все, у кого есть ссылка — Читатель».');
+    const factTxt=await rf.text();
+    let planTxt='';
+    try{const rp=await fetch(u('План'),{cache:'no-store'});if(rp.ok)planTxt=await rp.text();}catch(e){}
+
+    /* факт */
+    const rows=pfCsv(factTxt),out=[];let noMan=0,noManSum=0;
+    for(let i=1;i<rows.length;i++){
+      const c=rows[i];if(!c||c.length<5)continue;
+      const ds=pfDate(c[0]);if(!ds)continue;
+      const s=pfNum(c[4]);if(s<=0)continue;
+      const man=(c[12]||'').trim();
+      if(!man){noMan++;noManSum+=s;}
+      out.push({d:ds,s:s,op:(c[5]||'').trim(),st:(c[9]||'').trim(),ctr:(c[10]||'').trim()||'без контрагента',man:man||PF_NOMAN});
+    }
+    if(!out.length)throw new Error('Из листа «Свод по счетам» не распознана ни одна строка.');
+    PF.rows=out;
+
+    /* план из листа — источник для импорта */
+    const sp=[];
+    if(planTxt&&!/^\s*</.test(planTxt)){
+      const pr=pfCsv(planTxt);
+      for(let i=1;i<pr.length;i++){
+        const c=pr[i];if(!c||c.length<4)continue;
+        const man=(c[3]||'').trim();if(!man)continue;
+        let y=0,mo=0;const ds=pfDate(c[0]);
+        if(ds&&+ds.slice(0,4)>1900){y=+ds.slice(0,4);mo=+ds.slice(5,7);}
+        else{y=Math.round(pfNum(c[2]));mo=Math.round(pfNum(c[1]));}
+        if(y<1900||mo<1||mo>12)continue;
+        sp.push({y:y,m:mo,man:man,sum:pfNum(c[4])});
+      }
+    }
+    PF.sheetPlans=sp;
+
+    /* первое наполнение справочника и плана */
+    if(!PF.mans.length){
+      const s={};sp.forEach(p=>s[p.man]=1);out.forEach(r=>{if(r.man!==PF_NOMAN)s[r.man]=1;});
+      PF.mans=Object.keys(s).sort((a,b)=>a.localeCompare(b,'ru'));pfSaveMansLS();
+    }
+    if(withPlan||!Object.keys(PF.plan).length){
+      sp.forEach(p=>{const k=p.y+'-'+p.m;if(!PF.plan[k])PF.plan[k]={};if(PF.plan[k][p.man]==null&&p.sum>0)PF.plan[k][p.man]=p.sum;});
+      pfSavePlanLS();
+    }
+
+    PF.loaded=true;
+    const info=document.getElementById('pf-info');
+    if(info)info.textContent='Поступлений: '+out.length+' · в листе «План»: '+sp.length+' стр. · '+new Date().toLocaleString('ru-RU');
+    if(noMan)pfMsg('Поступлений без менеджера: '+noMan+' на '+pfF(noManSum)+' ₽ — идут отдельной строкой «'+PF_NOMAN+'».','warn');
+    pfRender();
+  }catch(e){
+    const hint=/fetch|Failed/i.test(e.message)?'<br>Так бывает, когда файл открыт в предпросмотре или внутри другой страницы. Скачайте его и откройте у себя двойным щелчком — как дашборд ДДС. И проверьте доступ к таблице: «Все, у кого есть ссылка — Читатель».':'';
+    pfMsg('⚠ '+e.message+hint,'err');
+  }
+  PF.busy=false;
+  if(btn){btn.disabled=false;btn.innerHTML='<span>⟳</span>&nbsp;Обновить факт';}
+}
+function pfMsg(html,kind){
+  const el=document.getElementById('pf-msg');if(!el)return;
+  if(!html){el.style.display='none';el.innerHTML='';return;}
+  const col=kind==='err'?'#ff6b6b':kind==='ok'?'#00E38A':'#fbbf24';
+  el.style.cssText='display:block;margin-bottom:14px;padding:9px 13px;border-radius:8px;font-size:12px;line-height:1.6;border:1px solid '+col+'55;background:'+col+'14;color:'+col;
+  el.innerHTML=html;
+}
+
+/* ── план и менеджеры ── */
+function pfPlanOf(y,m,man){
+  const k=y+'-'+m;
+  return (PF.plan[k]&&PF.plan[k][man]!=null)?PF.plan[k][man]:0;
+}
+function pfPlanMonths(){return Object.keys(PF.plan);}
+function pfFacts(){
+  if(PF.src==='all')return PF.rows;
+  if(PF.src==='in')return PF.rows.filter(r=>pfNorm(r.op).indexOf('поступлен')>=0);
+  return PF.rows.filter(r=>pfNorm(r.st).indexOf('поступление от покупателей')>=0);
+}
+function pfMansAll(){
+  const s={};PF.mans.forEach(m=>s[m]=1);
+  pfFacts().forEach(r=>s[r.man]=1);
+  pfPlanMonths().forEach(k=>Object.keys(PF.plan[k]).forEach(m=>s[m]=1));
+  const arr=Object.keys(s);
+  arr.sort((a,b)=>{
+    const ia=PF.mans.indexOf(a),ib=PF.mans.indexOf(b);
+    if(ia>=0&&ib>=0)return ia-ib;
+    if(ia>=0)return -1; if(ib>=0)return 1;
+    return a.localeCompare(b,'ru');
+  });
+  return arr;
+}
+function pfRange(){
+  if(PF.mode==='day'){const d=pfPI(PF.day||pfTodayIso());return [d,d];}
+  if(PF.mode==='month')return [new Date(PF.y,PF.m-1,1),new Date(PF.y,PF.m-1,pfDim(PF.y,PF.m))];
+  if(PF.mode==='year')return [new Date(PF.y,0,1),new Date(PF.y,11,31)];
+  let a=pfPI(PF.from||pfMonthStartIso()),b=pfPI(PF.to||pfTodayIso());
+  if(b<a){const t=a;a=b;b=t;} return [a,b];
+}
+function pfPlanIn(from,to,man){
+  let out=0;
+  const mans=man?[man]:pfMansAll();
+  for(let y=from.getFullYear();y<=to.getFullYear();y++)for(let mo=1;mo<=12;mo++){
+    const ms=new Date(y,mo-1,1),me=new Date(y,mo-1,pfDim(y,mo));
+    const a=ms>from?ms:from,b=me<to?me:to;
+    if(a>b)continue;
+    let w=1;
+    if(PF.prorate==='cal')w=((b-a)/864e5+1)/pfDim(y,mo);
+    else if(PF.prorate==='work'){const wd=pfWd(ms,me);w=wd?pfWd(a,b)/wd:0;}
+    mans.forEach(mn=>{out+=pfPlanOf(y,mo,mn)*w;});
+  }
+  return out;
+}
+function pfFactIn(from,to,man,rows){
+  const a=pfIso(from),b=pfIso(to);let out=0;
+  (rows||pfFacts()).forEach(r=>{if(r.d<a||r.d>b)return;if(man&&r.man!==man)return;out+=r.s;});
+  return out;
+}
+function pfYears(){
+  const s={};s[new Date().getFullYear()]=1;
+  PF.rows.forEach(r=>s[+r.d.slice(0,4)]=1);
+  PF.sheetPlans.forEach(p=>s[p.y]=1);
+  pfPlanMonths().forEach(k=>s[+k.split('-')[0]]=1);
+  return Object.keys(s).map(Number).sort();
+}
+
+/* ── панель периода ── */
+function pfBar(){
+  const el=document.getElementById('pf-sub');if(!el)return;
+  const ys=pfYears();if(!ys.includes(PF.y))PF.y=ys[ys.length-1];
+  const yS='<label>Год</label><select onchange="PF.y=+this.value;pfRender()">'+ys.map(y=>'<option value="'+y+'"'+(y===PF.y?' selected':'')+'>'+y+'</option>').join('')+'</select>';
+  const mS='<label>Месяц</label><select onchange="PF.m=+this.value;pfRender()">'+MN_F.slice(1).map((n,i)=>'<option value="'+(i+1)+'"'+(i+1===PF.m?' selected':'')+'>'+n+'</option>').join('')+'</select>';
+  if(PF.view==='days'){el.innerHTML=yS+'&ensp;'+mS;return;}
+  if(PF.mode==='day')el.innerHTML='<label>Дата</label><input type="date" value="'+PF.day+'" onchange="PF.day=this.value;pfRender()">';
+  else if(PF.mode==='month')el.innerHTML=yS+'&ensp;'+mS;
+  else if(PF.mode==='year')el.innerHTML=yS;
+  else el.innerHTML='<label>С</label><input type="date" value="'+PF.from+'" onchange="PF.from=this.value;pfRender()"> <span class="period-sep">—</span> <label>По</label><input type="date" value="'+PF.to+'" onchange="PF.to=this.value;pfRender()">';
+}
+function pfSetMode(m,btn){
+  PF.mode=m;
+  document.querySelectorAll('#pf-pills .ppill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');pfBar();pfRender();
+}
+function pfSetView(v,btn){
+  PF.view=v;
+  document.querySelectorAll('#pf-views .ppill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  ['exec','days','mans','plan'].forEach(k=>{document.getElementById('pf-v-'+k).style.display=(k===v?'':'none');});
+  document.getElementById('pf-pills').style.display=(v==='exec'?'flex':'none');
+  document.getElementById('pf-sub').style.display=(v==='exec'||v==='days')?'flex':'none';
+  document.getElementById('pf-opts').style.display=(v==='mans')?'none':'flex';
+  pfRender();
+}
+
+/* ── общий рендер ── */
+function pfRender(){
+  if(PF.view==='mans'){pfMansView();return;}
+  if(PF.view==='plan'){pfPlanView();return;}
+  if(!PF.loaded){
+    document.getElementById('pf-kpis').innerHTML='';
+    document.getElementById('pf-tbl').innerHTML='<tbody><tr><td style="padding:34px;text-align:center;color:var(--ix-mut)">Нажмите «Обновить факт», чтобы загрузить поступления из Google Таблицы</td></tr></tbody>';
+    return;
+  }
+  pfBar();
+  if(PF.view==='exec')pfExec(); else pfDays();
+}
+
+/* ══ 1. ВЫПОЛНЕНИЕ ══ */
+function pfExec(){
+  const [from,to]=pfRange(),R=pfFacts();
+  let rows=pfMansAll().map(m=>{
+    const pl=pfPlanIn(from,to,m),fa=pfFactIn(from,to,m,R);
+    return {man:m,plan:pl,fact:fa,diff:fa-pl,pct:pl>0?fa/pl*100:null};
+  }).filter(x=>x.plan>0.5||x.fact>0.5);
+  const tp=rows.reduce((s,x)=>s+x.plan,0),tf=rows.reduce((s,x)=>s+x.fact,0);
+  const pct=tp>0?tf/tp*100:null;
+  const today=new Date();today.setHours(0,0,0,0);
+  let fc=null,el=0,tot=(to-from)/864e5+1;
+  if(today>=from&&today<=to){el=(today-from)/864e5+1;fc=el>0?tf/el*tot:0;}
+
+  const K=(cls,lbl,val,sub)=>'<div class="kpi '+cls+'"><div class="kpi-lbl">'+lbl+'</div><div class="kpi-val">'+val+'</div><div class="kpi-sub">'+(sub||'')+'</div></div>';
+  const dl=pfIso(from).split('-').reverse().join('.')+(pfIso(from)===pfIso(to)?'':' — '+pfIso(to).split('-').reverse().join('.'));
+  document.getElementById('pf-kpis').innerHTML=
+     K('kpi-inv','План на период',pfF(tp),dl)
+    +K('kpi-rec','Факт','<span class="c-gn">'+pfF(tf)+'</span>',PF.src==='buyer'?'поступления от покупателей':PF.src==='in'?'все поступления':'все строки с плюсом')
+    +K(tf-tp>=0?'kpi-net':'kpi-exp','Отклонение','<span class="'+(tf-tp>=0?'c-gn':'c-rd')+'">'+(tf-tp>=0?'+':'−')+pfF(Math.abs(tf-tp))+'</span>','')
+    +K('kpi-div','Выполнение, всего',pct==null?'—':'<span class="'+(pct>=100?'c-gn':pct>=80?'c-am':'c-rd')+'">'+pct.toFixed(1)+' %</span>','менеджеров в расчёте: '+rows.length)
+    +K('kpi-fot','Прогноз периода',fc==null?'—':pfF(fc),fc==null?'период завершён':'прошло '+Math.round(el)+' из '+Math.round(tot)+' дн.');
+
+  const k=PF.sort.k,dir=PF.sort.dir;
+  rows.sort((a,b)=>k==='man'?dir*a.man.localeCompare(b.man,'ru'):dir*((a[k]==null?-1:a[k])-(b[k]==null?-1:b[k])));
+  const th=(t,key)=>'<th style="cursor:pointer" onclick="pfSort(\''+key+'\')">'+t+(PF.sort.k===key?(dir<0?' ↓':' ↑'):'')+'</th>';
+  let h='<thead><tr><th style="width:26px;min-width:26px"></th>'+th('Менеджер','man')+th('План','plan')+th('Факт','fact')+th('Δ','diff')+th('% выполнения','pct')+'<th style="width:140px">&nbsp;</th><th>Доля факта</th></tr></thead><tbody>';
+  rows.forEach(x=>{
+    const p=x.pct,col=p==null?'#9fb0a8':p>=100?'#00E38A':p>=80?'#fbbf24':'#ff6b6b';
+    const w=Math.max(0,Math.min(100,p||0)),op=!!PF.expMan[x.man];
+    h+='<tr><td style="text-align:center;cursor:pointer;color:#00E38A;font-family:inherit" onclick="pfTogMan(\''+pfQ(x.man)+'\')">'+(op?'▾':'▸')+'</td>'
+      +'<td style="cursor:pointer">'+pfE(x.man)+'</td>'
+      +'<td>'+(x.plan?pfF(x.plan):'<span style="color:#5d6b64">—</span>')+'</td>'
+      +'<td>'+(x.fact?pfF(x.fact):'<span style="color:#5d6b64">—</span>')+'</td>'
+      +'<td class="'+(x.diff>=0?'c-gn':'c-rd')+'">'+(x.diff>=0?'+':'−')+pfF(Math.abs(x.diff))+'</td>'
+      +'<td style="color:'+col+';font-weight:700">'+(p==null?'нет плана':p.toFixed(1)+' %')+'</td>'
+      +'<td><div style="height:6px;background:#1C2622;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+w+'%;background:'+col+';border-radius:3px"></div></div></td>'
+      +'<td>'+(tf?(x.fact/tf*100).toFixed(1)+' %':'—')+'</td></tr>';
+    if(op)h+='<tr><td></td><td colspan="7" style="padding:0 12px 12px">'+pfCtrBlock(from,to,x.man)+'</td></tr>';
+  });
+  h+='</tbody><tfoot><tr style="font-weight:700"><td></td><td>ИТОГО ПО ВСЕМ</td><td>'+pfF(tp)+'</td><td class="c-gn">'+pfF(tf)+'</td>'
+    +'<td class="'+(tf-tp>=0?'c-gn':'c-rd')+'">'+(tf-tp>=0?'+':'−')+pfF(Math.abs(tf-tp))+'</td>'
+    +'<td style="color:'+(pct==null?'#9fb0a8':pct>=100?'#00E38A':pct>=80?'#fbbf24':'#ff6b6b')+'">'+(pct==null?'—':pct.toFixed(1)+' %')+'</td><td></td><td>100 %</td></tr></tfoot>';
+  if(!rows.length)h='<tbody><tr><td style="padding:34px;text-align:center;color:var(--ix-mut)">За выбранный период нет ни плана, ни поступлений</td></tr></tbody>';
+  document.getElementById('pf-tbl').innerHTML=h;
+}
+function pfSort(k){if(PF.sort.k===k)PF.sort.dir*=-1;else{PF.sort.k=k;PF.sort.dir=k==='man'?1:-1;}pfExec();}
+function pfTogMan(m){PF.expMan[m]=!PF.expMan[m];pfExec();}
+
+function pfCtrBlock(from,to,man){
+  const a=pfIso(from),b=pfIso(to),agg={};
+  pfFacts().forEach(r=>{if(r.d<a||r.d>b)return;if(man&&r.man!==man)return;
+    const k=r.ctr;if(!agg[k])agg[k]={s:0,n:0,last:''};
+    agg[k].s+=r.s;agg[k].n++;if(r.d>agg[k].last)agg[k].last=r.d;});
+  const list=Object.keys(agg).sort((x,y)=>agg[y].s-agg[x].s);
+  if(!list.length)return '<div style="color:#5d6b64;font-size:11.5px;padding:6px 0">поступлений нет</div>';
+  const tot=list.reduce((s,k)=>s+agg[k].s,0);
+  let h='<div style="border:1px solid #33403A;border-radius:8px;overflow:hidden"><table class="dds" style="font-size:11.5px"><thead><tr><th>Контрагент</th><th>Платежей</th><th>Последний</th><th>Сумма</th><th>Доля</th></tr></thead><tbody>';
+  list.forEach(k=>{h+='<tr><td>'+pfE(k)+'</td><td>'+agg[k].n+'</td><td>'+agg[k].last.split('-').reverse().join('.')+'</td><td class="c-gn">'+pfF(agg[k].s)+'</td><td>'+(agg[k].s/tot*100).toFixed(1)+' %</td></tr>';});
+  return h+'</tbody></table></div>';
+}
+
+/* ══ 2. ПО ДНЯМ ══ */
+function pfMatrix(){
+  const y=PF.y,m=PF.m,nd=pfDim(y,m),R=pfFacts();
+  const mx={},tot=new Array(nd+1).fill(0);
+  R.forEach(r=>{
+    if(+r.d.slice(0,4)!==y||+r.d.slice(5,7)!==m)return;
+    const d=+r.d.slice(8,10);
+    if(!mx[r.man])mx[r.man]=new Array(nd+1).fill(0);
+    mx[r.man][d]+=r.s;tot[d]+=r.s;
+  });
+  const from=new Date(y,m-1,1),to=new Date(y,m-1,nd);
+  const mans=pfMansAll().filter(mn=>(mx[mn]&&mx[mn].some(v=>v>0))||pfPlanOf(y,m,mn)>0);
+  mans.forEach(mn=>{if(!mx[mn])mx[mn]=new Array(nd+1).fill(0);});
+  return {y:y,m:m,nd:nd,mans:mans,mx:mx,tot:tot,from:from,to:to};
+}
+function pfDays(){
+  const D=pfMatrix(),cum=PF.cum,nd=D.nd;
+  const planM=pfPlanIn(D.from,D.to);
+  const today=new Date(),td=(today.getFullYear()===D.y&&today.getMonth()+1===D.m)?today.getDate():0;
+
+  let h='<thead><tr><th style="width:26px;min-width:26px"></th><th>День</th>';
+  D.mans.forEach((mn,i)=>{h+='<th><span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:'+PF_COL[i%PF_COL.length]+';margin-right:5px"></span>'+pfE(mn)+'</th>';});
+  h+='<th>Факт, всего</th><th>План</th><th>% выполнения</th></tr></thead><tbody>';
+
+  const run={};D.mans.forEach(mn=>run[mn]=0);
+  let rt=0,runPlan=0;
+  for(let d=1;d<=nd;d++){
+    const dt=new Date(D.y,D.m-1,d),dp=pfPlanIn(dt,dt);
+    rt+=D.tot[d];runPlan+=dp;
+    const op=!!PF.exp[d];
+    h+='<tr'+(d===td?' style="background:rgba(0,227,138,.07)"':'')+'>'
+      +'<td style="text-align:center;cursor:pointer;color:#00E38A;font-family:inherit" onclick="pfTogDay('+d+')">'+(op?'▾':'▸')+'</td>'
+      +'<td style="cursor:pointer" onclick="pfTogDay('+d+')">'+pfP2(d)+'.'+pfP2(D.m)+'.'+D.y+'</td>';
+    D.mans.forEach(mn=>{
+      run[mn]+=D.mx[mn][d];
+      const v=cum?run[mn]:D.mx[mn][d];
+      h+='<td>'+(v?pfF(v):'<span style="color:#3f4b45">·</span>')+'</td>';
+    });
+    const tv=cum?rt:D.tot[d],pv=cum?runPlan:dp,pc=pv>0?tv/pv*100:null;
+    h+='<td style="font-weight:700">'+(tv?pfF(tv):'<span style="color:#3f4b45">·</span>')+'</td>'
+      +'<td style="color:#9fb0a8">'+(pv?pfF(pv):'—')+'</td>'
+      +'<td style="font-weight:700;color:'+(pc==null?'#5d6b64':pc>=100?'#00E38A':pc>=80?'#fbbf24':'#ff6b6b')+'">'+(pc==null?'—':pc.toFixed(0)+' %')+'</td></tr>';
+    if(op)h+='<tr><td></td><td colspan="'+(D.mans.length+3)+'" style="padding:0 12px 12px">'+pfDayDetail(dt)+'</td></tr>';
+  }
+  h+='</tbody><tfoot>';
+  let grand=0;
+  h+='<tr style="font-weight:700"><td></td><td>Факт за месяц</td>';
+  D.mans.forEach(mn=>{const s=D.mx[mn].reduce((x,v)=>x+v,0);grand+=s;h+='<td class="c-gn">'+pfF(s)+'</td>';});
+  h+='<td class="c-gn">'+pfF(grand)+'</td><td>'+pfF(planM)+'</td><td>'+(planM?(grand/planM*100).toFixed(1)+' %':'—')+'</td></tr>';
+  h+='<tr><td></td><td>План на месяц</td>';
+  D.mans.forEach(mn=>{h+='<td style="color:#9fb0a8">'+pfF(pfPlanOf(D.y,D.m,mn))+'</td>';});
+  h+='<td style="color:#9fb0a8">'+pfF(planM)+'</td><td></td><td></td></tr>';
+  h+='<tr style="font-weight:700"><td></td><td>% выполнения</td>';
+  D.mans.forEach(mn=>{
+    const p=pfPlanOf(D.y,D.m,mn),f=D.mx[mn].reduce((x,v)=>x+v,0),pc=p>0?f/p*100:null;
+    h+='<td style="color:'+(pc==null?'#5d6b64':pc>=100?'#00E38A':pc>=80?'#fbbf24':'#ff6b6b')+'">'+(pc==null?'—':pc.toFixed(1)+' %')+'</td>';
+  });
+  const gp=planM?grand/planM*100:null;
+  h+='<td style="color:'+(gp==null?'#5d6b64':gp>=100?'#00E38A':gp>=80?'#fbbf24':'#ff6b6b')+'">'+(gp==null?'—':gp.toFixed(1)+' %')+'</td><td></td><td></td></tr></tfoot>';
+  document.getElementById('pf-dyn').innerHTML=h;
+  document.getElementById('pf-dyn-title').textContent='Накопленный факт против плана · '+MN_F[D.m]+' '+D.y;
+  pfChart(D,planM);
+}
+function pfTogDay(d){PF.exp[d]=!PF.exp[d];pfDays();}
+function pfDayDetail(dt){
+  const iso=pfIso(dt),rows=pfFacts().filter(r=>r.d===iso);
+  if(!rows.length)return '<div style="color:#5d6b64;font-size:11.5px;padding:6px 0">в этот день поступлений нет</div>';
+  rows.sort((a,b)=>b.s-a.s);
+  const tot=rows.reduce((s,r)=>s+r.s,0);
+  let h='<div style="border:1px solid #33403A;border-radius:8px;overflow:hidden"><table class="dds" style="font-size:11.5px"><thead><tr><th>Контрагент</th><th>Менеджер</th><th>Статья</th><th>Сумма</th><th>Доля дня</th></tr></thead><tbody>';
+  rows.forEach(r=>{h+='<tr><td>'+pfE(r.ctr)+'</td><td style="text-align:right">'+pfE(r.man)+'</td><td style="color:#9fb0a8">'+pfE(r.st)+'</td><td class="c-gn">'+pfF(r.s)+'</td><td>'+(r.s/tot*100).toFixed(1)+' %</td></tr>';});
+  h+='<tr style="font-weight:700"><td>Итого за день</td><td></td><td></td><td class="c-gn">'+pfF(tot)+'</td><td>100 %</td></tr>';
+  return h+'</tbody></table></div>';
+}
+function pfChart(D,planM){
+  const cv=document.getElementById('pf-canvas');if(!cv||typeof Chart==='undefined')return;
+  const labels=[];for(let d=1;d<=D.nd;d++)labels.push(d);
+  const ds=[],totC=[];let a=0;
+  for(let d=1;d<=D.nd;d++){a+=D.tot[d];totC.push(a);}
+  ds.push({label:'План (равномерно)',data:labels.map(d=>planM*d/D.nd),borderColor:'#9fb0a8',borderDash:[6,4],borderWidth:2,pointRadius:0,fill:false,tension:0});
+  ds.push({label:'Факт — всего',data:totC,borderColor:'#ffffff',borderWidth:2.5,pointRadius:0,fill:false,tension:.15});
+  D.mans.forEach((mn,i)=>{
+    const c=[];let s=0;for(let d=1;d<=D.nd;d++){s+=D.mx[mn][d];c.push(s);}
+    ds.push({label:mn,data:c,borderColor:PF_COL[i%PF_COL.length],borderWidth:1.6,pointRadius:0,fill:false,tension:.15});
+  });
+  if(PF.chart)PF.chart.destroy();
+  PF.chart=new Chart(cv.getContext('2d'),{type:'line',data:{labels:labels,datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{color:'#9fb0a8',boxWidth:12,font:{size:11}}},
+        tooltip:{callbacks:{label:c=>c.dataset.label+': '+pfF(c.parsed.y)+' ₽'}}},
+      scales:{x:{ticks:{color:'#9fb0a8',font:{size:10}},grid:{color:'#33403A'}},
+              y:{ticks:{color:'#9fb0a8',font:{size:10},callback:v=>pfF(v/1000)+'k'},grid:{color:'#33403A'}}}}});
+}
+function pfCum(v,btn){PF.cum=v;document.querySelectorAll('#pf-cum .ppill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');pfDays();}
+function pfCsvOut(){
+  const D=pfMatrix(),rows=[['День'].concat(D.mans,['Итого','План на день'])];
+  for(let d=1;d<=D.nd;d++){
+    const dt=new Date(D.y,D.m-1,d),r=[pfP2(d)+'.'+pfP2(D.m)+'.'+D.y];
+    D.mans.forEach(mn=>r.push(Math.round(D.mx[mn][d])));
+    r.push(Math.round(D.tot[d]),Math.round(pfPlanIn(dt,dt)));rows.push(r);
+  }
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent('\ufeff'+rows.map(r=>r.join(';')).join('\n'));
+  a.download='план-факт_'+D.y+'-'+pfP2(D.m)+'.csv';a.click();
+}
+
+/* ══ 3. СПРАВОЧНИК МЕНЕДЖЕРОВ ══ */
+function pfMansView(){
+  const cnt={},sum={};
+  PF.rows.forEach(r=>{cnt[r.man]=(cnt[r.man]||0)+1;sum[r.man]=(sum[r.man]||0)+r.s;});
+  let h='<thead><tr><th>№</th><th>Менеджер</th><th>Поступлений в таблице</th><th>Сумма</th><th>Месяцев с планом</th><th style="width:100px"></th></tr></thead><tbody>';
+  PF.mans.forEach((m,i)=>{
+    let pm=0;pfPlanMonths().forEach(k=>{if(PF.plan[k][m]>0)pm++;});
+    h+='<tr><td style="text-align:left">'+(i+1)+'</td>'
+      +'<td><input value="'+pfE(m)+'" onchange="pfManRename('+i+',this.value)" style="width:100%;padding:3px 7px;border:1px solid #33403A;border-radius:5px;background:#1C2622;color:#F2F2F2;font-family:inherit;font-size:12px"></td>'
+      +'<td>'+(cnt[m]||0)+'</td><td class="c-gn">'+pfF(sum[m]||0)+'</td><td>'+pm+'</td>'
+      +'<td><button onclick="pfManDel('+i+')" style="padding:2px 9px;font-size:11px;border:1px solid #44534C;border-radius:5px;background:transparent;color:#ff6b6b;cursor:pointer;font-family:inherit">удалить</button></td></tr>';
+  });
+  if(!PF.mans.length)h+='<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--ix-mut)">Справочник пуст. Добавьте менеджера ниже или нажмите «Обновить факт» — имена подтянутся из таблицы.</td></tr>';
+  h+='</tbody>';
+  document.getElementById('pf-mans-tbl').innerHTML=h;
+
+  const unknown=Object.keys(cnt).filter(m=>m!==PF_NOMAN&&PF.mans.indexOf(m)<0);
+  const box=document.getElementById('pf-unknown');
+  if(unknown.length){
+    box.style.display='';
+    box.innerHTML='<div class="ctitle" style="margin-top:4px">В поступлениях есть, в справочнике нет</div>'
+      +unknown.map(m=>'<button onclick="pfManAdd(\''+pfQ(m)+'\')" style="margin:0 6px 6px 0;padding:4px 11px;font-size:12px;border:1px solid rgba(0,227,138,.45);border-radius:20px;background:rgba(0,227,138,.1);color:#00E38A;cursor:pointer;font-family:inherit">+ '+pfE(m)+' <span style="color:#9fb0a8">('+cnt[m]+')</span></button>').join('')
+      +'<div style="font-size:11.5px;color:#9fb0a8;margin-top:6px">Имена сверяются символ в символ: «Сурин А.» и «Сурин А» — разные люди.</div>';
+  }else box.style.display='none';
+}
+function pfManAdd(name){
+  const el=document.getElementById('pf-mans-new');
+  const v=(name!=null?String(name):(el?el.value:'')).trim();
+  if(!v)return;
+  if(PF.mans.indexOf(v)<0){PF.mans.push(v);pfSaveMansLS();}
+  if(el&&name==null)el.value='';
+  pfMansView();
+}
+function pfManDel(i){
+  const m=PF.mans[i];
+  PF.mans.splice(i,1);pfSaveMansLS();
+  pfMsg('«'+pfE(m)+'» убран из справочника. Поступления с этим именем в таблице остались и продолжат считаться.','warn');
+  pfMansView();
+}
+function pfManRename(i,v){
+  v=(v||'').trim();if(!v)return pfMansView();
+  const old=PF.mans[i];if(v===old)return;
+  if(PF.mans.indexOf(v)>=0)return pfMansView();
+  PF.mans[i]=v;pfSaveMansLS();
+  pfPlanMonths().forEach(k=>{if(PF.plan[k][old]!=null){PF.plan[k][v]=PF.plan[k][old];delete PF.plan[k][old];}});
+  pfSavePlanLS();
+  pfMsg('Переименовано: «'+pfE(old)+'» → «'+pfE(v)+'», план перенесён. В Google Таблице имя осталось прежним — факт подтянется только под тем написанием, что стоит в столбце «Менеджер».','warn');
+  pfMansView();
+}
+
+/* ══ 4. ПЛАН (хранится в приложении) ══ */
+function pfPlanView(){
+  const ys=pfYears();if(!ys.includes(PF.edY))PF.edY=ys[ys.length-1];
+  document.getElementById('pf-ed-sel').innerHTML='<label>Месяц плана</label>'
+    +'<select onchange="PF.edM=+this.value;PF.editBuf=null;pfPlanView()">'+MN_F.slice(1).map((n,i)=>'<option value="'+(i+1)+'"'+(i+1===PF.edM?' selected':'')+'>'+n+'</option>').join('')+'</select>'
+    +'<select onchange="PF.edY=+this.value;PF.editBuf=null;pfPlanView()">'+ys.map(y=>'<option value="'+y+'"'+(y===PF.edY?' selected':'')+'>'+y+'</option>').join('')+'</select>';
+
+  const key=PF.edY+'-'+PF.edM,saved=PF.plan[key]||{};
+  if(!PF.editBuf){
+    PF.editBuf={};
+    (PF.mans.length?PF.mans:pfMansAll().filter(m=>m!==PF_NOMAN)).forEach(m=>{PF.editBuf[m]=saved[m]||0;});
+    Object.keys(saved).forEach(m=>{if(PF.editBuf[m]==null)PF.editBuf[m]=saved[m];});
+  }
+  const nd=pfDim(PF.edY,PF.edM),wd=pfWd(new Date(PF.edY,PF.edM-1,1),new Date(PF.edY,PF.edM-1,nd));
+  const perDay=PF.prorate==='work'?wd:nd;
+  const mans=Object.keys(PF.editBuf).sort((a,b)=>{
+    const ia=PF.mans.indexOf(a),ib=PF.mans.indexOf(b);
+    if(ia>=0&&ib>=0)return ia-ib; if(ia>=0)return -1; if(ib>=0)return 1;
+    return a.localeCompare(b,'ru');
+  });
+  let h='<thead><tr><th>Менеджер</th><th style="width:170px">План на месяц, ₽</th><th style="width:130px">В среднем в день</th><th style="width:120px">Сохранено</th><th style="width:140px">В листе «План»</th></tr></thead><tbody>';
+  let tot=0;
+  mans.forEach(m=>{
+    const v=PF.editBuf[m]||0;tot+=v;
+    const sh=PF.sheetPlans.filter(p=>p.y===PF.edY&&p.m===PF.edM&&p.man===m)[0];
+    const st=saved[m]==null?'<span style="color:#22d3ee">не сохранён</span>'
+      :Math.round(saved[m])===Math.round(v)?'<span style="color:#00E38A">да</span>'
+      :'<span style="color:#fbbf24">есть правки</span>';
+    h+='<tr><td>'+pfE(m)+'</td>'
+      +'<td><input type="number" step="1000" value="'+v+'" data-man="'+pfE(m)+'" oninput="pfEdIn(this)" style="width:100%;text-align:right;padding:4px 8px;border:1px solid #44534C;border-radius:6px;background:#1C2622;color:#F2F2F2;font-family:\'Courier New\',monospace;font-size:12px"></td>'
+      +'<td style="color:#9fb0a8">'+pfF(v/perDay)+'</td><td>'+st+'</td>'
+      +'<td style="color:#9fb0a8">'+(sh?pfF(sh.sum):'—')+'</td></tr>';
+  });
+  h+='</tbody><tfoot><tr style="font-weight:700"><td>Итого за месяц</td><td id="pf-ed-tot">'+pfF(tot)+'</td><td>'+pfF(tot/perDay)+'</td><td></td><td></td></tr></tfoot>';
+  document.getElementById('pf-ed-tbl').innerHTML=h;
+  document.getElementById('pf-ed-hint').innerHTML='В месяце '+nd+' календарных и '+wd+' рабочих дней. Дневной план получается делением на '+(PF.prorate==='work'?'рабочие':'календарные')+' дни — способ переключается в шапке вкладки. План хранится в этом браузере: сделайте «Выгрузить в файл», если работаете с нескольких компьютеров.';
+}
+function pfEdIn(el){
+  PF.editBuf[el.getAttribute('data-man')]=+el.value||0;
+  const t=Object.keys(PF.editBuf).reduce((s,k)=>s+(PF.editBuf[k]||0),0);
+  const c=document.getElementById('pf-ed-tot');if(c)c.textContent=pfF(t);
+}
+function pfEdSave(){
+  const key=PF.edY+'-'+PF.edM;
+  PF.plan[key]={};
+  Object.keys(PF.editBuf).forEach(m=>{if(PF.editBuf[m]>0)PF.plan[key][m]=PF.editBuf[m];});
+  pfSavePlanLS();
+  pfMsg('План на '+MN_F[PF.edM]+' '+PF.edY+' сохранён и уже учитывается в расчётах.','ok');
+  pfPlanView();
+}
+function pfEdPrev(){
+  const py=PF.edM===1?PF.edY-1:PF.edY,pm=PF.edM===1?12:PF.edM-1;
+  const src=PF.plan[py+'-'+pm]||{};
+  if(!Object.keys(src).length){pfMsg('За '+MN_F[pm]+' '+py+' сохранённого плана нет.','warn');return;}
+  PF.editBuf={};Object.keys(src).forEach(m=>PF.editBuf[m]=src[m]);
+  pfMsg('Подставлен план за '+MN_F[pm]+' '+py+'. Нажмите «Сохранить».','ok');
+  pfPlanView();
+}
+function pfEdFromSheet(){
+  const sh=PF.sheetPlans.filter(p=>p.y===PF.edY&&p.m===PF.edM);
+  if(!sh.length){pfMsg('В листе «План» на '+MN_F[PF.edM]+' '+PF.edY+' строк нет. Нажмите «Обновить факт», чтобы перечитать таблицу.','warn');return;}
+  PF.editBuf={};sh.forEach(p=>PF.editBuf[p.man]=p.sum);
+  pfMsg('Подставлено из листа «План»: '+sh.length+' строк. Нажмите «Сохранить».','ok');
+  pfPlanView();
+}
+function pfEdClear(){
+  delete PF.plan[PF.edY+'-'+PF.edM];pfSavePlanLS();PF.editBuf=null;
+  pfMsg('План за '+MN_F[PF.edM]+' '+PF.edY+' удалён из приложения.','warn');
+  pfPlanView();
+}
+function pfEdAddMan(){
+  const el=document.getElementById('pf-ed-newman'),v=el.value.trim();
+  if(!v)return;
+  if(PF.mans.indexOf(v)<0){PF.mans.push(v);pfSaveMansLS();}
+  if(!PF.editBuf)PF.editBuf={};
+  if(PF.editBuf[v]==null)PF.editBuf[v]=0;
+  el.value='';pfPlanView();
+}
+function pfPlanExport(){
+  const data={plan:PF.plan,mans:PF.mans,at:new Date().toISOString()};
+  const a=document.createElement('a');
+  a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(data,null,1));
+  a.download='план-менеджеров.json';a.click();
+}
+function pfPlanImport(inp){
+  const f=inp.files&&inp.files[0];if(!f)return;
+  const fr=new FileReader();
+  fr.onload=()=>{
+    try{
+      const o=JSON.parse(fr.result);
+      if(o.plan)PF.plan=o.plan;
+      if(o.mans&&o.mans.length)PF.mans=o.mans;
+      pfSavePlanLS();pfSaveMansLS();PF.editBuf=null;
+      pfMsg('План и справочник восстановлены из файла.','ok');pfPlanView();
+    }catch(e){pfMsg('Файл не читается: '+e.message,'err');}
+  };
+  fr.readAsText(f);inp.value='';
+}
 
 function printDDS(){
   // Просто печатаем как есть на экране — никаких переключений
