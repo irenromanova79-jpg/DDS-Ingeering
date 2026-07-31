@@ -85,6 +85,18 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
 .vp{color:var(--ix-green);font-weight:600}.vn{color:var(--ix-red);font-weight:600}.vd{color:#75857d}
 .tag{display:inline-block;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:5px;font-weight:700;vertical-align:middle}
 
+/* ── возврат цветов значений: правило table.dds td перебивало классы строк ── */
+table.dds td.vp{color:var(--ix-green)}
+table.dds td.vn{color:var(--ix-red)}
+table.dds td.vd{color:#75857d}
+table.dds tr.r-op td,table.dds tr.r-net td{color:#06120d}
+table.dds tr.r-net.neg td{color:#fff}
+table.dds tr.r-inv td{color:#eafff7}
+table.dds tr.r-fin td{color:#f0eaff}
+table.dds tr.r-stat td{color:var(--ix-green)}
+table.dds tr.r-stat-inv td{color:var(--ix-cyan)}
+table.dds tr.r-stat-fin td{color:var(--ix-purple)}
+
 /* ── ОСТАТКИ ── */
 .bal-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
 .bal-title{font-size:15px;font-weight:700;margin-bottom:3px;color:var(--ix-txt)}
@@ -620,7 +632,7 @@ function renderKPIs(elId,txns){
   document.getElementById(elId).innerHTML=[
     `<div class="kpi kpi-rec"><div class="kpi-lbl">Поступления</div><div class="kpi-val c-bl">${fm(rec)}</div><div class="kpi-sub">руб.</div></div>`,
     `<div class="kpi kpi-exp"><div class="kpi-lbl">Общие расходы</div><div class="kpi-val c-rd">${fm(Math.abs(opex)+fot)}</div><div class="kpi-sub">ФОТ + операц.</div></div>`,
-    `<div class="kpi" style="border-left:4px solid #b45309"><div class="kpi-lbl">Расходы + инвестиции</div><div class="kpi-val" style="color:#b45309">${fm(Math.abs(opex)+fot+Math.abs(inv))}</div><div class="kpi-sub">ФОТ + операц. + инвест.</div></div>`,
+    `<div class="kpi" style="border-left:4px solid #fb923c"><div class="kpi-lbl">Расходы + инвестиции</div><div class="kpi-val" style="color:#fb923c">${fm(Math.abs(opex)+fot+Math.abs(inv))}</div><div class="kpi-sub">ФОТ + операц. + инвест.</div></div>`,
     `<div class="kpi kpi-div"><div class="kpi-lbl">Дивиденды</div><div class="kpi-val c-pu">${fm(Math.abs(div))}</div><div class="kpi-sub">руб.</div></div>`,
     `<div class="kpi kpi-net"><div class="kpi-lbl">Чистый поток</div><div class="kpi-val ${net>=0?'c-gn':'c-rd'}">${net<0?'−':''}${fm(net)}</div><div class="kpi-sub">руб.</div></div>`,
     `<div class="kpi kpi-fot"><div class="kpi-lbl">ФОТ</div><div class="kpi-val c-am">${fm(fot)}</div><div class="kpi-sub">руб.</div></div>`,
@@ -721,15 +733,15 @@ function buildDDS(){
   // Итого операционная
   const opNet=S(d.rec)+S(d.dep)+opTot-fotTot;
   const opNC=mc?ks.map(k=>{const v=(d.rec[k]||0)+(d.dep[k]||0)+opE.reduce((s,[,ov])=>s+(ov.tot[k]||0),0)-fotE.reduce((s,[,fv])=>s+(fv[k]||0),0);return`<td class="${v>=0?'vp':'vn'}">${v<0?'−':''}${fm(v)}</td>`;}).join('')+`<td class="${opNet>=0?'vp':'vn'}" style="font-weight:700">${opNet<0?'−':''}${fm(opNet)}</td>`:`<td class="${opNet>=0?'vp':'vn'}" style="font-weight:700">${opNet<0?'−':''}${fm(opNet)}</td>`;
-  h+=`<tr class="r-sub"><td style="color:#1e40af;font-size:12.5px">Итого операционная</td>${opNC}</tr>`;
+  h+=`<tr class="r-sub"><td style="color:#93c5fd;font-size:12.5px">Итого операционная</td>${opNC}</tr>`;
 
   // Чистый операционный денежный поток = поступления − (ФОТ + операционные расходы)
   const codpTot=S(d.rec)+S(d.dep)+opTot-fotTot;
   const codpC=mc
     ?ks.map(k=>{const v=(d.rec[k]||0)+(d.dep[k]||0)+opE.reduce((s,[,ov])=>s+(ov.tot[k]||0),0)-fotE.reduce((s,[,fv])=>s+(fv[k]||0),0);return`<td class="${v>=0?'vp':'vn'}" style="font-weight:700">${v<0?'−':''}${fm(v)}</td>`;}).join('')+`<td class="${codpTot>=0?'vp':'vn'}" style="font-weight:700;font-size:13px">${codpTot<0?'−':''}${fm(codpTot)}</td>`
     :`<td class="${codpTot>=0?'vp':'vn'}" style="font-weight:700;font-size:13px">${codpTot<0?'−':''}${fm(codpTot)}</td>`;
-  h+=`<tr style="background:${codpTot>=0?'#f0fdf4':'#fff1f2'};border-top:2px solid ${codpTot>=0?'#86efac':'#fca5a5'}">
-    <td style="font-weight:700;font-size:12.5px;color:${codpTot>=0?'#166534':'#991b1b'};padding:8px 12px">
+  h+=`<tr style="background:${codpTot>=0?'rgba(0,227,138,.08)':'rgba(255,107,107,.09)'};border-top:2px solid ${codpTot>=0?'rgba(0,227,138,.55)':'rgba(255,107,107,.55)'}">
+    <td style="font-weight:700;font-size:12.5px;color:${codpTot>=0?'#00E38A':'#ff8f8f'};padding:8px 12px">
       Чистый операционный денежный поток
       <span style="font-size:10px;font-weight:500;color:#9ca3af;margin-left:6px">= Поступления − ФОТ − Операц. расходы</span>
     </td>${codpC}</tr>`;
@@ -747,7 +759,7 @@ function buildDDS(){
       Object.entries(sv.ctrs).forEach(([ctr,cv])=>{h+=`<tr class="l3 hid" id="${sid}"><td>${ctr}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn">${fm(Math.abs(S(cv)))}</td>`}</tr>`;});
     });
   } else h+=`<tr class="l1"><td>Инвестиционные операции</td>${mc?cols.map(()=>`<td class="vd">—</td>`).join('')+`<td class="vd">—</td>`:`<td class="vd">—</td>`}</tr>`;
-  h+=`<tr class="r-sub"><td style="color:#0e7490;font-size:12.5px">Итого инвестиционная</td>${wC(d.inv,false)}</tr>`;
+  h+=`<tr class="r-sub"><td style="color:#22d3ee;font-size:12.5px">Итого инвестиционная</td>${wC(d.inv,false)}</tr>`;
 
   // ЧДП с учётом инвестиций
   const cdpInvTot=opNet+invTot;
@@ -758,8 +770,8 @@ function buildDDS(){
         return'<td class="'+(v>=0?'vp':'vn')+'" style="font-weight:700">'+(v<0?'−':'')+fm(Math.abs(v))+'</td>';
       }).join('')+'<td class="'+(cdpInvTot>=0?'vp':'vn')+'" style="font-weight:700;font-size:13px">'+(cdpInvTot<0?'−':'')+fm(Math.abs(cdpInvTot))+'</td>'
     :'<td class="'+(cdpInvTot>=0?'vp':'vn')+'" style="font-weight:700;font-size:13px">'+(cdpInvTot<0?'−':'')+fm(Math.abs(cdpInvTot))+'</td>';
-  h+='<tr style="background:'+(cdpInvTot>=0?'#ecfeff':'#fff1f2')+';border-top:2px solid '+(cdpInvTot>=0?'#67e8f9':'#fca5a5')+';border-bottom:2px solid '+(cdpInvTot>=0?'#67e8f9':'#fca5a5')+'">'
-    +'<td style="font-weight:700;font-size:12.5px;color:'+(cdpInvTot>=0?'#0e7490':'#991b1b')+';padding:8px 12px">'
+  h+='<tr style="background:'+(cdpInvTot>=0?'rgba(34,211,238,.08)':'rgba(255,107,107,.09)')+';border-top:2px solid '+(cdpInvTot>=0?'rgba(34,211,238,.55)':'rgba(255,107,107,.55)')+';border-bottom:2px solid '+(cdpInvTot>=0?'rgba(34,211,238,.55)':'rgba(255,107,107,.55)')+'">'
+    +'<td style="font-weight:700;font-size:12.5px;color:'+(cdpInvTot>=0?'#22d3ee':'#ff8f8f')+';padding:8px 12px">'
     +'ЧДП с учётом инвестиций'
     +'<span style="font-size:10px;font-weight:500;color:#9ca3af;margin-left:6px">= Операц. ЧДП + Инвестиции</span>'
     +'</td>'+cdpInvC+'</tr>';
@@ -801,7 +813,7 @@ function buildDDS(){
         // Детализация: дата + счёт + сумма
         cv.ops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
           const opCols=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`;
-          h+=`<tr class="hid" id="${cid}" style="background:#fdf4ff"><td style="padding-left:68px;font-size:11px;color:#8a9a92">${fdd(op.d)}&nbsp;&nbsp;<span style="background:rgba(183,154,255,.18);color:#b79aff;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opCols}</tr>`;
+          h+=`<tr class="hid" id="${cid}" style="background:rgba(167,139,250,.08)"><td style="padding-left:68px;font-size:11px;color:#8a9a92">${fdd(op.d)}&nbsp;&nbsp;<span style="background:rgba(183,154,255,.18);color:#b79aff;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opCols}</tr>`;
         });
       });
     }
@@ -809,19 +821,19 @@ function buildDDS(){
     // ВНЕСЕНИЕ дивидендов
     if(divInTot!==0){
       const inC=mc?ks.map(k=>{const v=Object.values(divIn).reduce((s,cv)=>s+(cv.cols[k]||0),0);return v?`<td class="vp">${fm(v)}</td>`:`<td class="vd">—</td>`;}).join('')+`<td class="vp" style="font-weight:600">${fm(divInTot)}</td>`:`<td class="vp" style="font-weight:600">${fm(divInTot)}</td>`;
-      h+=`<tr class="r-exp l1 hid" id="dd" onclick="tgl('dd_in')"><td style="padding-left:20px"><span class="chev-d" id="ic-dd_in">▶</span>Внесение дивидендов<span class="tag" style="background:#dcfce7;color:#166534">↓ вход</span></td>${inC}</tr>`;
+      h+=`<tr class="r-exp l1 hid" id="dd" onclick="tgl('dd_in')"><td style="padding-left:20px"><span class="chev-d" id="ic-dd_in">▶</span>Внесение дивидендов<span class="tag" style="background:rgba(0,227,138,.16);color:#00E38A">↓ вход</span></td>${inC}</tr>`;
       Object.entries(divIn).sort((a,b)=>S(b[1].cols)-S(a[1].cols)).forEach(([ctr,cv],ci)=>{
         const cid='din'+ci;
         const ctrC=mc?ks.map(k=>(cv.cols[k]||0)?`<td class="vp">${fm(cv.cols[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp" style="font-weight:600">${fm(S(cv.cols))}</td>`:`<td class="vp" style="font-weight:600">${fm(S(cv.cols))}</td>`;
         h+=`<tr class="r-exp l3 hid" id="dd_in" onclick="tgl('${cid}')"><td><span class="chev-d" id="ic-${cid}">▶</span>${ctr}</td>${ctrC}</tr>`;
         cv.ops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
           const opCols=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vp" style="font-size:11px">${fm(op.s)}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp" style="font-size:11px">${fm(op.s)}</td>`:`<td class="vp" style="font-size:11px">${fm(op.s)}</td>`;
-          h+=`<tr class="hid" id="${cid}" style="background:#f0fdf4"><td style="padding-left:68px;font-size:11px;color:#8a9a92">${fdd(op.d)}&nbsp;&nbsp;<span style="background:#dcfce7;color:#166534;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opCols}</tr>`;
+          h+=`<tr class="hid" id="${cid}" style="background:rgba(0,227,138,.08)"><td style="padding-left:68px;font-size:11px;color:#8a9a92">${fdd(op.d)}&nbsp;&nbsp;<span style="background:rgba(0,227,138,.16);color:#00E38A;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opCols}</tr>`;
         });
       });
     }
   } else h+=`<tr class="l1"><td>Дивиденды</td>${mc?cols.map(()=>`<td class="vd">—</td>`).join('')+`<td class="vd">—</td>`:`<td class="vd">—</td>`}</tr>`;
-  h+=`<tr class="r-sub"><td style="color:#5b21b6;font-size:12.5px">Итого финансовая</td>${wC(d.div,false)}</tr>`;
+  h+=`<tr class="r-sub"><td style="color:#c4b5fd;font-size:12.5px">Итого финансовая</td>${wC(d.div,false)}</tr>`;
 
   // IV. ПЕРЕМЕЩЕНИЯ МЕЖДУ СЧЕТАМИ
   const mvInByAcc=Object.entries(d.mv_in).sort((a,b)=>S(b[1].tot)-S(a[1].tot));
@@ -830,15 +842,15 @@ function buildDDS(){
   const mvOutTot=mvOutByAcc.reduce((s,[,v])=>s+S(v.tot),0);
   const mvNet=mvInTot+mvOutTot;
 
-  h+=`<tr style="background:#2B3630"><td colspan="${mc?cols.length+2:2}" style="padding:9px 12px;font-weight:700;font-size:11.5px;color:#374151;letter-spacing:.02em;border-bottom:1px solid #e2e8f0">IV. Перемещения между счетами <span style="font-size:10px;font-weight:500;color:#9ca3af">(не влияют на чистый поток)</span></td></tr>`;
+  h+=`<tr style="background:#2B3630"><td colspan="${mc?cols.length+2:2}" style="padding:9px 12px;font-weight:700;font-size:11.5px;color:#9fb0a8;letter-spacing:.02em;border-bottom:1px solid #3a4a43">IV. Перемещения между счетами <span style="font-size:10px;font-weight:500;color:#9ca3af">(не влияют на чистый поток)</span></td></tr>`;
 
   // Приток
   const mvInTotC=mc?ks.map(k=>{const v=mvInByAcc.reduce((s,[,av])=>s+(av.tot[k]||0),0);return v?`<td class="vp">${fm(v)}</td>`:`<td class="vd">—</td>`;}).join('')+`<td class="vp" style="font-weight:600">${fm(mvInTot)}</td>`:`<td class="vp" style="font-weight:600">${fm(mvInTot)}</td>`;
-  h+=`<tr class="r-exp" onclick="tgl('mvi')"><td><span class="chev-d" id="ic-mvi">▶</span>Перемещение — Приток<span class="tag" style="background:#dcfce7;color:#166534">↓ вход</span></td>${mvInTotC}</tr>`;
+  h+=`<tr class="r-exp" onclick="tgl('mvi')"><td><span class="chev-d" id="ic-mvi">▶</span>Перемещение — Приток<span class="tag" style="background:rgba(0,227,138,.16);color:#00E38A">↓ вход</span></td>${mvInTotC}</tr>`;
   mvInByAcc.forEach(([acc,av],ai)=>{
     const amid='mvi'+ai;
     const aC=mc?ks.map(k=>(av.tot[k]||0)?`<td class="vp">${fm(av.tot[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp" style="font-weight:500">${fm(S(av.tot))}</td>`:`<td class="vp" style="font-weight:500">${fm(S(av.tot))}</td>`;
-    h+=`<tr class="l1 hid" id="mvi" style="background:#f0fdf4"><td style="padding-left:20px">${acc}</td>${aC}</tr>`;
+    h+=`<tr class="l1 hid" id="mvi" style="background:rgba(0,227,138,.08)"><td style="padding-left:20px">${acc}</td>${aC}</tr>`;
     Object.entries(av.ctrs).filter(([,cv])=>S(cv)>0).sort((a,b)=>S(b[1])-S(a[1])).slice(0,10).forEach(([ctr,cv])=>{
       h+=`<tr class="l3 hid" id="mvi"><td>${ctr}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vp">${fm(cv[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp">${fm(S(cv))}</td>`:`<td class="vp">${fm(S(cv))}</td>`}</tr>`;
     });
@@ -849,7 +861,7 @@ function buildDDS(){
   h+=`<tr class="r-exp" onclick="tgl('mvo')"><td><span class="chev-d" id="ic-mvo">▶</span>Перемещение — Отток<span class="tag" style="background:rgba(255,107,107,.16);color:#ff8f8f">↑ выход</span></td>${mvOutTotC}</tr>`;
   mvOutByAcc.forEach(([acc,av],ai)=>{
     const aC=mc?ks.map(k=>(av.tot[k]||0)?`<td class="vn">${fm(Math.abs(av.tot[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:500">${fm(Math.abs(S(av.tot)))}</td>`:`<td class="vn" style="font-weight:500">${fm(Math.abs(S(av.tot)))}</td>`;
-    h+=`<tr class="l1 hid" id="mvo" style="background:#fff1f2"><td style="padding-left:20px">${acc}</td>${aC}</tr>`;
+    h+=`<tr class="l1 hid" id="mvo" style="background:rgba(255,107,107,.09)"><td style="padding-left:20px">${acc}</td>${aC}</tr>`;
     Object.entries(av.ctrs).filter(([,cv])=>S(cv)!==0).sort((a,b)=>S(a[1])-S(b[1])).slice(0,10).forEach(([ctr,cv])=>{
       h+=`<tr class="l3 hid" id="mvo"><td>${ctr}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn">${fm(Math.abs(S(cv)))}</td>`}</tr>`;
     });
@@ -857,7 +869,7 @@ function buildDDS(){
 
   // Нетто перемещений
   const mvNetC=mc?ks.map(k=>{const v=mvInByAcc.reduce((s,[,av])=>s+(av.tot[k]||0),0)+mvOutByAcc.reduce((s,[,av])=>s+(av.tot[k]||0),0);return`<td class="${Math.abs(v)<1000?'vd':v>0?'vp':'vn'}">${Math.abs(v)<1000?'≈0':v<0?'−':''}${Math.abs(v)<1000?'':fm(v)}</td>`;}).join('')+`<td class="${Math.abs(mvNet)<1000?'vd':mvNet>0?'vp':'vn'}" style="font-weight:600">${Math.abs(mvNet)<1000?'≈ 0':mvNet<0?'−':''}${Math.abs(mvNet)<1000?'':fm(mvNet)}</td>`:`<td class="${Math.abs(mvNet)<1000?'vd':mvNet>0?'vp':'vn'}" style="font-weight:600">${Math.abs(mvNet)<1000?'≈ 0':mvNet<0?'−':''}${Math.abs(mvNet)<1000?'':fm(mvNet)}</td>`;
-  h+=`<tr class="r-sub"><td style="color:#374151">Нетто перемещений</td>${mvNetC}</tr>`;
+  h+=`<tr class="r-sub"><td style="color:#9fb0a8">Нетто перемещений</td>${mvNetC}</tr>`;
 
   // ЧИСТЫЙ ПОТОК
   const netTot=S(d.rec)+S(d.dep)+opTot-fotTot+invTot+divTot;
