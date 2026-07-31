@@ -1520,8 +1520,8 @@ function pfRender(){
 function pfExec(){
   const [from,to]=pfRange(),R=pfFacts();
   let rows=pfMansAll().map(m=>{
-    const pl=pfPlanIn(from,to,m),fa=pfFactIn(from,to,m,R),faNet=pfFieldIn(from,to,m,R,'snd');
-    return {man:m,plan:pl,fact:fa,factNet:faNet,diff:faNet-pl,pct:pl>0?faNet/pl*100:null};
+    const pl=pfPlanIn(from,to,m),fa=pfFactIn(from,to,m,R),faNds=pfFieldIn(from,to,m,R,'nds'),faNet=pfFieldIn(from,to,m,R,'snd');
+    return {man:m,plan:pl,fact:fa,nds:faNds,factNet:faNet,diff:faNet-pl,pct:pl>0?faNet/pl*100:null};
   }).filter(x=>x.plan>0.5||x.fact>0.5);
   const tp=rows.reduce((s,x)=>s+x.plan,0),tf=rows.reduce((s,x)=>s+x.fact,0);
   const tNds=pfFieldIn(from,to,null,R,'nds'),tSnd=pfFieldIn(from,to,null,R,'snd');
@@ -1544,7 +1544,7 @@ function pfExec(){
   const k=PF.sort.k,dir=PF.sort.dir;
   rows.sort((a,b)=>k==='man'?dir*a.man.localeCompare(b.man,'ru'):dir*((a[k]==null?-1:a[k])-(b[k]==null?-1:b[k])));
   const th=(t,key)=>'<th style="cursor:pointer" onclick="pfSort(\''+key+'\')">'+t+(PF.sort.k===key?(dir<0?' ↓':' ↑'):'')+'</th>';
-  let h='<thead><tr><th style="width:26px;min-width:26px"></th>'+th('Менеджер','man')+th('План','plan')+th('Факт','fact')+th('Δ (без НДС)','diff')+th('% выполнения (без НДС)','pct')+'<th style="width:140px">&nbsp;</th><th>Доля факта</th></tr></thead><tbody>';
+  let h='<thead><tr><th style="width:26px;min-width:26px"></th>'+th('Менеджер','man')+th('План','plan')+th('Факт (с НДС)','fact')+th('НДС','nds')+th('Факт (без НДС)','factNet')+th('Δ (без НДС)','diff')+th('% выполнения','pct')+'<th style="width:140px">&nbsp;</th><th>Доля факта</th></tr></thead><tbody>';
   rows.forEach(x=>{
     const p=x.pct,col=p==null?'#9fb0a8':p>=100?'#00E38A':p>=80?'#fbbf24':'#ff6b6b';
     const w=Math.max(0,Math.min(100,p||0)),op=!!PF.expMan[x.man];
@@ -1552,13 +1552,16 @@ function pfExec(){
       +'<td style="cursor:pointer">'+pfE(x.man)+'</td>'
       +'<td>'+(x.plan?pfF(x.plan):'<span style="color:#5d6b64">—</span>')+'</td>'
       +'<td>'+(x.fact?pfF(x.fact):'<span style="color:#5d6b64">—</span>')+'</td>'
+      +'<td class="c-cy">'+(x.nds?pfF(x.nds):'<span style="color:#5d6b64">—</span>')+'</td>'
+      +'<td class="c-am">'+(x.factNet?pfF(x.factNet):'<span style="color:#5d6b64">—</span>')+'</td>'
       +'<td class="'+(x.diff>=0?'c-gn':'c-rd')+'">'+(x.diff>=0?'+':'−')+pfF(Math.abs(x.diff))+'</td>'
       +'<td style="color:'+col+';font-weight:700">'+(p==null?'нет плана':p.toFixed(1)+' %')+'</td>'
       +'<td><div style="height:6px;background:#1C2622;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+w+'%;background:'+col+';border-radius:3px"></div></div></td>'
       +'<td>'+(tf?(x.fact/tf*100).toFixed(1)+' %':'—')+'</td></tr>';
-    if(op)h+='<tr><td></td><td colspan="7" style="padding:0 12px 12px">'+pfCtrBlock(from,to,x.man)+'</td></tr>';
+    if(op)h+='<tr><td></td><td colspan="9" style="padding:0 12px 12px">'+pfCtrBlock(from,to,x.man)+'</td></tr>';
   });
   h+='</tbody><tfoot><tr style="font-weight:700"><td></td><td>ИТОГО ПО ВСЕМ</td><td>'+pfF(tp)+'</td><td class="c-gn">'+pfF(tf)+'</td>'
+    +'<td class="c-cy">'+pfF(tNds)+'</td><td class="c-am">'+pfF(tSnd)+'</td>'
     +'<td class="'+(tSnd-tp>=0?'c-gn':'c-rd')+'">'+(tSnd-tp>=0?'+':'−')+pfF(Math.abs(tSnd-tp))+'</td>'
     +'<td style="color:'+(pct==null?'#9fb0a8':pct>=100?'#00E38A':pct>=80?'#fbbf24':'#ff6b6b')+'">'+(pct==null?'—':pct.toFixed(1)+' %')+'</td><td></td><td>100 %</td></tr></tfoot>';
   if(!rows.length)h='<tbody><tr><td style="padding:34px;text-align:center;color:var(--ix-mut)">За выбранный период нет ни плана, ни поступлений</td></tr></tbody>';
