@@ -144,7 +144,7 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
   #plan table.dds thead th{background:#f4f4f4!important}
   #plan table.dds thead{display:table-header-group}
   #plan table.dds tr,#plan .ccard{break-inside:avoid}
-  #pf-views,#pf-pills,#pf-sub,#pf-opts,#pf-cum,#pf-ed-add,#pf-toast,#pf-msg,#pf-ed-hint,#pf-cols,#pf-unknown,#pf-bridge,#plan .pf-hint{display:none!important}
+  #pf-views,#pf-pills,#pf-sub,#pf-opts,#pf-cum,#pf-ed-add,#pf-toast,#pf-msg,#pf-ed-hint,#pf-cols,#pf-unknown,#pf-bridge,#pf-card-sel,#plan .pf-hint{display:none!important}
   #plan table.dds thead th:first-child,#plan table.dds tbody td:first-child,#plan table.dds tfoot td:first-child{display:none}
   #pf-print-head{display:block!important;margin-bottom:12px}
   #pf-print-head h2{font-size:15px;margin:0 0 4px;color:#111}
@@ -296,6 +296,7 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
       <button class="ppill" onclick="pfSetView('days',this)">По дням</button>
       <button class="ppill" onclick="pfSetView('mans',this)">Менеджеры</button>
       <button class="ppill" onclick="pfSetView('plan',this)">План</button>
+      <button class="ppill" onclick="pfSetView('card',this)">Карточка менеджера</button>
     </div>
     <div class="period-pills" id="pf-pills">
       <button class="ppill" onclick="pfSetMode('day',this)">День</button>
@@ -398,6 +399,21 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
         </label>
       </div>
     </div>
+  </div>
+
+  <div id="pf-v-card" style="display:none">
+    <div class="period-sub" id="pf-card-sel" style="margin-bottom:14px"></div>
+    <div class="kpis" id="pf-card-kpis" style="grid-template-columns:repeat(5,1fr);margin-bottom:18px"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span class="pf-hint" style="font-size:11px;color:#9fb0a8">поступления выбранного менеджера за период, сгруппированные по счёту</span>
+      <span style="margin-left:auto;display:flex;gap:8px">
+        <button onclick="pfPrint(0)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">🖨&nbsp;Печать</button>
+        <button onclick="pfPrint(1)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">📄&nbsp;PDF</button>
+        <button onclick="pfXlsx()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit">📊&nbsp;Excel</button>
+        <button onclick="pfCsvOut()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">↓&nbsp;CSV</button>
+      </span>
+    </div>
+    <div class="tbl-wrap"><table class="dds" id="pf-card-tbl"></table></div>
   </div>
 </div>
 <script>/*!
@@ -1187,7 +1203,7 @@ const PF={rows:[],sheetPlans:[],loaded:false,busy:false,view:'exec',mode:'month'
   y:new Date().getFullYear(),m:new Date().getMonth()+1,
   day:pfTodayIso(),from:pfMonthStartIso(),to:pfTodayIso(),
   prorate:'cal',src:'buyer',cum:0,chart:null,sort:{k:'fact',dir:-1},
-  plan:{},mans:[],exp:{},expMan:{},edY:new Date().getFullYear(),edM:new Date().getMonth()+1,editBuf:null};
+  plan:{},mans:[],exp:{},expMan:{},edY:new Date().getFullYear(),edM:new Date().getMonth()+1,editBuf:null,card:{man:''}};
 
 try{PF.plan=JSON.parse(localStorage.getItem(PF_K_PLAN)||localStorage.getItem('irixplan:ov')||'{}');}catch(e){PF.plan={};}
 try{PF.mans=JSON.parse(localStorage.getItem(PF_K_MANS)||'[]');}catch(e){PF.mans=[];}
@@ -1483,7 +1499,7 @@ function pfBar(){
   else el.innerHTML='<label>С</label><input type="date" value="'+PF.from+'" onchange="PF.from=this.value;pfRender()"> <span class="period-sep">—</span> <label>По</label><input type="date" value="'+PF.to+'" onchange="PF.to=this.value;pfRender()">';
 }
 function pfGoView(v){
-  const idx={exec:0,days:1,mans:2,plan:3}[v];
+  const idx={exec:0,days:1,mans:2,plan:3,card:4}[v];
   const btns=document.querySelectorAll('#pf-views .ppill');
   if(btns[idx])pfSetView(v,btns[idx]);
 }
@@ -1496,9 +1512,9 @@ function pfSetView(v,btn){
   PF.view=v;
   document.querySelectorAll('#pf-views .ppill').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  ['exec','days','mans','plan'].forEach(k=>{document.getElementById('pf-v-'+k).style.display=(k===v?'':'none');});
-  document.getElementById('pf-pills').style.display=(v==='exec'?'flex':'none');
-  document.getElementById('pf-sub').style.display=(v==='exec'||v==='days')?'flex':'none';
+  ['exec','days','mans','plan','card'].forEach(k=>{document.getElementById('pf-v-'+k).style.display=(k===v?'':'none');});
+  document.getElementById('pf-pills').style.display=(v==='exec'||v==='card'?'flex':'none');
+  document.getElementById('pf-sub').style.display=(v==='exec'||v==='days'||v==='card')?'flex':'none';
   document.getElementById('pf-opts').style.display=(v==='mans')?'none':'flex';
   pfRender();
 }
@@ -1510,10 +1526,13 @@ function pfRender(){
   if(!PF.loaded){
     document.getElementById('pf-kpis').innerHTML='';
     document.getElementById('pf-tbl').innerHTML='<tbody><tr><td style="padding:34px;text-align:center;color:var(--ix-mut)">Нажмите «Обновить факт», чтобы загрузить поступления из Google Таблицы</td></tr></tbody>';
+    const ck=document.getElementById('pf-card-kpis'),ct=document.getElementById('pf-card-tbl');
+    if(ck)ck.innerHTML='';
+    if(ct)ct.innerHTML='<tbody><tr><td style="padding:34px;text-align:center;color:var(--ix-mut)">Нажмите «Обновить факт», чтобы загрузить поступления из Google Таблицы</td></tr></tbody>';
     return;
   }
   pfBar();
-  if(PF.view==='exec')pfExec(); else pfDays();
+  if(PF.view==='exec')pfExec(); else if(PF.view==='card')pfCardView(); else pfDays();
 }
 
 /* ══ 1. ВЫПОЛНЕНИЕ ══ */
@@ -1581,6 +1600,68 @@ function pfCtrBlock(from,to,man){
   let h='<div style="border:1px solid #33403A;border-radius:8px;overflow:hidden"><table class="dds" style="font-size:11.5px"><thead><tr><th>Контрагент</th><th>Платежей</th><th>Последний</th><th>Сумма</th><th>Доля</th></tr></thead><tbody>';
   list.forEach(k=>{h+='<tr><td>'+pfE(k)+'</td><td>'+agg[k].n+'</td><td>'+agg[k].last.split('-').reverse().join('.')+'</td><td class="c-gn">'+pfF(agg[k].s)+'</td><td>'+(agg[k].s/tot*100).toFixed(1)+' %</td></tr>';});
   return h+'</tbody></table></div>';
+}
+
+/* ══ 1б. КАРТОЧКА МЕНЕДЖЕРА — план/факт + разбивка по счетам ══ */
+function pfCardRows(from,to,man){
+  const a=pfIso(from),b=pfIso(to);
+  return pfFacts().filter(r=>r.d>=a&&r.d<=b&&r.man===man);
+}
+function pfCardView(){
+  const [from,to]=pfRange();
+  const mans=pfMansAll();
+  if(!PF.card)PF.card={man:''};
+  if(!PF.card.man||mans.indexOf(PF.card.man)<0)PF.card.man=mans[0]||'';
+  const sel=document.getElementById('pf-card-sel');
+  if(sel)sel.innerHTML=mans.length
+    ?'<label>Менеджер</label><select onchange="PF.card.man=this.value;pfCardView()">'+mans.map(m=>'<option value="'+pfE(m)+'"'+(m===PF.card.man?' selected':'')+'>'+pfE(m)+'</option>').join('')+'</select>'
+    :'<span style="color:#9fb0a8">Нет ни одного менеджера — заполните справочник на вкладке «Менеджеры»</span>';
+  const man=PF.card.man;
+  const R=man?pfCardRows(from,to,man):[];
+  const pl=man?pfPlanIn(from,to,man):0;
+  const fa=R.reduce((s,r)=>s+r.s,0),nds=R.reduce((s,r)=>s+(r.nds||0),0),snd=R.reduce((s,r)=>s+(r.snd||0),0);
+  const pct=pl>0?snd/pl*100:null;
+  const K=(cls,lbl,val,sub)=>'<div class="kpi '+cls+'"><div class="kpi-lbl">'+lbl+'</div><div class="kpi-val">'+val+'</div><div class="kpi-sub">'+(sub||'')+'</div></div>';
+  const dl=pfIso(from).split('-').reverse().join('.')+(pfIso(from)===pfIso(to)?'':' — '+pfIso(to).split('-').reverse().join('.'));
+  const kpis=document.getElementById('pf-card-kpis');
+  if(kpis)kpis.innerHTML=
+     K('kpi-inv','План на период',pfF(pl),dl)
+    +K('kpi-rec','Факт (с НДС)','<span class="c-gn">'+pfF(fa)+'</span>',PF.src==='buyer'?'поступления от покупателей':PF.src==='in'?'все поступления':'все строки с плюсом')
+    +K('kpi-ndsy','НДС','<span class="c-cy">'+pfF(nds)+'</span>','из листа «Свод по счетам»')
+    +K('kpi-ndsn','Сумма без НДС','<span class="c-am">'+pfF(snd)+'</span>','из листа «Свод по счетам»')
+    +K('kpi-div','% выполнения плана',pct==null?'—':'<span class="'+(pct>=100?'c-gn':pct>=80?'c-am':'c-rd')+'">'+pct.toFixed(1)+' %</span>','от суммы без НДС');
+
+  const agg={};
+  R.forEach(r=>{const k=r.co||'без счёта';if(!agg[k])agg[k]={n:0,s:0,nds:0,snd:0,last:''};
+    agg[k].n++;agg[k].s+=r.s;agg[k].nds+=r.nds||0;agg[k].snd+=r.snd||0;if(r.d>agg[k].last)agg[k].last=r.d;});
+  const list=Object.keys(agg).sort((x,y)=>agg[y].s-agg[x].s);
+  let h='<thead><tr><th style="text-align:left">Счёт</th><th>Платежей</th><th>Последний</th><th>Сумма (с НДС)</th><th>НДС</th><th>Сумма без НДС</th><th>Доля</th></tr></thead><tbody>';
+  list.forEach(k=>{
+    h+='<tr><td style="text-align:left">'+pfE(k)+'</td><td>'+agg[k].n+'</td><td>'+agg[k].last.split('-').reverse().join('.')+'</td>'
+      +'<td class="c-gn">'+pfF(agg[k].s)+'</td><td class="c-cy">'+pfF(agg[k].nds)+'</td><td class="c-am">'+pfF(agg[k].snd)+'</td>'
+      +'<td>'+(fa?(agg[k].s/fa*100).toFixed(1)+' %':'—')+'</td></tr>';
+  });
+  if(!list.length)h+='<tr><td colspan="7" style="padding:34px;text-align:center;color:var(--ix-mut)">'+(man?'За выбранный период у менеджера нет поступлений':'Выберите менеджера')+'</td></tr></tbody>';
+  else h+='</tbody><tfoot><tr style="font-weight:700"><td style="text-align:left">ИТОГО</td><td>'+R.length+'</td><td></td>'
+    +'<td class="c-gn">'+pfF(fa)+'</td><td class="c-cy">'+pfF(nds)+'</td><td class="c-am">'+pfF(snd)+'</td><td>100 %</td></tr></tfoot>';
+  document.getElementById('pf-card-tbl').innerHTML=h;
+}
+function pfAoaCard(){
+  const [from,to]=pfRange(),man=PF.card&&PF.card.man||'';
+  const R=man?pfCardRows(from,to,man):[];
+  const pl=man?pfPlanIn(from,to,man):0;
+  const fa=R.reduce((s,r)=>s+r.s,0),nds=R.reduce((s,r)=>s+(r.nds||0),0),snd=R.reduce((s,r)=>s+(r.snd||0),0);
+  const agg={};
+  R.forEach(r=>{const k=r.co||'без счёта';if(!agg[k])agg[k]={n:0,s:0,nds:0,snd:0};
+    agg[k].n++;agg[k].s+=r.s;agg[k].nds+=r.nds||0;agg[k].snd+=r.snd||0;});
+  const list=Object.keys(agg).sort((x,y)=>agg[y].s-agg[x].s);
+  const dl=pfIso(from).split('-').reverse().join('.')+(pfIso(from)===pfIso(to)?'':' — '+pfIso(to).split('-').reverse().join('.'));
+  const rows=[['Менеджер',man||'—'],['Период',dl],['План',Math.round(pl)],['Факт (с НДС)',Math.round(fa)],
+    ['НДС',Math.round(nds)],['Сумма без НДС',Math.round(snd)],['% выполнения плана',pl>0?Math.round(snd/pl*100):''],[],
+    ['Счёт','Платежей','Сумма (с НДС)','НДС','Сумма без НДС','Доля']];
+  list.forEach(k=>rows.push([k,agg[k].n,Math.round(agg[k].s),Math.round(agg[k].nds),Math.round(agg[k].snd),fa?+(agg[k].s/fa*100).toFixed(1):'']));
+  if(list.length)rows.push(['ИТОГО',R.length,Math.round(fa),Math.round(nds),Math.round(snd),100]);
+  return {rows:rows,title:'Карточка менеджера — '+(man||'—')+' · '+dl,name:'Карточка менеджера'};
 }
 
 /* ══ 2. ПО ДНЯМ ══ */
@@ -1745,15 +1826,15 @@ function pfSrcLabel(){
 
 /* CSV текущего вида */
 function pfCsvOut(){
-  const A=PF.view==='days'?pfAoaDays():pfAoaExec();
+  const A=PF.view==='days'?pfAoaDays():PF.view==='card'?pfAoaCard():pfAoaExec();
   const csv=A.rows.map(r=>r.map(c=>c===''||c==null?'':c).join(';')).join('\n');
   const a=document.createElement('a');
   a.href='data:text/csv;charset=utf-8,'+encodeURIComponent('\ufeff'+csv);
-  a.download='план-факт_'+PF.y+'-'+pfP2(PF.m)+'.csv';a.click();
+  a.download=(PF.view==='card'?'карточка-менеджера_':'план-факт_')+PF.y+'-'+pfP2(PF.m)+'.csv';a.click();
   pfToast('CSV сохранён.','ok');
 }
 
-/* Excel: оба листа сразу */
+/* Excel: карточка менеджера — один лист; иначе — оба листа сразу */
 function pfXlsx(){
   if(typeof XLSX==='undefined'){
     pfToast('Библиотека Excel не загрузилась (нужен интернет) — сохраняю CSV.','warn');
@@ -1761,19 +1842,20 @@ function pfXlsx(){
   }
   try{
     const wb=XLSX.utils.book_new();
-    [pfAoaDays(),pfAoaExec()].forEach(A=>{
+    const list=PF.view==='card'?[pfAoaCard()]:[pfAoaDays(),pfAoaExec()];
+    list.forEach(A=>{
       const ws=XLSX.utils.aoa_to_sheet([[A.title],['Факт: '+pfSrcLabel()+' · сформировано '+new Date().toLocaleString('ru-RU')],[]].concat(A.rows));
       ws['!cols']=A.rows[0].map((c,i)=>({wch:i===0?16:15}));
       XLSX.utils.book_append_sheet(wb,ws,A.name);
     });
-    XLSX.writeFile(wb,'план-факт_'+PF.y+'-'+pfP2(PF.m)+'.xlsx');
-    pfToast('Файл Excel сохранён — два листа: «По дням» и «По менеджерам».','ok');
+    XLSX.writeFile(wb,(PF.view==='card'?'карточка-менеджера_':'план-факт_')+PF.y+'-'+pfP2(PF.m)+'.xlsx');
+    pfToast(PF.view==='card'?'Файл Excel сохранён.':'Файл Excel сохранён — два листа: «По дням» и «По менеджерам».','ok');
   }catch(e){pfToast('Не удалось собрать Excel: '+e.message+'. Сохраняю CSV.','err');pfCsvOut();}
 }
 
 /* Печать / PDF: печатается только открытый раздел вкладки */
 function pfPrint(asPdf){
-  const A=PF.view==='days'?pfAoaDays():pfAoaExec();
+  const A=PF.view==='days'?pfAoaDays():PF.view==='card'?pfAoaCard():pfAoaExec();
   const h=document.getElementById('pf-print-head');
   if(h)h.innerHTML='<h2>'+pfE(A.title)+'</h2>'
     +'<div>Факт: '+pfSrcLabel()+' (лист «Свод по счетам»)'
