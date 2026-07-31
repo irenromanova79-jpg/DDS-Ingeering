@@ -1203,7 +1203,7 @@ const PF={rows:[],sheetPlans:[],loaded:false,busy:false,view:'exec',mode:'month'
   y:new Date().getFullYear(),m:new Date().getMonth()+1,
   day:pfTodayIso(),from:pfMonthStartIso(),to:pfTodayIso(),
   prorate:'cal',src:'buyer',cum:0,chart:null,sort:{k:'fact',dir:-1},
-  plan:{},mans:[],exp:{},expMan:{},edY:new Date().getFullYear(),edM:new Date().getMonth()+1,editBuf:null,card:{man:''}};
+  plan:{},mans:[],exp:{},expMan:{},edY:new Date().getFullYear(),edM:new Date().getMonth()+1,editBuf:null,card:{man:''},cardExp:{}};
 
 try{PF.plan=JSON.parse(localStorage.getItem(PF_K_PLAN)||localStorage.getItem('irixplan:ov')||'{}');}catch(e){PF.plan={};}
 try{PF.mans=JSON.parse(localStorage.getItem(PF_K_MANS)||'[]');}catch(e){PF.mans=[];}
@@ -1635,16 +1635,34 @@ function pfCardView(){
   R.forEach(r=>{const k=r.co||'без счёта';if(!agg[k])agg[k]={n:0,s:0,nds:0,snd:0,last:''};
     agg[k].n++;agg[k].s+=r.s;agg[k].nds+=r.nds||0;agg[k].snd+=r.snd||0;if(r.d>agg[k].last)agg[k].last=r.d;});
   const list=Object.keys(agg).sort((x,y)=>agg[y].s-agg[x].s);
-  let h='<thead><tr><th style="text-align:left">Счёт</th><th>Платежей</th><th>Последний</th><th>Сумма (с НДС)</th><th>НДС</th><th>Сумма без НДС</th><th>Доля</th></tr></thead><tbody>';
+  let h='<thead><tr><th style="width:26px;min-width:26px"></th><th style="text-align:left">Счёт</th><th>Платежей</th><th>Последний</th><th>Сумма (с НДС)</th><th>НДС</th><th>Сумма без НДС</th><th>Доля</th></tr></thead><tbody>';
   list.forEach(k=>{
-    h+='<tr><td style="text-align:left">'+pfE(k)+'</td><td>'+agg[k].n+'</td><td>'+agg[k].last.split('-').reverse().join('.')+'</td>'
+    const op=!!PF.cardExp[k];
+    h+='<tr><td style="text-align:center;cursor:pointer;color:#00E38A;font-family:inherit" onclick="pfCardTog(\''+pfQ(k)+'\')">'+(op?'▾':'▸')+'</td>'
+      +'<td style="text-align:left;cursor:pointer" onclick="pfCardTog(\''+pfQ(k)+'\')">'+pfE(k)+'</td>'
+      +'<td>'+agg[k].n+'</td><td>'+agg[k].last.split('-').reverse().join('.')+'</td>'
       +'<td class="c-gn">'+pfF(agg[k].s)+'</td><td class="c-cy">'+pfF(agg[k].nds)+'</td><td class="c-am">'+pfF(agg[k].snd)+'</td>'
       +'<td>'+(fa?(agg[k].s/fa*100).toFixed(1)+' %':'—')+'</td></tr>';
+    if(op)h+='<tr><td></td><td colspan="7" style="padding:0 12px 12px">'+pfCardCoBlock(R,k)+'</td></tr>';
   });
-  if(!list.length)h+='<tr><td colspan="7" style="padding:34px;text-align:center;color:var(--ix-mut)">'+(man?'За выбранный период у менеджера нет поступлений':'Выберите менеджера')+'</td></tr></tbody>';
-  else h+='</tbody><tfoot><tr style="font-weight:700"><td style="text-align:left">ИТОГО</td><td>'+R.length+'</td><td></td>'
+  if(!list.length)h+='<tr><td colspan="8" style="padding:34px;text-align:center;color:var(--ix-mut)">'+(man?'За выбранный период у менеджера нет поступлений':'Выберите менеджера')+'</td></tr></tbody>';
+  else h+='</tbody><tfoot><tr style="font-weight:700"><td></td><td style="text-align:left">ИТОГО</td><td>'+R.length+'</td><td></td>'
     +'<td class="c-gn">'+pfF(fa)+'</td><td class="c-cy">'+pfF(nds)+'</td><td class="c-am">'+pfF(snd)+'</td><td>100 %</td></tr></tfoot>';
   document.getElementById('pf-card-tbl').innerHTML=h;
+}
+function pfCardTog(k){PF.cardExp[k]=!PF.cardExp[k];pfCardView();}
+/* детализация по компаниям/контрагентам внутри одного счёта */
+function pfCardCoBlock(R,acc){
+  const agg={};
+  R.forEach(r=>{if((r.co||'без счёта')!==acc)return;
+    const k=r.ctr||'без контрагента';if(!agg[k])agg[k]={s:0,n:0,last:''};
+    agg[k].s+=r.s;agg[k].n++;if(r.d>agg[k].last)agg[k].last=r.d;});
+  const list=Object.keys(agg).sort((x,y)=>agg[y].s-agg[x].s);
+  if(!list.length)return '<div style="color:#5d6b64;font-size:11.5px;padding:6px 0">поступлений нет</div>';
+  const tot=list.reduce((s,k)=>s+agg[k].s,0);
+  let h='<div style="border:1px solid #33403A;border-radius:8px;overflow:hidden"><table class="dds" style="font-size:11.5px"><thead><tr><th style="text-align:left">Компания / контрагент</th><th>Платежей</th><th>Последний</th><th>Сумма</th><th>Доля</th></tr></thead><tbody>';
+  list.forEach(k=>{h+='<tr><td style="text-align:left">'+pfE(k)+'</td><td>'+agg[k].n+'</td><td>'+agg[k].last.split('-').reverse().join('.')+'</td><td class="c-gn">'+pfF(agg[k].s)+'</td><td>'+(agg[k].s/tot*100).toFixed(1)+' %</td></tr>';});
+  return h+'</tbody></table></div>';
 }
 function pfAoaCard(){
   const [from,to]=pfRange(),man=PF.card&&PF.card.man||'';
