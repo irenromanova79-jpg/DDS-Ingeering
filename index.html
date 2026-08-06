@@ -144,7 +144,7 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
   #plan table.dds thead th{background:#f4f4f4!important}
   #plan table.dds thead{display:table-header-group}
   #plan table.dds tr,#plan .ccard{break-inside:avoid}
-  #pf-views,#pf-pills,#pf-sub,#pf-opts,#pf-cum,#pf-ed-add,#pf-toast,#pf-msg,#pf-ed-hint,#pf-cols,#pf-unknown,#pf-bridge,#pf-card-sel,#plan .pf-hint{display:none!important}
+  #pf-views,#pf-pills,#pf-sub,#pf-opts,#pf-cum,#pf-ed-add,#pf-toast,#pf-msg,#pf-ed-hint,#pf-cols,#pf-unknown,#pf-bridge,#pf-card-sel,#pf-excl-box,#pf-sheet-dds,#pf-sheet-marg,#plan .pf-hint{display:none!important}
   #pf-tbl>thead>tr>th:first-child,#pf-tbl>tbody>tr>td:first-child,#pf-tbl>tfoot>tr>td:first-child,
   #pf-dyn>thead>tr>th:first-child,#pf-dyn>tbody>tr>td:first-child,#pf-dyn>tfoot>tr>td:first-child,
   #pf-card-tbl>thead>tr>th:first-child,#pf-card-tbl>tbody>tr>td:first-child,#pf-card-tbl>tfoot>tr>td:first-child{display:none}
@@ -324,6 +324,7 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
     </select>
     <div class="period-info" id="pf-info" style="margin-left:auto">факт не загружен</div>
   </div>
+  <div class="period-sub" id="pf-excl-box" style="margin-bottom:14px;display:none"></div>
   <div id="pf-msg" style="display:none"></div>
   <div id="pf-print-head"></div>
 
@@ -1202,7 +1203,7 @@ function exportExcel(){
 // ══════════════════════════════════════════════════════
 const PF_SID='1-mIST6Tzn_s7nKEIHoQV2GPLpk7cTus9RAgZxVi-GZQ';
 const PF_PLAN_GID='397917950'; /* gid листа «План Менеджеры» — надёжнее, чем искать по названию */
-const PF_K_PLAN='irixplan:plan', PF_K_MANS='irixplan:mans2', PF_K_BRIDGE='irixplan:bridge', PF_K_PLAN_REV='irixplan:planrev';
+const PF_K_PLAN='irixplan:plan', PF_K_MANS='irixplan:mans2', PF_K_BRIDGE='irixplan:bridge', PF_K_PLAN_REV='irixplan:planrev', PF_K_EXCL='irixplan:excl';
 const PF_COL=['#00E38A','#22d3ee','#fbbf24','#b79aff','#ff6b6b','#7dd3fc','#a3e635','#f472b6','#facc15','#34d399'];
 const PF_NOMAN='— без менеджера —';
 
@@ -1214,10 +1215,12 @@ const PF={rows:[],sheetPlans:[],loaded:false,busy:false,view:'exec',mode:'month'
   day:pfTodayIso(),from:pfMonthStartIso(),to:pfTodayIso(),
   prorate:'cal',src:'buyer',cum:0,chart:null,sort:{k:'fact',dir:-1},
   plan:{},mans:[],exp:{},expMan:{},edY:new Date().getFullYear(),edM:new Date().getMonth()+1,editBuf:null,card:{man:''},cardExp:{},
-  planKind:'cash',planRev:{},sheet:'dds'};
+  planKind:'cash',planRev:{},sheet:'dds',excludeCtr:['АО Альфа-Банк']};
 
 try{PF.plan=JSON.parse(localStorage.getItem(PF_K_PLAN)||localStorage.getItem('irixplan:ov')||'{}');}catch(e){PF.plan={};}
 try{PF.planRev=JSON.parse(localStorage.getItem(PF_K_PLAN_REV)||'{}');}catch(e){PF.planRev={};}
+try{const ex=localStorage.getItem(PF_K_EXCL);if(ex)PF.excludeCtr=JSON.parse(ex);}catch(e){}
+function pfSaveExclLS(){try{localStorage.setItem(PF_K_EXCL,JSON.stringify(PF.excludeCtr));}catch(e){}}
 try{PF.mans=JSON.parse(localStorage.getItem(PF_K_MANS)||'[]');}catch(e){PF.mans=[];}
 try{PF.bridge=JSON.parse(localStorage.getItem(PF_K_BRIDGE)||'{}');}catch(e){PF.bridge={};}
 function pfShared(){return !!(PF.bridge&&PF.bridge.url);}
@@ -1389,8 +1392,9 @@ async function pfLoad(withPlan){
       const s=pfNum(c[iS]);if(s<=0)continue;
       const man=iM<0?'':(c[iM]||'').trim();
       const stV=(c[iA]||'').trim();
-      if(!man&&pfNorm(stV).indexOf('поступление от покупателей')>=0){noMan++;noManSum+=s;}
       const ctrV=(c[iK]||'').trim()||'без контрагента';
+      const isExcl=PF.excludeCtr.some(x=>pfNorm(ctrV)===pfNorm(x)||pfNorm(ctrV).indexOf(pfNorm(x))>=0);
+      if(!man&&!isExcl&&pfNorm(stV).indexOf('поступление от покупателей')>=0){noMan++;noManSum+=s;}
       const coV=iC<0?ctrV:((c[iC]||'').trim()||'без компании');
       /* НДС и сумма без НДС должны всегда давать в сумме полную сумму строки —
          берём то, что заполнено в таблице, и досчитываем недостающее, а не суммируем оба столбца независимо */
@@ -1465,10 +1469,17 @@ function pfPlanMonthsAll(){
   return Object.keys(s);
 }
 function pfPlanMonths(){return Object.keys(PF.plan);}
+function pfExcluded(r){
+  const c=pfNorm(r.ctr);
+  return PF.excludeCtr.some(x=>c===pfNorm(x)||c.indexOf(pfNorm(x))>=0);
+}
 function pfFacts(){
-  if(PF.src==='all')return PF.rows;
-  if(PF.src==='in')return PF.rows.filter(r=>pfNorm(r.op).indexOf('поступлен')>=0);
-  return PF.rows.filter(r=>pfNorm(r.st).indexOf('поступление от покупателей')>=0);
+  let base;
+  if(PF.src==='all')base=PF.rows;
+  else if(PF.src==='in')base=PF.rows.filter(r=>pfNorm(r.op).indexOf('поступлен')>=0);
+  else base=PF.rows.filter(r=>pfNorm(r.st).indexOf('поступление от покупателей')>=0);
+  if(PF.excludeCtr&&PF.excludeCtr.length)base=base.filter(r=>!pfExcluded(r));
+  return base;
 }
 function pfMansAll(){
   const s={};PF.mans.forEach(m=>s[m]=1);
@@ -1555,6 +1566,7 @@ function pfSetView(v,btn){
   document.getElementById('pf-pills').style.display=(v==='exec'||v==='card'?'flex':'none');
   document.getElementById('pf-sub').style.display=(v==='exec'||v==='days'||v==='card')?'flex':'none';
   document.getElementById('pf-opts').style.display=(v==='mans')?'none':'flex';
+  const eb=document.getElementById('pf-excl-box');if(eb&&v!=='exec')eb.style.display='none';
   pfRender();
 }
 
@@ -1582,7 +1594,35 @@ function pfSetSheet(v,btn){
   document.getElementById('pf-kpis').style.gridTemplateColumns='repeat('+(v==='marg'?6:4)+',1fr)';
   pfExec();
 }
+/* список контрагентов, исключённых из факта (депозиты, банковские проценты и т.п.) */
+function pfExclBox(){
+  const el=document.getElementById('pf-excl-box');if(!el)return;
+  el.style.display='';
+  const chips=PF.excludeCtr.length
+    ? PF.excludeCtr.map((c,i)=>'<span style="display:inline-flex;align-items:center;gap:5px;margin:0 6px 5px 0;padding:3px 9px;font-size:11.5px;border:1px solid #44534C;border-radius:20px;background:rgba(255,255,255,.03);color:#F2F2F2">'+pfE(c)+' <span onclick="pfExclDel('+i+')" title="вернуть в факт" style="cursor:pointer;color:#ff6b6b;font-weight:700">×</span></span>').join('')
+    : '<span style="color:#5d6b64;font-size:11.5px">список пуст</span>';
+  el.innerHTML='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 12px;border:1px solid #33403A;border-radius:8px;background:rgba(255,255,255,.02)">'
+    +'<span style="font-size:11.5px;color:#9fb0a8">Исключены из факта (не выручка — депозиты, проценты банка):</span>'
+    +chips
+    +'<input id="pf-excl-inp" placeholder="контрагент…" onkeydown="if(event.key===\'Enter\')pfExclAdd()" style="min-width:180px;padding:4px 9px;border:1px solid #44534C;border-radius:6px;background:#1C2622;color:#F2F2F2;font-family:inherit;font-size:11.5px">'
+    +'<button onclick="pfExclAdd()" style="padding:4px 11px;font-size:11.5px;border:1px solid #44534C;border-radius:6px;background:transparent;color:#F2F2F2;cursor:pointer;font-family:inherit">+ Исключить</button>'
+    +'</div>';
+}
+function pfExclAdd(){
+  const inp=document.getElementById('pf-excl-inp');const v=(inp&&inp.value||'').trim();
+  if(!v)return;
+  if(PF.excludeCtr.some(x=>pfNorm(x)===pfNorm(v))){pfToast('«'+pfE(v)+'» уже в списке исключений.','warn');return;}
+  PF.excludeCtr.push(v);pfSaveExclLS();
+  pfToast('«'+pfE(v)+'» исключён из факта.','ok');
+  pfExec();
+}
+function pfExclDel(i){
+  const c=PF.excludeCtr[i];PF.excludeCtr.splice(i,1);pfSaveExclLS();
+  pfToast('«'+pfE(c)+'» снова учитывается в факте.','warn');
+  pfExec();
+}
 function pfExec(){
+  pfExclBox();
   const [from,to]=pfRange(),R=pfFacts();
   const marg=PF.sheet==='marg';
   let rows=pfMansAll().map(m=>{
