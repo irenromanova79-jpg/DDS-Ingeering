@@ -387,7 +387,7 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
       <div class="ctitle">План по менеджерам</div>
       <div style="display:flex;gap:8px;margin-bottom:14px">
         <button class="ppill active" id="pf-pk-cash" onclick="pfSetPlanKind('cash',this)">План (деньги)</button>
-        <button class="ppill" id="pf-pk-rev" onclick="pfSetPlanKind('rev',this)">План по выручке (без НДС)</button>
+        <button class="ppill" id="pf-pk-rev" onclick="pfSetPlanKind('rev',this)">План по марже</button>
       </div>
       <div id="pf-bridge" class="period-sub" style="margin-bottom:12px;padding:9px 12px;border:1px solid #33403A;border-radius:8px;background:rgba(255,255,255,.02)"></div>
       <div class="period-sub" id="pf-ed-sel" style="margin-bottom:12px"></div>
@@ -1215,7 +1215,7 @@ const PF={rows:[],sheetPlans:[],loaded:false,busy:false,view:'exec',mode:'month'
   day:pfTodayIso(),from:pfMonthStartIso(),to:pfTodayIso(),
   prorate:'cal',src:'buyer',cum:0,chart:null,sort:{k:'fact',dir:-1},
   plan:{},mans:[],exp:{},expMan:{},edY:new Date().getFullYear(),edM:new Date().getMonth()+1,editBuf:null,card:{man:''},cardExp:{},
-  planKind:'cash',planRev:{},sheet:'dds',excludeCtr:['АО Альфа-Банк']};
+  planKind:'cash',planRev:{},sheet:'dds',excludeCtr:['Альфа']};
 
 try{PF.plan=JSON.parse(localStorage.getItem(PF_K_PLAN)||localStorage.getItem('irixplan:ov')||'{}');}catch(e){PF.plan={};}
 try{PF.planRev=JSON.parse(localStorage.getItem(PF_K_PLAN_REV)||'{}');}catch(e){PF.planRev={};}
@@ -1230,8 +1230,15 @@ function pfSaveMansLS(){try{localStorage.setItem(PF_K_MANS,JSON.stringify(PF.man
 /* какое хранилище редактируется сейчас на вкладке «План» */
 function pfPlanStore(){return PF.planKind==='rev'?PF.planRev:PF.plan;}
 function pfPlanStoreSave(){if(PF.planKind==='rev')pfSavePlanRevLS();else pfSavePlanLS();}
-/* план по выручке (без НДС) — только локально, отдельно от денежного плана, используется листом «Маржа» */
-function pfPlanRevOf(y,m,man){const k=y+'-'+m;return (PF.planRev[k]&&PF.planRev[k][man]!=null)?PF.planRev[k][man]:0;}
+/* план по выручке (Маржа): берётся из листа (строки с признаком «Маржа» в столбце F),
+   локальная правка в браузере имеет приоритет там, где она есть */
+function pfPlanRevOf(y,m,man){
+  const k=y+'-'+m;
+  const loc=(PF.planRev[k]&&PF.planRev[k][man]!=null)?PF.planRev[k][man]:null;
+  if(loc!=null)return loc;
+  const sh=pfSheetPlanOf(y,m,man,'rev');
+  return sh!=null?sh:0;
+}
 function pfPlanRevIn(from,to,man){
   let out=0;const mans=man?[man]:pfMansAll();
   for(let y=from.getFullYear();y<=to.getFullYear();y++)for(let mo=1;mo<=12;mo++){
@@ -1316,7 +1323,8 @@ function pfParsePlan(txt){
   }
   const PH=pr[phr]||[];
   const pD=pfFindCol(PH,['дата'],0),pM=pfFindCol(PH,['месяц'],1),pY=pfFindCol(PH,['год'],2),
-        pMan=pfFindCol(PH,['менеджер'],3),pS=pfFindCol(PH,['сумма-план','сумма план','сумма','план'],4);
+        pMan=pfFindCol(PH,['менеджер'],3),pS=pfFindCol(PH,['сумма-план','сумма план','сумма','план'],4),
+        pK=pfFindCol(PH,['ддс/маржа','ддс / маржа','ддс/','признак','тип'],5);
   for(let i=phr+1;i<pr.length;i++){
     const c=pr[i];if(!c||c.length<3)continue;
     const man=(c[pMan]||'').trim();if(!man)continue;
@@ -1325,7 +1333,10 @@ function pfParsePlan(txt){
     else{y=Math.round(pfNum(c[pY]));mo=Math.round(pfNum(c[pM]));}
     if(y<1900||mo<1||mo>12)continue;
     const sum=pfNum(c[pS]);if(sum<=0)continue;
-    sp.push({y:y,m:mo,man:man,sum:sum});
+    /* признак из столбца F: «маржа» → план по выручке, иначе (пусто/«ддс») → денежный план */
+    const kindRaw=pK>=0?pfNorm(c[pK]):'';
+    const kind=kindRaw.indexOf('маржа')>=0?'rev':'cash';
+    sp.push({y:y,m:mo,man:man,sum:sum,kind:kind});
   }
   return sp;
 }
@@ -1379,8 +1390,9 @@ async function pfLoad(withPlan){
           iO=pfFindCol(H,['операция'],5), iA=pfFindCol(H,['статьи','статья'],9),
           iK=pfFindCol(H,['контрагент'],10), iM=pfFindCol(H,['менеджер'],-1),
           iC=pfFindCol(H,['компания','счет','счёт','юр лицо','юрлицо','организация','аккаунт'],-1),
-          iN=pfFindCol(H,['ндс'],13), iSnd=pfFindCol(H,['без ндс','сумма без ндс'],14);
-    PF.cols={d:iD,s:iS,o:iO,a:iA,k:iK,m:iM,c:iC,n:iN,snd:iSnd};
+          iN=pfFindCol(H,['ндс'],13), iSnd=pfFindCol(H,['без ндс','сумма без ндс'],14),
+          iSub=pfFindCol(H,['сумма подрядчика','сумма подрядчиков','подрядчик','подрядчики','подрядчика'],15);
+    PF.cols={d:iD,s:iS,o:iO,a:iA,k:iK,m:iM,c:iC,n:iN,snd:iSnd,sub:iSub};
     PF.head=H.map((x,i)=>({l:pfL(i),t:String(x||'').trim()})).filter(x=>x.t);
     let manWarn='';
     if(iM<0)manWarn='В листе «Свод по счетам» не нашёлся столбец с заголовком «Менеджер» — все поступления сложены в строку «'+PF_NOMAN+'». Вот какие заголовки прочитались: '
@@ -1393,9 +1405,9 @@ async function pfLoad(withPlan){
       const man=iM<0?'':(c[iM]||'').trim();
       const stV=(c[iA]||'').trim();
       const ctrV=(c[iK]||'').trim()||'без контрагента';
-      const isExcl=PF.excludeCtr.some(x=>pfNorm(ctrV)===pfNorm(x)||pfNorm(ctrV).indexOf(pfNorm(x))>=0);
-      if(!man&&!isExcl&&pfNorm(stV).indexOf('поступление от покупателей')>=0){noMan++;noManSum+=s;}
       const coV=iC<0?ctrV:((c[iC]||'').trim()||'без компании');
+      const isExcl=PF.excludeCtr.some(x=>{const n=pfNorm(x);return n&&(pfNorm(ctrV).indexOf(n)>=0||pfNorm(coV).indexOf(n)>=0);});
+      if(!man&&!isExcl&&pfNorm(stV).indexOf('поступление от покупателей')>=0){noMan++;noManSum+=s;}
       /* НДС и сумма без НДС должны всегда давать в сумме полную сумму строки —
          берём то, что заполнено в таблице, и досчитываем недостающее, а не суммируем оба столбца независимо */
       const ndsRaw=iN>=0?pfNum(c[iN]):0, sndRaw=iSnd>=0?pfNum(c[iSnd]):0;
@@ -1403,7 +1415,8 @@ async function pfLoad(withPlan){
       if(ndsRaw){ndsV=ndsRaw;sndV=s-ndsRaw;}
       else if(sndRaw){sndV=sndRaw;ndsV=s-sndRaw;}
       else{ndsV=0;sndV=s;}
-      out.push({d:ds,s:s,op:(c[iO]||'').trim(),st:stV,ctr:ctrV,man:man||PF_NOMAN,co:coV,nds:ndsV,snd:sndV});
+      const subV=iSub>=0?pfNum(c[iSub]):0;
+      out.push({d:ds,s:s,op:(c[iO]||'').trim(),st:stV,ctr:ctrV,man:man||PF_NOMAN,co:coV,nds:ndsV,snd:sndV,sub:subV,marg:sndV-subV});
     }
     if(!out.length)throw new Error('Из листа «Свод по счетам» не распознана ни одна строка.');
     PF.rows=out;
@@ -1426,7 +1439,8 @@ async function pfLoad(withPlan){
       PF._edSet=true;PF.editBuf=null;
     }
     const info=document.getElementById('pf-info');
-    if(info)info.textContent='Поступлений: '+out.length+' · в листе «План»: '+sp.length+' стр. · '+new Date().toLocaleString('ru-RU');
+    if(info){const nc=sp.filter(p=>(p.kind||'cash')==='cash').length,nr=sp.filter(p=>p.kind==='rev').length;
+      info.textContent='Поступлений: '+out.length+' · план: ДДС '+nc+' / Маржа '+nr+' стр. · '+new Date().toLocaleString('ru-RU');}
     if(manWarn)pfMsg(manWarn,'err');
     else if(noMan)pfMsg('Поступлений от покупателей без менеджера: '+noMan+' на '+pfF(noManSum)+' ₽ — идут отдельной строкой «'+PF_NOMAN+'».','warn');
     pfRender();
@@ -1446,10 +1460,11 @@ function pfMsg(html,kind){
 }
 
 /* ── план и менеджеры ── */
-function pfSheetPlanOf(y,m,man){
+function pfSheetPlanOf(y,m,man,kind){
+  kind=kind||'cash';
   for(let i=0;i<PF.sheetPlans.length;i++){
     const p=PF.sheetPlans[i];
-    if(p.y===y&&p.m===m&&p.man===man)return p.sum;
+    if(p.y===y&&p.m===m&&p.man===man&&(p.kind||'cash')===kind)return p.sum;
   }
   return null;
 }
@@ -1458,7 +1473,7 @@ function pfSheetPlanOf(y,m,man){
 function pfPlanOf(y,m,man){
   const k=y+'-'+m;
   const loc=(PF.plan[k]&&PF.plan[k][man]!=null)?PF.plan[k][man]:null;
-  const sh=pfSheetPlanOf(y,m,man);
+  const sh=pfSheetPlanOf(y,m,man,'cash');
   if(pfShared())return sh!=null?sh:(loc!=null?loc:0);
   return loc!=null?loc:(sh!=null?sh:0);
 }
@@ -1470,8 +1485,8 @@ function pfPlanMonthsAll(){
 }
 function pfPlanMonths(){return Object.keys(PF.plan);}
 function pfExcluded(r){
-  const c=pfNorm(r.ctr);
-  return PF.excludeCtr.some(x=>c===pfNorm(x)||c.indexOf(pfNorm(x))>=0);
+  const c=pfNorm(r.ctr),co=pfNorm(r.co);
+  return PF.excludeCtr.some(x=>{const n=pfNorm(x);return n&&(c.indexOf(n)>=0||co.indexOf(n)>=0);});
 }
 function pfFacts(){
   let base;
@@ -1629,27 +1644,32 @@ function pfExec(){
     const pl=marg?pfPlanRevIn(from,to,m):pfPlanIn(from,to,m),
           fa=pfFactIn(from,to,m,R),
           faNds=pfFieldIn(from,to,m,R,'nds'),
-          faNet=pfFieldIn(from,to,m,R,'snd');
-    const factForPct=marg?faNet:fa;
-    return {man:m,plan:pl,fact:fa,nds:faNds,factNet:faNet,diff:factForPct-pl,pct:pl>0?factForPct/pl*100:null};
+          faNet=pfFieldIn(from,to,m,R,'snd'),
+          faSub=pfFieldIn(from,to,m,R,'sub'),
+          faMarg=pfFieldIn(from,to,m,R,'marg');
+    const factForPct=marg?faMarg:fa;
+    return {man:m,plan:pl,fact:fa,nds:faNds,factNet:faNet,sub:faSub,factMarg:faMarg,diff:factForPct-pl,pct:pl>0?factForPct/pl*100:null};
   }).filter(x=>x.plan>0.5||x.fact>0.5);
   const tp=rows.reduce((s,x)=>s+x.plan,0),tf=rows.reduce((s,x)=>s+x.fact,0);
-  const tNds=pfFieldIn(from,to,null,R,'nds'),tSnd=pfFieldIn(from,to,null,R,'snd');
-  const tFactForPct=marg?tSnd:tf;
+  const tNds=pfFieldIn(from,to,null,R,'nds'),tSnd=pfFieldIn(from,to,null,R,'snd'),
+        tSub=pfFieldIn(from,to,null,R,'sub'),tMarg=pfFieldIn(from,to,null,R,'marg');
+  const tFactForPct=marg?tMarg:tf;
   const pct=tp>0?tFactForPct/tp*100:null;
 
   const K=(cls,lbl,val,sub)=>'<div class="kpi '+cls+'"><div class="kpi-lbl">'+lbl+'</div><div class="kpi-val">'+val+'</div><div class="kpi-sub">'+(sub||'')+'</div></div>';
   const dl=pfIso(from).split('-').reverse().join('.')+(pfIso(from)===pfIso(to)?'':' — '+pfIso(to).split('-').reverse().join('.'));
   const kpis=document.getElementById('pf-kpis');
   if(marg){
+    kpis.style.gridTemplateColumns='repeat(6,1fr)';
     kpis.innerHTML=
-       K('kpi-inv','План по выручке',pfF(tp),dl+' · без НДС')
+       K('kpi-inv','План по марже',pfF(tp),dl+' · без НДС и подрядчиков')
       +K('kpi-rec','Факт (с НДС)','<span class="c-gn">'+pfF(tf)+'</span>',PF.src==='buyer'?'поступления от покупателей':PF.src==='in'?'все поступления':'все строки с плюсом')
-      +K('kpi-ndsy','Сумма НДС','<span class="c-cy">'+pfF(tNds)+'</span>','из листа «Свод по счетам»')
-      +K('kpi-ndsn','Сумма без НДС','<span class="c-am">'+pfF(tSnd)+'</span>','из листа «Свод по счетам»')
-      +K(tSnd-tp>=0?'kpi-net':'kpi-exp','Отклонение','<span class="'+(tSnd-tp>=0?'c-gn':'c-rd')+'">'+(tSnd-tp>=0?'+':'−')+pfF(Math.abs(tSnd-tp))+'</span>','от суммы без НДС к плану по выручке')
-      +K('kpi-div','Выполнение, всего',pct==null?'—':'<span class="'+(pct>=100?'c-gn':pct>=80?'c-am':'c-rd')+'">'+pct.toFixed(1)+' %</span>','от суммы без НДС · менеджеров в расчёте: '+rows.length);
+      +K('kpi-ndsy','НДС','<span class="c-cy">'+pfF(tNds)+'</span>','из листа «Свод по счетам»')
+      +K('kpi-exp','Подрядчики','<span class="c-rd">'+pfF(tSub)+'</span>','из листа «Свод по счетам»')
+      +K('kpi-ndsn','Маржа','<span class="c-am">'+pfF(tMarg)+'</span>','факт − НДС − подрядчики')
+      +K('kpi-div','Выполнение, всего',pct==null?'—':'<span class="'+(pct>=100?'c-gn':pct>=80?'c-am':'c-rd')+'">'+pct.toFixed(1)+' %</span>','маржа к плану · менеджеров: '+rows.length);
   }else{
+    kpis.style.gridTemplateColumns='repeat(4,1fr)';
     kpis.innerHTML=
        K('kpi-inv','План на период',pfF(tp),dl)
       +K('kpi-rec','Факт','<span class="c-gn">'+pfF(tf)+'</span>',PF.src==='buyer'?'поступления от покупателей':PF.src==='in'?'все поступления':'все строки с плюсом')
@@ -1662,7 +1682,7 @@ function pfExec(){
   const th=(t,key)=>'<th style="cursor:pointer" onclick="pfSort(\''+key+'\')">'+t+(PF.sort.k===key?(dir<0?' ↓':' ↑'):'')+'</th>';
   let h;
   if(marg){
-    h='<thead><tr><th style="width:26px;min-width:26px"></th>'+th('Менеджер','man')+th('План (выручка)','plan')+th('Факт (с НДС)','fact')+th('НДС','nds')+th('Факт (без НДС)','factNet')+th('Δ (без НДС)','diff')+th('% выполнения','pct')+'<th style="width:140px">&nbsp;</th><th>Доля факта</th></tr></thead><tbody>';
+    h='<thead><tr><th style="width:26px;min-width:26px"></th>'+th('Менеджер','man')+th('План (маржа)','plan')+th('Факт (с НДС)','fact')+th('НДС','nds')+th('Подрядчики','sub')+th('Маржа','factMarg')+th('Δ','diff')+th('% вып.','pct')+'<th style="width:110px">&nbsp;</th><th>Доля факта</th></tr></thead><tbody>';
     rows.forEach(x=>{
       const p=x.pct,col=p==null?'#9fb0a8':p>=100?'#00E38A':p>=80?'#fbbf24':'#ff6b6b';
       const w=Math.max(0,Math.min(100,p||0)),op=!!PF.expMan[x.man];
@@ -1671,7 +1691,8 @@ function pfExec(){
         +'<td>'+(x.plan?pfF(x.plan):'<span style="color:#5d6b64">—</span>')+'</td>'
         +'<td>'+(x.fact?pfF(x.fact):'<span style="color:#5d6b64">—</span>')+'</td>'
         +'<td class="c-cy">'+(x.nds?pfF(x.nds):'<span style="color:#5d6b64">—</span>')+'</td>'
-        +'<td class="c-am">'+(x.factNet?pfF(x.factNet):'<span style="color:#5d6b64">—</span>')+'</td>'
+        +'<td class="c-rd">'+(x.sub?pfF(x.sub):'<span style="color:#5d6b64">—</span>')+'</td>'
+        +'<td class="c-am">'+(x.factMarg?pfF(x.factMarg):'<span style="color:#5d6b64">—</span>')+'</td>'
         +'<td class="'+(x.diff>=0?'c-gn':'c-rd')+'">'+(x.diff>=0?'+':'−')+pfF(Math.abs(x.diff))+'</td>'
         +'<td style="color:'+col+';font-weight:700">'+(p==null?'нет плана':p.toFixed(1)+' %')+'</td>'
         +'<td><div style="height:6px;background:#1C2622;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+w+'%;background:'+col+';border-radius:3px"></div></div></td>'
@@ -1679,8 +1700,8 @@ function pfExec(){
       if(op)h+=pfCtrRows(from,to,x.man,'marg');
     });
     h+='</tbody><tfoot><tr style="font-weight:700"><td></td><td>ИТОГО ПО ВСЕМ</td><td>'+pfF(tp)+'</td><td class="c-gn">'+pfF(tf)+'</td>'
-      +'<td class="c-cy">'+pfF(tNds)+'</td><td class="c-am">'+pfF(tSnd)+'</td>'
-      +'<td class="'+(tSnd-tp>=0?'c-gn':'c-rd')+'">'+(tSnd-tp>=0?'+':'−')+pfF(Math.abs(tSnd-tp))+'</td>'
+      +'<td class="c-cy">'+pfF(tNds)+'</td><td class="c-rd">'+pfF(tSub)+'</td><td class="c-am">'+pfF(tMarg)+'</td>'
+      +'<td class="'+(tMarg-tp>=0?'c-gn':'c-rd')+'">'+(tMarg-tp>=0?'+':'−')+pfF(Math.abs(tMarg-tp))+'</td>'
       +'<td style="color:'+(pct==null?'#9fb0a8':pct>=100?'#00E38A':pct>=80?'#fbbf24':'#ff6b6b')+'">'+(pct==null?'—':pct.toFixed(1)+' %')+'</td><td></td><td>100 %</td></tr></tfoot>';
   }else{
     h='<thead><tr><th style="width:26px;min-width:26px"></th>'+th('Менеджер','man')+th('План','plan')+th('Факт','fact')+th('Δ','diff')+th('% выполнения','pct')+'<th style="width:140px">&nbsp;</th><th>Доля факта</th></tr></thead><tbody>';
@@ -1723,12 +1744,12 @@ function pfCtrBlock(from,to,man){
 function pfCtrRows(from,to,man,mode){
   const a=pfIso(from),b=pfIso(to),agg={};
   pfFacts().forEach(r=>{if(r.d<a||r.d>b)return;if(man&&r.man!==man)return;
-    const k=r.ctr;if(!agg[k])agg[k]={s:0,nds:0,snd:0,n:0,last:''};
-    agg[k].s+=r.s;agg[k].nds+=r.nds||0;agg[k].snd+=r.snd||0;agg[k].n++;if(r.d>agg[k].last)agg[k].last=r.d;});
+    const k=r.ctr;if(!agg[k])agg[k]={s:0,nds:0,snd:0,sub:0,marg:0,n:0,last:''};
+    agg[k].s+=r.s;agg[k].nds+=r.nds||0;agg[k].snd+=r.snd||0;agg[k].sub+=r.sub||0;agg[k].marg+=r.marg||0;agg[k].n++;if(r.d>agg[k].last)agg[k].last=r.d;});
   const list=Object.keys(agg).sort((x,y)=>agg[y].s-agg[x].s);
   const tf=list.reduce((s,k)=>s+agg[k].s,0);
   const bg='background:rgba(255,255,255,.015)';
-  if(!list.length)return '<tr style="'+bg+'"><td></td><td colspan="'+(mode==='marg'?9:7)+'" style="color:#5d6b64;font-size:11.5px;padding:6px 0 6px 6px">поступлений нет</td></tr>';
+  if(!list.length)return '<tr style="'+bg+'"><td></td><td colspan="'+(mode==='marg'?10:7)+'" style="color:#5d6b64;font-size:11.5px;padding:6px 0 6px 6px">поступлений нет</td></tr>';
   let h='';
   list.forEach(k=>{
     const share=tf?(agg[k].s/tf*100).toFixed(1)+' %':'—';
@@ -1739,7 +1760,8 @@ function pfCtrRows(from,to,man,mode){
         +'<td style="color:#5d6b64">—</td>'
         +'<td class="c-gn" style="font-size:11.5px">'+pfF(agg[k].s)+'</td>'
         +'<td class="c-cy" style="font-size:11.5px">'+(agg[k].nds?pfF(agg[k].nds):'—')+'</td>'
-        +'<td class="c-am" style="font-size:11.5px">'+(agg[k].snd?pfF(agg[k].snd):'—')+'</td>'
+        +'<td class="c-rd" style="font-size:11.5px">'+(agg[k].sub?pfF(agg[k].sub):'—')+'</td>'
+        +'<td class="c-am" style="font-size:11.5px">'+(agg[k].marg?pfF(agg[k].marg):'—')+'</td>'
         +'<td style="color:#5d6b64">—</td><td style="color:#5d6b64">—</td><td></td>'
         +'<td style="font-size:11.5px;color:#9fb0a8">'+share+'</td></tr>';
     }else{
@@ -1989,16 +2011,16 @@ function pfAoaExec(){
   const marg=PF.sheet==='marg';
   const dl=pfIso(from).split('-').reverse().join('.')+(pfIso(from)===pfIso(to)?'':' — '+pfIso(to).split('-').reverse().join('.'));
   if(marg){
-    const rows=[['Менеджер','План (выручка)','Факт (с НДС)','НДС','Факт (без НДС)','Отклонение (без НДС)','% выполнения','Доля факта']];
-    let tp=0,tf=0,tn=0,ts=0;
-    const list=pfMansAll().map(m=>({man:m,plan:pfPlanRevIn(from,to,m),fact:pfFactIn(from,to,m,R),nds:pfFieldIn(from,to,m,R,'nds'),snd:pfFieldIn(from,to,m,R,'snd')}))
+    const rows=[['Менеджер','План (маржа)','Факт (с НДС)','НДС','Подрядчики','Маржа','Отклонение','% выполнения','Доля факта']];
+    let tp=0,tf=0,tn=0,tsu=0,tmg=0;
+    const list=pfMansAll().map(m=>({man:m,plan:pfPlanRevIn(from,to,m),fact:pfFactIn(from,to,m,R),nds:pfFieldIn(from,to,m,R,'nds'),sub:pfFieldIn(from,to,m,R,'sub'),mg:pfFieldIn(from,to,m,R,'marg')}))
       .filter(x=>x.plan>0.5||x.fact>0.5);
-    list.forEach(x=>{tp+=x.plan;tf+=x.fact;tn+=x.nds;ts+=x.snd;});
+    list.forEach(x=>{tp+=x.plan;tf+=x.fact;tn+=x.nds;tsu+=x.sub;tmg+=x.mg;});
     list.sort((a,b)=>b.fact-a.fact);
-    list.forEach(x=>rows.push([x.man,Math.round(x.plan),Math.round(x.fact),Math.round(x.nds),Math.round(x.snd),Math.round(x.snd-x.plan),
-      x.plan>0?Math.round(x.snd/x.plan*100):'',tf?+(x.fact/tf*100).toFixed(1):'']));
-    rows.push(['ИТОГО ПО ВСЕМ',Math.round(tp),Math.round(tf),Math.round(tn),Math.round(ts),Math.round(ts-tp),tp?Math.round(ts/tp*100):'',100]);
-    return {rows:rows,title:'Маржа — выполнение плана по выручке — '+dl,name:'Маржа'};
+    list.forEach(x=>rows.push([x.man,Math.round(x.plan),Math.round(x.fact),Math.round(x.nds),Math.round(x.sub),Math.round(x.mg),Math.round(x.mg-x.plan),
+      x.plan>0?Math.round(x.mg/x.plan*100):'',tf?+(x.fact/tf*100).toFixed(1):'']));
+    rows.push(['ИТОГО ПО ВСЕМ',Math.round(tp),Math.round(tf),Math.round(tn),Math.round(tsu),Math.round(tmg),Math.round(tmg-tp),tp?Math.round(tmg/tp*100):'',100]);
+    return {rows:rows,title:'Маржа — выполнение плана (факт − НДС − подрядчики) — '+dl,name:'Маржа'};
   }
   const rows=[['Менеджер','План','Факт','Отклонение','% выполнения','Доля факта']];
   let tp=0,tf=0;
@@ -2084,7 +2106,7 @@ function pfMansView(){
 
   const cd=document.getElementById('pf-cols');
   if(cd){
-    if(PF.cols)cd.innerHTML='Столбцы листа «Свод по счетам» распознаны так: дата <b>'+pfL(PF.cols.d)+'</b>, сумма <b>'+pfL(PF.cols.s)+'</b>, операция <b>'+pfL(PF.cols.o)+'</b>, статья <b>'+pfL(PF.cols.a)+'</b>, контрагент <b>'+pfL(PF.cols.k)+'</b>, менеджер <b>'+pfL(PF.cols.m)+'</b>, НДС <b>'+pfL(PF.cols.n)+'</b>, сумма без НДС <b>'+pfL(PF.cols.snd)+'</b>. Если менеджер указан не на ту букву — переименуйте заголовок в таблице.';
+    if(PF.cols)cd.innerHTML='Столбцы листа «Свод по счетам» распознаны так: дата <b>'+pfL(PF.cols.d)+'</b>, сумма <b>'+pfL(PF.cols.s)+'</b>, операция <b>'+pfL(PF.cols.o)+'</b>, статья <b>'+pfL(PF.cols.a)+'</b>, контрагент <b>'+pfL(PF.cols.k)+'</b>, менеджер <b>'+pfL(PF.cols.m)+'</b>, НДС <b>'+pfL(PF.cols.n)+'</b>, сумма без НДС <b>'+pfL(PF.cols.snd)+'</b>, подрядчики <b>'+pfL(PF.cols.sub)+'</b>. Если менеджер указан не на ту букву — переименуйте заголовок в таблице.';
     else cd.innerHTML='Нажмите «Обновить факт», чтобы прочитать таблицу.';
   }
   const unknown=Object.keys(cnt).filter(m=>m!==PF_NOMAN&&PF.mans.indexOf(m)<0);
@@ -2133,20 +2155,22 @@ function pfSetPlanKind(v,btn){
 }
 function pfPlanView(){
   const REV=PF.planKind==='rev';
-  ['pf-refresh-plan-btn','pf-fromsheet-btn','pf-fromsheet-hint','pf-bridge'].forEach(id=>{
-    const el=document.getElementById(id);if(el)el.style.display=REV?'none':'';
-  });
+  /* строки читаются из листа в обоих режимах — прячем только мост записи в таблицу (он для денежного плана) */
+  const bx=document.getElementById('pf-bridge');if(bx)bx.style.display=REV?'none':'';
+  const fh=document.getElementById('pf-fromsheet-hint');if(fh)fh.style.display='';
+  ['pf-refresh-plan-btn','pf-fromsheet-btn'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
   const ys=pfYears();if(!ys.includes(PF.edY))PF.edY=ys[ys.length-1];
   document.getElementById('pf-ed-sel').innerHTML='<label>Месяц плана</label>'
     +'<select onchange="PF.edM=+this.value;PF.editBuf=null;pfPlanView()">'+MN_F.slice(1).map((n,i)=>'<option value="'+(i+1)+'"'+(i+1===PF.edM?' selected':'')+'>'+n+'</option>').join('')+'</select>'
     +'<select onchange="PF.edY=+this.value;PF.editBuf=null;pfPlanView()">'+ys.map(y=>'<option value="'+y+'"'+(y===PF.edY?' selected':'')+'>'+y+'</option>').join('')+'</select>';
 
   const key=PF.edY+'-'+PF.edM,saved=(REV?PF.planRev:PF.plan)[key]||{};
-  /* строки: сохранённые локально + (для денежного плана) те, что уже стоят в листе «План» */
+  const sheetKind=REV?'rev':'cash';
+  /* строки: те, что стоят в листе «План Менеджеры» (по нужному признаку) + сохранённые локально */
   if(!PF.editBuf){
     PF.editBuf={};
-    if(!REV)PF.sheetPlans.forEach(p=>{if(p.y===PF.edY&&p.m===PF.edM)PF.editBuf[p.man]=p.sum;});
-    Object.keys(saved).forEach(m=>{if(REV||!pfShared()||PF.editBuf[m]==null)PF.editBuf[m]=saved[m];});
+    PF.sheetPlans.forEach(p=>{if(p.y===PF.edY&&p.m===PF.edM&&(p.kind||'cash')===sheetKind)PF.editBuf[p.man]=p.sum;});
+    Object.keys(saved).forEach(m=>{if(PF.editBuf[m]==null)PF.editBuf[m]=saved[m];});
   }
 
   /* строка добавления: менеджер выбирается из справочника */
@@ -2173,11 +2197,11 @@ function pfPlanView(){
     return a.localeCompare(b,'ru');
   });
   let h='<thead><tr><th>Менеджер</th><th style="width:170px">План на месяц, ₽</th><th style="width:130px">В среднем в день</th><th style="width:150px">Где сохранён</th>'
-    +(REV?'':'<th style="width:140px">В таблице</th>')+'<th style="width:44px"></th></tr></thead><tbody>';
+    +'<th style="width:140px">В таблице</th><th style="width:44px"></th></tr></thead><tbody>';
   let tot=0;
   mans.forEach(m=>{
     const v=PF.editBuf[m]||0;tot+=v;
-    const sh=REV?null:PF.sheetPlans.filter(p=>p.y===PF.edY&&p.m===PF.edM&&p.man===m)[0];
+    const sh=PF.sheetPlans.filter(p=>p.y===PF.edY&&p.m===PF.edM&&p.man===m&&(p.kind||'cash')===sheetKind)[0];
     const inSheet=sh&&Math.round(sh.sum)===Math.round(v);
     const inLocal=saved[m]!=null&&Math.round(saved[m])===Math.round(v);
     const st=inSheet?'<span style="color:#00E38A">в таблице</span>'
@@ -2187,17 +2211,16 @@ function pfPlanView(){
     h+='<tr><td>'+pfE(m)+(known?'':' <span style="color:#fbbf24" title="нет в справочнике">•</span>')+'</td>'
       +'<td><input type="number" step="1000" value="'+v+'" data-man="'+pfE(m)+'" oninput="pfEdIn(this)" style="width:100%;text-align:right;padding:4px 8px;border:1px solid #44534C;border-radius:6px;background:#1C2622;color:#F2F2F2;font-family:\'Courier New\',monospace;font-size:12px"></td>'
       +'<td style="color:#9fb0a8">'+pfF(v/perDay)+'</td><td>'+st+'</td>'
-      +(REV?'':'<td style="color:#9fb0a8">'+(sh?pfF(sh.sum):'—')+'</td>')
+      +'<td style="color:#9fb0a8">'+(sh?pfF(sh.sum):'—')+'</td>'
       +'<td><button onclick="pfEdDelMan(\''+pfQ(m)+'\')" title="убрать из плана" style="padding:1px 8px;font-size:13px;border:1px solid #44534C;border-radius:5px;background:transparent;color:#ff6b6b;cursor:pointer;font-family:inherit">×</button></td></tr>';
   });
-  const ncol=REV?5:6;
+  const ncol=6;
   if(!mans.length)h+='<tr><td colspan="'+ncol+'" style="padding:22px;text-align:center;color:var(--ix-mut)">На '+MN_F[PF.edM]+' '+PF.edY+' плана пока нет. Выберите менеджера выше, впишите сумму и нажмите «Добавить в план».</td></tr>';
-  h+='</tbody><tfoot><tr style="font-weight:700"><td>Итого за месяц</td><td id="pf-ed-tot">'+pfF(tot)+'</td><td>'+pfF(tot/perDay)+'</td><td></td>'+(REV?'':'<td></td>')+'<td></td></tr></tfoot>';
+  h+='</tbody><tfoot><tr style="font-weight:700"><td>Итого за месяц</td><td id="pf-ed-tot">'+pfF(tot)+'</td><td>'+pfF(tot/perDay)+'</td><td></td><td></td><td></td></tr></tfoot>';
   document.getElementById('pf-ed-tbl').innerHTML=h;
   if(!REV)pfBridgeBox();
-  document.getElementById('pf-ed-hint').innerHTML=(REV?'План по выручке (без НДС) используется листом «Маржа» и хранится только в этом браузере. ':'')
-    +'В месяце '+nd+' календарных и '+wd+' рабочих дней; дневной план — это месячный, делённый на '+(PF.prorate==='work'?'рабочие':'календарные')+' дни.'
-    +(REV?'':' План живёт в этом браузере: «Выгрузить в файл» — если работаете с нескольких компьютеров.');
+  document.getElementById('pf-ed-hint').innerHTML=(REV?'План по марже читается из листа «План Менеджеры» — строки со значением «Маржа» в столбце «ДДС/Маржа»; на листе «Маржа» с ним сверяется факт − НДС − подрядчики. Правки хранятся в этом браузере поверх таблицы. ':'План (деньги) читается из строк со значением «ДДС» в столбце «ДДС/Маржа». ')
+    +'В месяце '+nd+' календарных и '+wd+' рабочих дней; дневной план — это месячный, делённый на '+(PF.prorate==='work'?'рабочие':'календарные')+' дни.';
 }
 
 /* ── настройка записи в таблицу ── */
@@ -2317,22 +2340,24 @@ function pfEdPrev(){
   pfPlanView();
 }
 function pfEdFromSheet(){
-  const sh=PF.sheetPlans.filter(p=>p.y===PF.edY&&p.m===PF.edM);
-  if(!sh.length){pfToast('В листе «План» на '+MN_F[PF.edM]+' '+PF.edY+' строк нет. Нажмите «Обновить факт», чтобы перечитать таблицу.','warn');return;}
+  const sk=PF.planKind==='rev'?'rev':'cash';
+  const sh=PF.sheetPlans.filter(p=>p.y===PF.edY&&p.m===PF.edM&&(p.kind||'cash')===sk);
+  if(!sh.length){pfToast('В листе «План Менеджеры» на '+MN_F[PF.edM]+' '+PF.edY+' строк с признаком «'+(sk==='rev'?'Маржа':'ДДС')+'» нет. Нажмите «Обновить факт», чтобы перечитать таблицу.','warn');return;}
   PF.editBuf={};sh.forEach(p=>PF.editBuf[p.man]=p.sum);
-  pfToast('Подставлено из листа «План»: '+sh.length+' строк. Не забудьте «Сохранить».','ok');
+  pfToast('Подставлено из листа «План Менеджеры» ('+(sk==='rev'?'Маржа':'ДДС')+'): '+sh.length+' строк. Не забудьте «Сохранить».','ok');
   pfPlanView();
 }
 /* обновить план текущего месяца из Google Таблицы за один клик: свежий сетевой запрос + применение + сохранение */
 async function pfPlanRefreshFromSheet(){
   const btn=document.getElementById('pf-refresh-plan-btn');
   if(btn){btn.disabled=true;btn.innerHTML='<span class="spin">⟳</span>&nbsp;Обновляю…';}
-  pfToast('Читаю лист «План» из Google Таблицы…','ok');
+  pfToast('Читаю лист «План Менеджеры» из Google Таблицы…','ok');
+  const sk=PF.planKind==='rev'?'rev':'cash';
   try{
     await pfReloadPlan();
-    const sh=PF.sheetPlans.filter(p=>p.y===PF.edY&&p.m===PF.edM);
+    const sh=PF.sheetPlans.filter(p=>p.y===PF.edY&&p.m===PF.edM&&(p.kind||'cash')===sk);
     if(!sh.length){
-      pfToast('В таблице на '+MN_F[PF.edM]+' '+PF.edY+' строк не нашлось. Проверьте месяц/год или заполните лист «План».','warn');
+      pfToast('В таблице на '+MN_F[PF.edM]+' '+PF.edY+' строк с признаком «'+(sk==='rev'?'Маржа':'ДДС')+'» не нашлось. Проверьте месяц/год или столбец «ДДС/Маржа».','warn');
     }else{
       PF.editBuf={};sh.forEach(p=>PF.editBuf[p.man]=p.sum);
       pfEdSave();
