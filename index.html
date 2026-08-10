@@ -1670,7 +1670,7 @@ function pfExec(){
           faMarg=pfFieldIn(from,to,m,R,'marg');
     const factForPct=marg?faMarg:fa;
     return {man:m,plan:pl,fact:fa,nds:faNds,factNet:faNet,sub:faSub,factMarg:faMarg,diff:factForPct-pl,pct:pl>0?factForPct/pl*100:null};
-  }).filter(x=>x.plan>0.5||x.fact>0.5);
+  }).filter(x=>x.plan>0.5||x.fact>0.5||x.man===PF_NOMAN);
   const tp=rows.reduce((s,x)=>s+x.plan,0),tf=rows.reduce((s,x)=>s+x.fact,0);
   const tNds=pfFieldIn(from,to,null,R,'nds'),tSnd=pfFieldIn(from,to,null,R,'snd'),
         tSub=pfFieldIn(from,to,null,R,'sub'),tMarg=pfFieldIn(from,to,null,R,'marg');
@@ -1699,7 +1699,11 @@ function pfExec(){
   }
 
   const k=PF.sort.k,dir=PF.sort.dir;
-  rows.sort((a,b)=>k==='man'?dir*a.man.localeCompare(b.man,'ru'):dir*((a[k]==null?-1:a[k])-(b[k]==null?-1:b[k])));
+  rows.sort((a,b)=>{
+    if(a.man===PF_NOMAN)return -1;
+    if(b.man===PF_NOMAN)return 1;
+    return k==='man'?dir*a.man.localeCompare(b.man,'ru'):dir*((a[k]==null?-1:a[k])-(b[k]==null?-1:b[k]));
+  });
   const th=(t,key)=>'<th style="cursor:pointer" onclick="pfSort(\''+key+'\')">'+t+(PF.sort.k===key?(dir<0?' ↓':' ↑'):'')+'</th>';
   let h;
   if(marg){
@@ -1707,8 +1711,9 @@ function pfExec(){
     rows.forEach(x=>{
       const p=x.pct,col=p==null?'#5B6B63':p>=100?'#00875A':p>=80?'#B45309':'#DC2626';
       const w=Math.max(0,Math.min(100,p||0)),op=!!PF.expMan[x.man];
-      h+='<tr><td style="text-align:center;cursor:pointer;color:#00875A;font-family:inherit" onclick="pfTogMan(\''+pfQ(x.man)+'\')">'+(op?'▾':'▸')+'</td>'
-        +'<td style="cursor:pointer">'+pfE(x.man)+'</td>'
+      const noMan=x.man===PF_NOMAN,rowSt=noMan?' style="background:rgba(180,83,9,.08)"':'';
+      h+='<tr'+rowSt+'><td style="text-align:center;cursor:pointer;color:#00875A;font-family:inherit" onclick="pfTogMan(\''+pfQ(x.man)+'\')">'+(op?'▾':'▸')+'</td>'
+        +'<td style="cursor:pointer'+(noMan?';color:#B45309;font-weight:700':'')+'">'+(noMan?'⚠ ':'')+pfE(x.man)+'</td>'
         +'<td>'+(x.plan?pfF(x.plan):'<span style="color:#5d6b64">—</span>')+'</td>'
         +'<td>'+(x.fact?pfF(x.fact):'<span style="color:#5d6b64">—</span>')+'</td>'
         +'<td class="c-cy">'+(x.nds?pfF(x.nds):'<span style="color:#5d6b64">—</span>')+'</td>'
@@ -1729,8 +1734,9 @@ function pfExec(){
     rows.forEach(x=>{
       const p=x.pct,col=p==null?'#5B6B63':p>=100?'#00875A':p>=80?'#B45309':'#DC2626';
       const w=Math.max(0,Math.min(100,p||0)),op=!!PF.expMan[x.man];
-      h+='<tr><td style="text-align:center;cursor:pointer;color:#00875A;font-family:inherit" onclick="pfTogMan(\''+pfQ(x.man)+'\')">'+(op?'▾':'▸')+'</td>'
-        +'<td style="cursor:pointer">'+pfE(x.man)+'</td>'
+      const noMan=x.man===PF_NOMAN,rowSt=noMan?' style="background:rgba(180,83,9,.08)"':'';
+      h+='<tr'+rowSt+'><td style="text-align:center;cursor:pointer;color:#00875A;font-family:inherit" onclick="pfTogMan(\''+pfQ(x.man)+'\')">'+(op?'▾':'▸')+'</td>'
+        +'<td style="cursor:pointer'+(noMan?';color:#B45309;font-weight:700':'')+'">'+(noMan?'⚠ ':'')+pfE(x.man)+'</td>'
         +'<td>'+(x.plan?pfF(x.plan):'<span style="color:#5d6b64">—</span>')+'</td>'
         +'<td>'+(x.fact?pfF(x.fact):'<span style="color:#5d6b64">—</span>')+'</td>'
         +'<td class="'+(x.diff>=0?'c-gn':'c-rd')+'">'+(x.diff>=0?'+':'−')+pfF(Math.abs(x.diff))+'</td>'
