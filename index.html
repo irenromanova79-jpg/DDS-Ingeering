@@ -1430,7 +1430,7 @@ async function pfLoad(withPlan){
       const stV=(c[iA]||'').trim();
       const ctrV=(c[iK]||'').trim()||'без контрагента';
       const coV=iC<0?ctrV:((c[iC]||'').trim()||'без компании');
-      const isExcl=PF.excludeCtr.some(x=>{const n=pfNorm(x);return n&&(pfNorm(ctrV).indexOf(n)>=0||pfNorm(coV).indexOf(n)>=0);});
+      const isExcl=PF.excludeCtr.some(x=>{const n=pfNorm(x);return n&&pfNorm(ctrV).indexOf(n)>=0;});
       if(!man&&!isExcl&&pfNorm(stV).indexOf('поступление от покупателей')>=0){noMan++;noManSum+=s;}
       /* НДС и сумма без НДС должны всегда давать в сумме полную сумму строки —
          берём то, что заполнено в таблице, и досчитываем недостающее, а не суммируем оба столбца независимо */
@@ -1509,8 +1509,8 @@ function pfPlanMonthsAll(){
 }
 function pfPlanMonths(){return Object.keys(PF.plan);}
 function pfExcluded(r){
-  const c=pfNorm(r.ctr),co=pfNorm(r.co);
-  return PF.excludeCtr.some(x=>{const n=pfNorm(x);return n&&(c.indexOf(n)>=0||co.indexOf(n)>=0);});
+  const c=pfNorm(r.ctr);
+  return PF.excludeCtr.some(x=>{const n=pfNorm(x);return n&&c.indexOf(n)>=0;});
 }
 function pfFacts(){
   let base;
