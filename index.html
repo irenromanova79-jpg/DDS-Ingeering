@@ -7,14 +7,14 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --ix-green:#00E38A; --ix-green-d:#00B874; --ix-bg:#1C2622; --ix-card:#26312C;
-  --ix-line:#33403A; --ix-line2:#44534C; --ix-txt:#F2F2F2; --ix-mut:#9fb0a8;
-  --ix-red:#ff6b6b; --ix-amber:#fbbf24; --ix-cyan:#22d3ee; --ix-purple:#b79aff;
+  --ix-green:#00875A; --ix-green-d:#00B874; --ix-bg:#F3F6F4; --ix-card:#FFFFFF;
+  --ix-line:#DCE6E0; --ix-line2:#C7D3CC; --ix-txt:#1E2A24; --ix-mut:#5B6B63;
+  --ix-red:#DC2626; --ix-amber:#B45309; --ix-cyan:#0E7490; --ix-purple:#7C3AED;
 }
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:var(--ix-bg);color:var(--ix-txt);font-size:13px}
 
 /* ── ШАПКА ── */
-.hdr{position:sticky;top:0;z-index:100;background:#19231F;border-bottom:1px solid var(--ix-line);box-shadow:0 2px 14px rgba(0,0,0,.5)}
+.hdr{position:sticky;top:0;z-index:100;background:#FFFFFF;border-bottom:1px solid var(--ix-line);box-shadow:0 2px 14px rgba(16,24,20,.10)}
 .hdr-top{display:flex;align-items:center;justify-content:space-between;padding:11px 22px;gap:16px}
 .hdr-brand{display:flex;align-items:center;gap:12px;min-width:0}
 .ix-logo{flex-shrink:0;display:block}
@@ -23,7 +23,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;ba
 .ix-name i{font-style:normal;font-size:9px;letter-spacing:.06em;color:var(--ix-green);font-weight:600}
 .hdr-div{width:1px;height:30px;background:var(--ix-line2);flex-shrink:0}
 .hdr-title{font-size:14px;font-weight:600;color:var(--ix-txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hdr-period{font-size:11px;color:var(--ix-green);background:rgba(0,227,138,.09);padding:4px 11px;border-radius:20px;border:1px solid rgba(0,227,138,.25);white-space:nowrap;font-weight:600}
+.hdr-period{font-size:11px;color:var(--ix-green);background:rgba(0,135,90,.09);padding:4px 11px;border-radius:20px;border:1px solid rgba(0,135,90,.25);white-space:nowrap;font-weight:600}
 .tabs{display:flex;padding:0 22px;border-top:1px solid var(--ix-line)}
 .tab{padding:9px 20px;font-size:13px;font-weight:500;border:none;background:none;cursor:pointer;color:var(--ix-mut);border-bottom:2px solid transparent;font-family:inherit;transition:all .15s}
 .tab.active{color:var(--ix-green);border-bottom-color:var(--ix-green)}
@@ -34,11 +34,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;ba
 .period-pills{display:flex;gap:2px;background:var(--ix-bg);border-radius:8px;padding:3px;border:1px solid var(--ix-line2)}
 .ppill{padding:5px 14px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;border-radius:6px;color:var(--ix-mut);font-family:inherit;transition:all .15s}
 .ppill:hover:not(.active){color:var(--ix-txt)}
-.ppill.active{background:var(--ix-green);color:#06120d;box-shadow:0 2px 10px rgba(0,227,138,.3)}
+.ppill.active{background:var(--ix-green);color:#06120d;box-shadow:0 2px 10px rgba(0,135,90,.3)}
 .period-sub{display:flex;align-items:center;gap:8px;font-size:12px;flex-wrap:wrap}
 .period-sub select,.period-sub input[type=date]{padding:5px 9px;border:1px solid var(--ix-line2);border-radius:6px;font-size:12px;font-family:inherit;color:var(--ix-txt);background:var(--ix-bg);cursor:pointer;font-weight:500}
 .period-sub select:focus,.period-sub input[type=date]:focus{outline:none;border-color:var(--ix-green)}
-.period-sub input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1) saturate(4) hue-rotate(100deg)}
+.period-sub input[type=date]::-webkit-calendar-picker-indicator{filter:invert(28%) sepia(90%) saturate(1200%) hue-rotate(115deg) brightness(90%);opacity:.85}
 .period-sub label{color:var(--ix-mut);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .period-sep{color:var(--ix-line2)}
 .period-info{margin-left:auto;font-size:11px;color:var(--ix-mut);background:var(--ix-bg);padding:4px 10px;border-radius:12px;border:1px solid var(--ix-line2);font-weight:500}
@@ -54,7 +54,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;ba
 .kpi.kpi-ndsy{border-left-color:var(--ix-cyan)}.kpi.kpi-ndsn{border-left-color:var(--ix-amber)}
 .kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ix-mut);margin-bottom:6px}
 .kpi-val{font-size:17px;font-weight:700;font-family:'Courier New',monospace;line-height:1.1}
-.kpi-sub{font-size:10px;color:#8b9a93;margin-top:3px;font-weight:500}
+.kpi-sub{font-size:10px;color:#66766E;margin-top:3px;font-weight:500}
 .c-bl{color:var(--ix-green)}.c-gn{color:var(--ix-green)}.c-rd{color:var(--ix-red)}
 .c-pu{color:var(--ix-purple)}.c-am{color:var(--ix-amber)}.c-cy{color:var(--ix-cyan)}
 
@@ -68,11 +68,11 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
 .r-op td{background:linear-gradient(90deg,#00E38A,#00B874);color:#06120d;font-weight:800;font-size:11.5px;padding:9px 12px;border-bottom:none}
 .r-inv td{background:linear-gradient(90deg,#0e7c66,#0a5f4e);color:#eafff7;font-weight:800;font-size:11.5px;padding:9px 12px;border-bottom:none}
 .r-fin td{background:linear-gradient(90deg,#4a3a7a,#3a2d5e);color:#f0eaff;font-weight:800;font-size:11.5px;padding:9px 12px;border-bottom:none}
-.r-tot td{font-weight:700;background:rgba(0,227,138,.05);border-top:1px solid rgba(0,227,138,.2);border-bottom:1px solid rgba(0,227,138,.2);font-size:12.5px}
+.r-tot td{font-weight:700;background:rgba(0,135,90,.05);border-top:1px solid rgba(0,135,90,.2);border-bottom:1px solid rgba(0,135,90,.2);font-size:12.5px}
 .r-net td{font-weight:800;background:var(--ix-green);color:#06120d;font-size:14px;border:none}
 .r-net.neg td{background:#c0392b;color:#fff}
-.r-sub td{font-weight:600;color:var(--ix-txt);background:#2B3630;border-bottom:1px solid var(--ix-line2)}
-.r-stat td{background:rgba(0,227,138,.045);font-weight:600;font-size:11.5px;color:var(--ix-green);border-bottom:1px solid var(--ix-line)}
+.r-sub td{font-weight:600;color:var(--ix-txt);background:#EEF3F0;border-bottom:1px solid var(--ix-line2)}
+.r-stat td{background:rgba(0,135,90,.045);font-weight:600;font-size:11.5px;color:var(--ix-green);border-bottom:1px solid var(--ix-line)}
 .r-stat-fin td{background:rgba(167,139,250,.06);font-weight:600;font-size:11.5px;color:var(--ix-purple);border-bottom:1px solid var(--ix-line)}
 .r-stat-inv td{background:rgba(34,211,238,.055);font-weight:600;font-size:11.5px;color:var(--ix-cyan);border-bottom:1px solid var(--ix-line)}
 .r-exp{cursor:pointer}.r-exp:hover td{filter:brightness(1.35)}
@@ -80,28 +80,28 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
 .chev-d{display:inline-block;font-size:9px;margin-right:6px;transition:transform .15s;color:var(--ix-green)}
 .chev.open,.chev-d.open{transform:rotate(90deg)}
 .l1 td:first-child{padding-left:20px;color:var(--ix-txt);font-weight:500}
-.l2 td:first-child{padding-left:36px;color:#c3d0ca}
+.l2 td:first-child{padding-left:36px;color:#465650}
 .l3 td:first-child{padding-left:52px;color:var(--ix-mut);font-size:11.5px}
 .vp{color:var(--ix-green);font-weight:600}.vn{color:var(--ix-red);font-weight:600}.vd{color:#75857d}
-table.dds tr.zeb>td{background:rgba(255,255,255,.035)}
-table.dds tr.zeb.r-op-day>td{background:rgba(255,255,255,.055)}
+table.dds tr.zeb>td{background:rgba(30,42,36,.035)}
+table.dds tr.zeb.r-op-day>td{background:rgba(30,42,36,.05)}
 .tag{display:inline-block;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:5px;font-weight:700;vertical-align:middle}
 
 /* ── ОСТАТКИ ── */
 .bal-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
 .bal-title{font-size:15px;font-weight:700;margin-bottom:3px;color:var(--ix-txt)}
 .bal-ts{font-size:11px;color:var(--ix-mut);font-weight:500}
-.rbtn{display:flex;align-items:center;gap:6px;padding:8px 16px;font-size:12px;font-weight:700;border:1px solid var(--ix-green);border-radius:8px;background:rgba(0,227,138,.08);cursor:pointer;color:var(--ix-green);font-family:inherit;transition:all .15s}
-.rbtn:hover:not(:disabled){background:var(--ix-green);color:#06120d;box-shadow:0 0 16px rgba(0,227,138,.35)}
+.rbtn{display:flex;align-items:center;gap:6px;padding:8px 16px;font-size:12px;font-weight:700;border:1px solid var(--ix-green);border-radius:8px;background:rgba(0,135,90,.08);cursor:pointer;color:var(--ix-green);font-family:inherit;transition:all .15s}
+.rbtn:hover:not(:disabled){background:var(--ix-green);color:#06120d;box-shadow:0 0 16px rgba(0,135,90,.35)}
 .rbtn:disabled{opacity:.4;cursor:default}
 .spin{animation:spin .9s linear infinite;display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
 .bal-block{background:var(--ix-card);border:1px solid var(--ix-line);border-radius:12px;overflow:hidden;margin-bottom:12px}
 .brow{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--ix-line)}
 .brow:last-child{border-bottom:none}
-.brow.btot{background:linear-gradient(120deg,#00E38A,#00B874);padding:16px 18px}
-.brow.bsec{background:#2B3630;border-left:3px solid var(--ix-green)}
-.brow.bbank{background:#2B3630;border-left:3px solid rgba(0,227,138,.35)}
+.brow.btot{background:linear-gradient(120deg,#00875A,#00B874);padding:16px 18px}
+.brow.bsec{background:#EEF3F0;border-left:3px solid var(--ix-green)}
+.brow.bbank{background:#EEF3F0;border-left:3px solid rgba(0,135,90,.35)}
 .brow.bacc{padding-left:32px}
 .brow.bacc .blbl{color:var(--ix-mut);font-size:12px;font-weight:500}
 .blbl{font-size:13px;font-weight:600;color:var(--ix-txt)}
@@ -126,18 +126,19 @@ table.dds tr.zeb.r-op-day>td{background:rgba(255,255,255,.055)}
 
 /* ── План/факт: закреплённая шапка таблиц ── */
 #pf-v-days .tbl-wrap,#pf-v-exec .tbl-wrap{max-height:calc(100vh - 250px)}
-#pf-v-days table.dds thead th,#pf-v-exec table.dds thead th{position:sticky;top:0;z-index:6;background:#1C2622;box-shadow:inset 0 -1px 0 #44534C}
-#pf-v-days table.dds tbody td:nth-child(1),#pf-v-days table.dds tfoot td:nth-child(1){position:sticky;left:0;z-index:4;background:#26312C}
-#pf-v-days table.dds tbody td:nth-child(2),#pf-v-days table.dds tfoot td:nth-child(2){position:sticky;left:26px;z-index:4;background:#26312C}
+#pf-v-days table.dds thead th,#pf-v-exec table.dds thead th{position:sticky;top:0;z-index:6;background:#F3F6F4;box-shadow:inset 0 -1px 0 #C7D3CC}
+#pf-v-days table.dds tbody td:nth-child(1),#pf-v-days table.dds tfoot td:nth-child(1){position:sticky;left:0;z-index:4;background:#FFFFFF}
+#pf-v-days table.dds tbody td:nth-child(2),#pf-v-days table.dds tfoot td:nth-child(2){position:sticky;left:26px;z-index:4;background:#FFFFFF}
+#pf-v-days table.dds tbody tr.zeb td:nth-child(1),#pf-v-days table.dds tbody tr.zeb td:nth-child(2){background:#EAF0EC}
 #pf-v-days table.dds thead th:nth-child(1){left:0;z-index:7}
 #pf-v-days table.dds thead th:nth-child(2){left:26px;z-index:7}
-#pf-v-days table.dds tfoot td{position:sticky;bottom:0;background:#232e29;z-index:5}
+#pf-v-days table.dds tfoot td{position:sticky;bottom:0;background:#F3F6F4;z-index:5}
 #pf-print-head{display:none}
 /* строки детализации дня */
-#pf-v-days tr.pf-det td{background:#20292500;font-size:11px;padding-top:3px;padding-bottom:3px;border-bottom:1px dotted #2c3a34}
-#pf-v-days tr.pf-det:hover td{background:rgba(255,255,255,.03)}
-#pf-v-days tr.pf-det td.pf-det-name{text-align:left;font-family:inherit;color:#9fb0a8;max-width:420px;white-space:normal;line-height:1.35;background:#26312C}
-#pf-v-days tr.pf-det td:nth-child(1),#pf-v-days tr.pf-det td:nth-child(2){background:#26312C}
+#pf-v-days tr.pf-det td{background:#20292500;font-size:11px;padding-top:3px;padding-bottom:3px;border-bottom:1px dotted #DCE6E0}
+#pf-v-days tr.pf-det:hover td{background:rgba(30,42,36,.045)}
+#pf-v-days tr.pf-det td.pf-det-name{text-align:left;font-family:inherit;color:#5B6B63;max-width:420px;white-space:normal;line-height:1.35;background:#FFFFFF}
+#pf-v-days tr.pf-det td:nth-child(1),#pf-v-days tr.pf-det td:nth-child(2){background:#FFFFFF}
 @media print{
   body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   #pf-v-days .tbl-wrap,#pf-v-exec .tbl-wrap{max-height:none!important;overflow:visible!important;border:none!important}
@@ -157,7 +158,7 @@ table.dds tr.zeb.r-op-day>td{background:rgba(255,255,255,.055)}
 
 @media print {
   body{background:#fff!important;color:#111!important;font-size:11px}
-  .hdr{position:relative!important;box-shadow:none!important;background:#19231F!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .hdr{position:relative!important;box-shadow:none!important;background:#FFFFFF!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .tabs,.toolbar,button{display:none!important}
   .screen{display:none!important}
   .screen.active{display:block!important;padding:8px 0!important}
@@ -209,10 +210,10 @@ table.dds tr.zeb.r-op-day>td{background:rgba(255,255,255,.055)}
     <div id="hdr-period" class="hdr-period">—</div>
   </div>
   <div style="display:flex;align-items:center;gap:6px">
-    <button onclick="printDDS()" title="Печать / Сохранить PDF" style="display:flex;align-items:center;gap:5px;padding:7px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:8px;background:rgba(255,255,255,.04);cursor:pointer;color:#c3d0ca;font-family:inherit;transition:all .15s" onmouseover="this.style.background='rgba(0,227,138,.14)';this.style.color='#00E38A';this.style.borderColor='#00E38A'" onmouseout="this.style.background='rgba(255,255,255,.04)';this.style.color='#c3d0ca';this.style.borderColor='#44534C'">
+    <button onclick="printDDS()" title="Печать / Сохранить PDF" style="display:flex;align-items:center;gap:5px;padding:7px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:8px;background:rgba(30,42,36,.05);cursor:pointer;color:#465650;font-family:inherit;transition:all .15s" onmouseover="this.style.background='rgba(0,135,90,.14)';this.style.color='#00875A';this.style.borderColor='#00875A'" onmouseout="this.style.background='rgba(30,42,36,.05)';this.style.color='#465650';this.style.borderColor='#C7D3CC'">
       🖨 PDF
     </button>
-    <button onclick="exportExcel()" id="xlsbtn" title="Сохранить Excel" style="display:flex;align-items:center;gap:5px;padding:7px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:8px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit;transition:all .15s" onmouseover="this.style.background='#00E38A';this.style.color='#06120d'" onmouseout="this.style.background='rgba(0,227,138,.12)';this.style.color='#00E38A'">
+    <button onclick="exportExcel()" id="xlsbtn" title="Сохранить Excel" style="display:flex;align-items:center;gap:5px;padding:7px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,135,90,.45);border-radius:8px;background:rgba(0,135,90,.12);cursor:pointer;color:#00875A;font-family:inherit;transition:all .15s" onmouseover="this.style.background='#00875A';this.style.color='#06120d'" onmouseout="this.style.background='rgba(0,135,90,.12)';this.style.color='#00875A'">
       📊 Excel
     </button>
 
@@ -236,7 +237,7 @@ table.dds tr.zeb.r-op-day>td{background:rgba(255,255,255,.055)}
   </div>
   <div class="period-sub" id="psub"></div>
   <div class="period-info" id="pinfo">—</div>
-  <button id="rdds" onclick="refreshDDSData()" style="display:flex;align-items:center;gap:5px;padding:5px 12px;font-size:12px;font-weight:600;border:1px solid #00E38A;border-radius:6px;background:rgba(0,227,138,.1);cursor:pointer;color:#00E38A;font-family:inherit;margin-left:4px;transition:all .15s" onmouseover="this.style.background='#059669';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='#059669'">
+  <button id="rdds" onclick="refreshDDSData()" style="display:flex;align-items:center;gap:5px;padding:5px 12px;font-size:12px;font-weight:600;border:1px solid #00875A;border-radius:6px;background:rgba(0,135,90,.1);cursor:pointer;color:#00875A;font-family:inherit;margin-left:4px;transition:all .15s" onmouseover="this.style.background='#059669';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='#059669'">
     <span id="rdds-ico">⟳</span>&nbsp;Обновить данные
   </button>
 </div>
@@ -251,10 +252,10 @@ table.dds tr.zeb.r-op-day>td{background:rgba(255,255,255,.055)}
   <span style="margin-left:auto;display:flex;align-items:center;gap:7px;white-space:nowrap">
     <svg width="15" height="15" viewBox="0 0 100 100" style="flex-shrink:0">
       <polygon points="3,97 3,55 60,3 97,3" fill="#00B874"/>
-      <polygon points="3,3 3,45 55,97 97,97" fill="#00E38A"/>
+      <polygon points="3,3 3,45 55,97 97,97" fill="#00875A"/>
     </svg>
-    <b style="color:#00E38A;letter-spacing:.1em;font-weight:800">IRIX</b>
-    <span style="color:#8b9a93">· умные приложения для бизнеса</span>
+    <b style="color:#00875A;letter-spacing:.1em;font-weight:800">IRIX</b>
+    <span style="color:#66766E">· умные приложения для бизнеса</span>
   </span></div>
 </div>
 <div id="dds" class="screen">
@@ -268,9 +269,9 @@ table.dds tr.zeb.r-op-day>td{background:rgba(255,255,255,.055)}
       <div class="ctitle">Поступления 2025 (все месяцы) + 2026 (факт)</div>
       <div class="leg">
         <div class="li"><div class="lsq" style="background:#2f6d5a"></div>Поступления 2025</div>
-        <div class="li"><div class="lsq" style="background:#00E38A"></div>Поступления 2026</div>
+        <div class="li"><div class="lsq" style="background:#00875A"></div>Поступления 2026</div>
         <div class="li"><div class="lsq" style="background:#5eead4"></div>ЧДП 2025</div>
-        <div class="li"><div class="lsq" style="background:#fbbf24"></div>ЧДП 2026</div>
+        <div class="li"><div class="lsq" style="background:#B45309"></div>ЧДП 2026</div>
       </div>
       <div style="position:relative;height:220px"><canvas id="c1"></canvas></div>
     </div>
@@ -278,8 +279,8 @@ table.dds tr.zeb.r-op-day>td{background:rgba(255,255,255,.055)}
       <div class="ctitle">Динамика потоков за период</div>
       <div class="leg">
         <div class="li"><div class="lsq" style="background:#00B874"></div>Поступления</div>
-        <div class="li"><div class="lsq" style="background:#ff6b6b"></div>Расходы</div>
-        <div class="li"><div class="lsq" style="background:#fbbf24"></div>ЧДП</div>
+        <div class="li"><div class="lsq" style="background:#DC2626"></div>Расходы</div>
+        <div class="li"><div class="lsq" style="background:#B45309"></div>ЧДП</div>
       </div>
       <div style="position:relative;height:300px"><canvas id="c2"></canvas></div>
     </div>
@@ -310,7 +311,7 @@ table.dds tr.zeb.r-op-day>td{background:rgba(255,255,255,.055)}
       <button class="ppill" onclick="pfSetMode('custom',this)">Период</button>
     </div>
     <div class="period-sub" id="pf-sub"></div>
-    <button id="pf-rbtn" onclick="pfLoad()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit;display:flex;align-items:center;gap:5px;margin-left:auto"><span>⟳</span>&nbsp;Обновить факт</button>
+    <button id="pf-rbtn" onclick="pfLoad()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,135,90,.45);border-radius:7px;background:rgba(0,135,90,.12);cursor:pointer;color:#00875A;font-family:inherit;display:flex;align-items:center;gap:5px;margin-left:auto"><span>⟳</span>&nbsp;Обновить факт</button>
   </div>
   <div class="period-sub" id="pf-opts" style="margin-bottom:14px">
     <label>Факт считаем как</label>
@@ -338,12 +339,12 @@ table.dds tr.zeb.r-op-day>td{background:rgba(255,255,255,.055)}
     </div>
     <div class="kpis" id="pf-kpis" style="grid-template-columns:repeat(4,1fr)"></div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-      <span class="pf-hint" style="font-size:11px;color:#9fb0a8">строка менеджера раскрывается по контрагентам — щёлкните по треугольнику</span>
+      <span class="pf-hint" style="font-size:11px;color:#5B6B63">строка менеджера раскрывается по контрагентам — щёлкните по треугольнику</span>
       <span style="margin-left:auto;display:flex;gap:8px">
-        <button onclick="pfPrint(0)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">🖨&nbsp;Печать</button>
-        <button onclick="pfPrint(1)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">📄&nbsp;PDF</button>
-        <button onclick="pfXlsx()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit">📊&nbsp;Excel</button>
-        <button onclick="pfCsvOut()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">↓&nbsp;CSV</button>
+        <button onclick="pfPrint(0)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">🖨&nbsp;Печать</button>
+        <button onclick="pfPrint(1)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">📄&nbsp;PDF</button>
+        <button onclick="pfXlsx()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,135,90,.45);border-radius:7px;background:rgba(0,135,90,.12);cursor:pointer;color:#00875A;font-family:inherit">📊&nbsp;Excel</button>
+        <button onclick="pfCsvOut()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">↓&nbsp;CSV</button>
       </span>
     </div>
     <div class="tbl-wrap"><table class="dds" id="pf-tbl"></table></div>
@@ -359,12 +360,12 @@ table.dds tr.zeb.r-op-day>td{background:rgba(255,255,255,.055)}
         <button class="ppill active" onclick="pfCum(0,this)">За день</button>
         <button class="ppill" onclick="pfCum(1,this)">Нарастающим итогом</button>
       </div>
-      <span class="pf-hint" style="font-size:11px;color:#9fb0a8">строки — дни месяца, столбцы — менеджеры; день раскрывается по контрагентам</span>
+      <span class="pf-hint" style="font-size:11px;color:#5B6B63">строки — дни месяца, столбцы — менеджеры; день раскрывается по контрагентам</span>
       <span style="margin-left:auto;display:flex;gap:8px">
-        <button onclick="pfPrint(0)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">🖨&nbsp;Печать</button>
-        <button onclick="pfPrint(1)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">📄&nbsp;PDF</button>
-        <button onclick="pfXlsx()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit">📊&nbsp;Excel</button>
-        <button onclick="pfCsvOut()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">↓&nbsp;CSV</button>
+        <button onclick="pfPrint(0)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">🖨&nbsp;Печать</button>
+        <button onclick="pfPrint(1)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">📄&nbsp;PDF</button>
+        <button onclick="pfXlsx()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,135,90,.45);border-radius:7px;background:rgba(0,135,90,.12);cursor:pointer;color:#00875A;font-family:inherit">📊&nbsp;Excel</button>
+        <button onclick="pfCsvOut()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">↓&nbsp;CSV</button>
       </span>
     </div>
     <div class="tbl-wrap"><table class="dds" id="pf-dyn"></table></div>
@@ -374,12 +375,12 @@ table.dds tr.zeb.r-op-day>td{background:rgba(255,255,255,.055)}
     <div class="ccard">
       <div class="ctitle">Справочник менеджеров — заполняется вручную</div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
-        <input id="pf-mans-new" placeholder="Фамилия И." onkeydown="if(event.key==='Enter')pfManAdd()" style="padding:5px 9px;border:1px solid #44534C;border-radius:6px;background:#1C2622;color:#F2F2F2;font-family:inherit;font-size:12px;width:220px">
-        <button onclick="pfManAdd()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit">+&nbsp;Добавить</button>
-        <button onclick="pfMansClear()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">✕&nbsp;Очистить справочник</button>
-        <span style="font-size:11.5px;color:#9fb0a8">имя должно совпадать со столбцом «Менеджер» листа «Свод по счетам»</span>
+        <input id="pf-mans-new" placeholder="Фамилия И." onkeydown="if(event.key==='Enter')pfManAdd()" style="padding:5px 9px;border:1px solid #C7D3CC;border-radius:6px;background:#F3F6F4;color:#1E2A24;font-family:inherit;font-size:12px;width:220px">
+        <button onclick="pfManAdd()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,135,90,.45);border-radius:7px;background:rgba(0,135,90,.12);cursor:pointer;color:#00875A;font-family:inherit">+&nbsp;Добавить</button>
+        <button onclick="pfMansClear()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">✕&nbsp;Очистить справочник</button>
+        <span style="font-size:11.5px;color:#5B6B63">имя должно совпадать со столбцом «Менеджер» листа «Свод по счетам»</span>
       </div>
-      <div id="pf-cols" style="font-size:11.5px;color:#9fb0a8;margin-bottom:14px;line-height:1.6"></div>
+      <div id="pf-cols" style="font-size:11.5px;color:#5B6B63;margin-bottom:14px;line-height:1.6"></div>
       <table class="dds" id="pf-mans-tbl"></table>
       <div id="pf-unknown" style="display:none;margin-top:16px"></div>
     </div>
@@ -392,23 +393,23 @@ table.dds tr.zeb.r-op-day>td{background:rgba(255,255,255,.055)}
         <button class="ppill active" id="pf-pk-cash" onclick="pfSetPlanKind('cash',this)">План (деньги)</button>
         <button class="ppill" id="pf-pk-rev" onclick="pfSetPlanKind('rev',this)">План по марже</button>
       </div>
-      <div id="pf-bridge" class="period-sub" style="margin-bottom:12px;padding:9px 12px;border:1px solid #33403A;border-radius:8px;background:rgba(255,255,255,.02)"></div>
+      <div id="pf-bridge" class="period-sub" style="margin-bottom:12px;padding:9px 12px;border:1px solid #DCE6E0;border-radius:8px;background:rgba(30,42,36,.035)"></div>
       <div class="period-sub" id="pf-ed-sel" style="margin-bottom:12px"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
-        <button onclick="pfEdSave()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit">✓&nbsp;Сохранить</button>
-        <button id="pf-refresh-plan-btn" onclick="pfPlanRefreshFromSheet()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(34,211,238,.45);border-radius:7px;background:rgba(34,211,238,.1);cursor:pointer;color:#22d3ee;font-family:inherit">⟳&nbsp;Обновить план из таблицы</button>
-        <button onclick="pfEdPrev()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">⧉&nbsp;Взять прошлый месяц</button>
-        <button id="pf-fromsheet-btn" onclick="pfEdFromSheet()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">↓&nbsp;Подтянуть из листа «План» (без сети)</button>
-        <button onclick="pfEdClear()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">✕&nbsp;Удалить план месяца</button>
-        <button onclick="pfEdWipe()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">🗑&nbsp;Удалить план целиком</button>
+        <button onclick="pfEdSave()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,135,90,.45);border-radius:7px;background:rgba(0,135,90,.12);cursor:pointer;color:#00875A;font-family:inherit">✓&nbsp;Сохранить</button>
+        <button id="pf-refresh-plan-btn" onclick="pfPlanRefreshFromSheet()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(34,211,238,.45);border-radius:7px;background:rgba(34,211,238,.1);cursor:pointer;color:#0E7490;font-family:inherit">⟳&nbsp;Обновить план из таблицы</button>
+        <button onclick="pfEdPrev()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">⧉&nbsp;Взять прошлый месяц</button>
+        <button id="pf-fromsheet-btn" onclick="pfEdFromSheet()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">↓&nbsp;Подтянуть из листа «План» (без сети)</button>
+        <button onclick="pfEdClear()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">✕&nbsp;Удалить план месяца</button>
+        <button onclick="pfEdWipe()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">🗑&nbsp;Удалить план целиком</button>
       </div>
       <div class="period-sub" id="pf-fromsheet-hint" style="margin-bottom:14px;color:#5d6b64;font-size:11px">«Обновить план из таблицы» — заново скачивает лист «План» из Google Таблицы и заменяет план текущего месяца на актуальные цифры оттуда. Используйте это, если данные в таблице поменялись.</div>
-      <div class="period-sub" id="pf-ed-add" style="margin-bottom:14px;padding:10px 12px;border:1px solid #33403A;border-radius:8px;background:rgba(255,255,255,.02)"></div>
+      <div class="period-sub" id="pf-ed-add" style="margin-bottom:14px;padding:10px 12px;border:1px solid #DCE6E0;border-radius:8px;background:rgba(30,42,36,.035)"></div>
       <table class="dds" id="pf-ed-tbl"></table>
-      <div id="pf-ed-hint" style="font-size:11.5px;color:#9fb0a8;margin-top:12px;line-height:1.6"></div>
+      <div id="pf-ed-hint" style="font-size:11.5px;color:#5B6B63;margin-top:12px;line-height:1.6"></div>
       <div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap">
-        <button onclick="pfPlanExport()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">⬇&nbsp;Выгрузить план в файл</button>
-        <label style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit;display:inline-flex;align-items:center">⬆&nbsp;Загрузить из файла
+        <button onclick="pfPlanExport()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">⬇&nbsp;Выгрузить план в файл</button>
+        <label style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit;display:inline-flex;align-items:center">⬆&nbsp;Загрузить из файла
           <input type="file" accept="application/json" onchange="pfPlanImport(this)" style="display:none">
         </label>
       </div>
@@ -419,12 +420,12 @@ table.dds tr.zeb.r-op-day>td{background:rgba(255,255,255,.055)}
     <div class="period-sub" id="pf-card-sel" style="margin-bottom:14px"></div>
     <div class="kpis" id="pf-card-kpis" style="grid-template-columns:repeat(5,1fr);margin-bottom:18px"></div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-      <span class="pf-hint" style="font-size:11px;color:#9fb0a8">поступления выбранного менеджера за период, сгруппированные по счёту</span>
+      <span class="pf-hint" style="font-size:11px;color:#5B6B63">поступления выбранного менеджера за период, сгруппированные по счёту</span>
       <span style="margin-left:auto;display:flex;gap:8px">
-        <button onclick="pfPrint(0)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">🖨&nbsp;Печать</button>
-        <button onclick="pfPrint(1)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">📄&nbsp;PDF</button>
-        <button onclick="pfXlsx()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit">📊&nbsp;Excel</button>
-        <button onclick="pfCsvOut()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #44534C;border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;color:#F2F2F2;font-family:inherit">↓&nbsp;CSV</button>
+        <button onclick="pfPrint(0)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">🖨&nbsp;Печать</button>
+        <button onclick="pfPrint(1)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">📄&nbsp;PDF</button>
+        <button onclick="pfXlsx()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,135,90,.45);border-radius:7px;background:rgba(0,135,90,.12);cursor:pointer;color:#00875A;font-family:inherit">📊&nbsp;Excel</button>
+        <button onclick="pfCsvOut()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">↓&nbsp;CSV</button>
       </span>
     </div>
     <div class="tbl-wrap"><table class="dds" id="pf-card-tbl"></table></div>
@@ -684,8 +685,8 @@ function buildDDS(){
   h+=`<tr class="r-exp" onclick="tgl('ge')"><td><span class="chev-d" id="ic-ge">▶</span>Общие расходы</td>${totalExpC}</tr>`;
 
   // Подраздел: ФОТ
-  h+=`<tr class="r-exp l1 hid" id="ge" onclick="tgl('ee')"><td style="padding-left:20px"><span class="chev-d" id="ic-ee">▶</span>Заработная плата и ФОТ<span class="tag" style="background:rgba(251,191,36,.16);color:#fbbf24">ФОТ</span></td>${fotC}</tr>`;
-  h+=`<tr class="hid r-hdr" id="ee" style="background:#2B3630"><td style="padding-left:52px;font-size:10px;font-weight:700;color:#8a9a92">Сотрудник</td>${mc?cols.map(c=>`<td style="font-size:10px;font-weight:700;color:#8a9a92;background:#2B3630">${c.short}</td>`).join('')+`<td style="font-size:10px;font-weight:700;color:#8a9a92;background:#2B3630">Итого</td>`:`<td style="font-size:10px;font-weight:700;color:#8a9a92;background:#2B3630">Итого</td>`}</tr>`;
+  h+=`<tr class="r-exp l1 hid" id="ge" onclick="tgl('ee')"><td style="padding-left:20px"><span class="chev-d" id="ic-ee">▶</span>Заработная плата и ФОТ<span class="tag" style="background:rgba(251,191,36,.16);color:#B45309">ФОТ</span></td>${fotC}</tr>`;
+  h+=`<tr class="hid r-hdr" id="ee" style="background:#EEF3F0"><td style="padding-left:52px;font-size:10px;font-weight:700;color:#66766E">Сотрудник</td>${mc?cols.map(c=>`<td style="font-size:10px;font-weight:700;color:#66766E;background:#EEF3F0">${c.short}</td>`).join('')+`<td style="font-size:10px;font-weight:700;color:#66766E;background:#EEF3F0">Итого</td>`:`<td style="font-size:10px;font-weight:700;color:#66766E;background:#EEF3F0">Итого</td>`}</tr>`;
   fotE.forEach(([p,pv],ei)=>{
     const eid='fe'+ei;
     const eops=(d.fot_ops&&d.fot_ops[p])||[];
@@ -696,7 +697,7 @@ function buildDDS(){
       eops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
         const fdd=x=>{const q=x.split('-');return q[2]+'.'+q[1];};
         const oC=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`;
-        h+=`<tr class="hid r-op-day" id="${eid}" data-par="ee" style="background:#1F2A25"><td style="padding-left:68px;font-size:11px;color:#8a9a92">${fdd(op.d)}&nbsp;<span style="background:rgba(251,191,36,.16);color:#fbbf24;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${oC}</tr>`;
+        h+=`<tr class="hid r-op-day" id="${eid}" data-par="ee" style="background:#F5F9F7"><td style="padding-left:68px;font-size:11px;color:#66766E">${fdd(op.d)}&nbsp;<span style="background:rgba(251,191,36,.16);color:#B45309;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${oC}</tr>`;
       });
     } else {
       h+=`<tr class="l3 hid" id="ee" data-par="ge"><td>${p}</td>${pC}</tr>`;
@@ -722,7 +723,7 @@ function buildDDS(){
         ops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
           const fdd=d=>{const p=d.split('-');return p[2]+'.'+p[1];};
           const opC=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`;
-          h+=`<tr class="hid r-op-day" id="${did}" data-par="${sid}" style="background:#1F2A25"><td style="padding-left:68px;font-size:11px;color:#8a9a92">${fdd(op.d)}&nbsp;<span style="background:rgba(255,107,107,.16);color:#ff8f8f;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opC}</tr>`;
+          h+=`<tr class="hid r-op-day" id="${did}" data-par="${sid}" style="background:#F5F9F7"><td style="padding-left:68px;font-size:11px;color:#66766E">${fdd(op.d)}&nbsp;<span style="background:rgba(255,107,107,.16);color:#B91C1C;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opC}</tr>`;
         });
       } else {
         h+=`<tr class="l3 hid" id="${sid}" data-par="oo"><td style="padding-left:52px">${ctr}</td>${ctrC}</tr>`;
@@ -743,7 +744,7 @@ function buildDDS(){
   h+=`<tr style="background:${codpTot>=0?'#f0fdf4':'#fff1f2'};border-top:2px solid ${codpTot>=0?'#86efac':'#fca5a5'}">
     <td style="font-weight:700;font-size:12.5px;color:${codpTot>=0?'#166534':'#991b1b'};padding:8px 12px">
       Чистый операционный денежный поток
-      <span style="font-size:10px;font-weight:500;color:#9ca3af;margin-left:6px">= Поступления − ФОТ − Операц. расходы</span>
+      <span style="font-size:10px;font-weight:500;color:#6b7b73;margin-left:6px">= Поступления − ФОТ − Операц. расходы</span>
     </td>${codpC}</tr>`;
 
   // II. ИНВЕСТИЦИОННАЯ
@@ -755,7 +756,7 @@ function buildDDS(){
     Object.entries(invSt).forEach(([st,sv],si)=>{
       const sid='iv'+si;
       const stC=mc?ks.map(k=>(sv.tot[k]||0)?`<td class="vn">${fm(Math.abs(sv.tot[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:700">${fm(Math.abs(S(sv.tot)))}</td>`:`<td class="vn" style="font-weight:700">${fm(Math.abs(S(sv.tot)))}</td>`;
-      h+=`<tr class="r-exp r-stat-inv l1" onclick="tgl('${sid}')"><td><span class="chev-d" id="ic-${sid}">▶</span>${st}<span class="tag" style="background:rgba(34,211,238,.16);color:#22d3ee">инвест.</span></td>${stC}</tr>`;
+      h+=`<tr class="r-exp r-stat-inv l1" onclick="tgl('${sid}')"><td><span class="chev-d" id="ic-${sid}">▶</span>${st}<span class="tag" style="background:rgba(34,211,238,.16);color:#0E7490">инвест.</span></td>${stC}</tr>`;
       Object.entries(sv.ctrs).forEach(([ctr,cv])=>{h+=`<tr class="l3 hid" id="${sid}"><td>${ctr}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn">${fm(Math.abs(S(cv)))}</td>`}</tr>`;});
     });
   } else h+=`<tr class="l1"><td>Инвестиционные операции</td>${mc?cols.map(()=>`<td class="vd">—</td>`).join('')+`<td class="vd">—</td>`:`<td class="vd">—</td>`}</tr>`;
@@ -773,7 +774,7 @@ function buildDDS(){
   h+='<tr style="background:'+(cdpInvTot>=0?'#ecfeff':'#fff1f2')+';border-top:2px solid '+(cdpInvTot>=0?'#67e8f9':'#fca5a5')+';border-bottom:2px solid '+(cdpInvTot>=0?'#67e8f9':'#fca5a5')+'">'
     +'<td style="font-weight:700;font-size:12.5px;color:'+(cdpInvTot>=0?'#0e7490':'#991b1b')+';padding:8px 12px">'
     +'ЧДП с учётом инвестиций'
-    +'<span style="font-size:10px;font-weight:500;color:#9ca3af;margin-left:6px">= Операц. ЧДП + Инвестиции</span>'
+    +'<span style="font-size:10px;font-weight:500;color:#6b7b73;margin-left:6px">= Операц. ЧДП + Инвестиции</span>'
     +'</td>'+cdpInvC+'</tr>';
 
   // III. ФИНАНСОВАЯ (Дивиденды)
@@ -797,7 +798,7 @@ function buildDDS(){
 
     // Итого строка дивидендов
     const divC=mc?ks.map(k=>(d.div[k]||0)?`<td class="vn">${fm(Math.abs(d.div[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:700">${fm(Math.abs(divTot))}</td>`:`<td class="vn" style="font-weight:700">${fm(Math.abs(divTot))}</td>`;
-    h+=`<tr class="r-exp r-stat-fin" onclick="tgl('dd')"><td><span class="chev-d" id="ic-dd">▶</span>Дивиденды<span class="tag" style="background:rgba(183,154,255,.18);color:#b79aff">фин.</span></td>${divC}</tr>`;
+    h+=`<tr class="r-exp r-stat-fin" onclick="tgl('dd')"><td><span class="chev-d" id="ic-dd">▶</span>Дивиденды<span class="tag" style="background:rgba(183,154,255,.18);color:#7C3AED">фин.</span></td>${divC}</tr>`;
 
     // helper: format date dd.mm
     const fdd=d=>{const p=d.split('-');return p[2]+'.'+p[1];};
@@ -805,7 +806,7 @@ function buildDDS(){
     // ВЫВОД дивидендов
     if(divOutTot!==0){
       const outC=mc?ks.map(k=>{const v=Object.values(divOut).reduce((s,cv)=>s+(cv.cols[k]||0),0);return v?`<td class="vn">${fm(Math.abs(v))}</td>`:`<td class="vd">—</td>`;}).join('')+`<td class="vn" style="font-weight:600">${fm(Math.abs(divOutTot))}</td>`:`<td class="vn" style="font-weight:600">${fm(Math.abs(divOutTot))}</td>`;
-      h+=`<tr class="r-exp l1 hid" id="dd" onclick="tgl('dd_out')"><td style="padding-left:20px"><span class="chev-d" id="ic-dd_out">▶</span>Вывод дивидендов<span class="tag" style="background:rgba(255,107,107,.16);color:#ff8f8f">↑ выход</span></td>${outC}</tr>`;
+      h+=`<tr class="r-exp l1 hid" id="dd" onclick="tgl('dd_out')"><td style="padding-left:20px"><span class="chev-d" id="ic-dd_out">▶</span>Вывод дивидендов<span class="tag" style="background:rgba(255,107,107,.16);color:#B91C1C">↑ выход</span></td>${outC}</tr>`;
       Object.entries(divOut).sort((a,b)=>S(a[1].cols)-S(b[1].cols)).forEach(([ctr,cv],ci)=>{
         const cid='dout'+ci;
         const ctrC=mc?ks.map(k=>(cv.cols[k]||0)?`<td class="vn">${fm(Math.abs(cv.cols[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:600">${fm(Math.abs(S(cv.cols)))}</td>`:`<td class="vn" style="font-weight:600">${fm(Math.abs(S(cv.cols)))}</td>`;
@@ -813,7 +814,7 @@ function buildDDS(){
         // Детализация: дата + счёт + сумма
         cv.ops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
           const opCols=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`;
-          h+=`<tr class="hid" id="${cid}" style="background:#fdf4ff"><td style="padding-left:68px;font-size:11px;color:#8a9a92">${fdd(op.d)}&nbsp;&nbsp;<span style="background:rgba(183,154,255,.18);color:#b79aff;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opCols}</tr>`;
+          h+=`<tr class="hid" id="${cid}" style="background:#fdf4ff"><td style="padding-left:68px;font-size:11px;color:#66766E">${fdd(op.d)}&nbsp;&nbsp;<span style="background:rgba(183,154,255,.18);color:#7C3AED;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opCols}</tr>`;
         });
       });
     }
@@ -828,7 +829,7 @@ function buildDDS(){
         h+=`<tr class="r-exp l3 hid" id="dd_in" onclick="tgl('${cid}')"><td><span class="chev-d" id="ic-${cid}">▶</span>${ctr}</td>${ctrC}</tr>`;
         cv.ops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
           const opCols=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vp" style="font-size:11px">${fm(op.s)}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp" style="font-size:11px">${fm(op.s)}</td>`:`<td class="vp" style="font-size:11px">${fm(op.s)}</td>`;
-          h+=`<tr class="hid" id="${cid}" style="background:#f0fdf4"><td style="padding-left:68px;font-size:11px;color:#8a9a92">${fdd(op.d)}&nbsp;&nbsp;<span style="background:#dcfce7;color:#166534;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opCols}</tr>`;
+          h+=`<tr class="hid" id="${cid}" style="background:#f0fdf4"><td style="padding-left:68px;font-size:11px;color:#66766E">${fdd(op.d)}&nbsp;&nbsp;<span style="background:#dcfce7;color:#166534;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opCols}</tr>`;
         });
       });
     }
@@ -842,7 +843,7 @@ function buildDDS(){
   const mvOutTot=mvOutByAcc.reduce((s,[,v])=>s+S(v.tot),0);
   const mvNet=mvInTot+mvOutTot;
 
-  h+=`<tr style="background:#2B3630"><td colspan="${mc?cols.length+2:2}" style="padding:9px 12px;font-weight:700;font-size:11.5px;color:#374151;letter-spacing:.02em;border-bottom:1px solid #e2e8f0">IV. Перемещения между счетами <span style="font-size:10px;font-weight:500;color:#9ca3af">(не влияют на чистый поток)</span></td></tr>`;
+  h+=`<tr style="background:#EEF3F0"><td colspan="${mc?cols.length+2:2}" style="padding:9px 12px;font-weight:700;font-size:11.5px;color:#374151;letter-spacing:.02em;border-bottom:1px solid #e2e8f0">IV. Перемещения между счетами <span style="font-size:10px;font-weight:500;color:#6b7b73">(не влияют на чистый поток)</span></td></tr>`;
 
   // Приток
   const mvInTotC=mc?ks.map(k=>{const v=mvInByAcc.reduce((s,[,av])=>s+(av.tot[k]||0),0);return v?`<td class="vp">${fm(v)}</td>`:`<td class="vd">—</td>`;}).join('')+`<td class="vp" style="font-weight:600">${fm(mvInTot)}</td>`:`<td class="vp" style="font-weight:600">${fm(mvInTot)}</td>`;
@@ -858,7 +859,7 @@ function buildDDS(){
 
   // Отток
   const mvOutTotC=mc?ks.map(k=>{const v=mvOutByAcc.reduce((s,[,av])=>s+(av.tot[k]||0),0);return v?`<td class="vn">${fm(Math.abs(v))}</td>`:`<td class="vd">—</td>`;}).join('')+`<td class="vn" style="font-weight:600">${fm(Math.abs(mvOutTot))}</td>`:`<td class="vn" style="font-weight:600">${fm(Math.abs(mvOutTot))}</td>`;
-  h+=`<tr class="r-exp" onclick="tgl('mvo')"><td><span class="chev-d" id="ic-mvo">▶</span>Перемещение — Отток<span class="tag" style="background:rgba(255,107,107,.16);color:#ff8f8f">↑ выход</span></td>${mvOutTotC}</tr>`;
+  h+=`<tr class="r-exp" onclick="tgl('mvo')"><td><span class="chev-d" id="ic-mvo">▶</span>Перемещение — Отток<span class="tag" style="background:rgba(255,107,107,.16);color:#B91C1C">↑ выход</span></td>${mvOutTotC}</tr>`;
   mvOutByAcc.forEach(([acc,av],ai)=>{
     const aC=mc?ks.map(k=>(av.tot[k]||0)?`<td class="vn">${fm(Math.abs(av.tot[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:500">${fm(Math.abs(S(av.tot)))}</td>`:`<td class="vn" style="font-weight:500">${fm(Math.abs(S(av.tot)))}</td>`;
     h+=`<tr class="l1 hid" id="mvo" style="background:#fff1f2"><td style="padding-left:20px">${acc}</td>${aC}</tr>`;
@@ -918,15 +919,15 @@ function hideKids(par){
 }
 
 // ── ГРАФИКИ ───────────────────────────────────────────
-// Тёмная тема IRIX для Chart.js
+// Светлая тема IRIX для Chart.js
 if(window.Chart){
-  Chart.defaults.color='#8a9a92';
-  Chart.defaults.borderColor='rgba(255,255,255,.06)';
+  Chart.defaults.color='#66766E';
+  Chart.defaults.borderColor='rgba(30,42,36,.07)';
   Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif";
-  Chart.defaults.plugins.tooltip.backgroundColor='#19231F';
-  Chart.defaults.plugins.tooltip.titleColor='#F2F2F2';
-  Chart.defaults.plugins.tooltip.bodyColor='#c3d0ca';
-  Chart.defaults.plugins.tooltip.borderColor='#00E38A';
+  Chart.defaults.plugins.tooltip.backgroundColor='#FFFFFF';
+  Chart.defaults.plugins.tooltip.titleColor='#1E2A24';
+  Chart.defaults.plugins.tooltip.bodyColor='#465650';
+  Chart.defaults.plugins.tooltip.borderColor='#00875A';
   Chart.defaults.plugins.tooltip.borderWidth=1;
 }
 const charts={};
@@ -959,10 +960,10 @@ function updateCharts(txns){
   const n26=r26.map((r,i)=>r+(e26[i]||0));
   charts.c1=new Chart(document.getElementById('c1'),{type:'bar',data:{labels:yoyL,datasets:[
     {label:'Пост.2025',data:[...r25,...Array(r26.length).fill(null)],backgroundColor:'#2f6d5a',borderRadius:3},
-    {label:'Пост.2026',data:[...Array(12).fill(null),...r26],backgroundColor:'#00E38A',borderRadius:3},
+    {label:'Пост.2026',data:[...Array(12).fill(null),...r26],backgroundColor:'#00875A',borderRadius:3},
     {type:'line',label:'ЧДП2025',data:[...n25,...Array(n26.length).fill(null)],borderColor:'#5eead4',borderDash:[4,3],backgroundColor:'transparent',pointRadius:3,pointBackgroundColor:'#5eead4',tension:.3},
-    {type:'line',label:'ЧДП2026',data:[...Array(12).fill(null),...n26],borderColor:'#fbbf24',borderDash:[4,3],backgroundColor:'transparent',pointRadius:4,pointBackgroundColor:'#fbbf24',tension:.3},
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw!=null?` ${Math.round(c.raw).toLocaleString('ru-RU')} руб.`:null}}},scales:{x:{ticks:{font:{size:9.5}},grid:{display:false},border:{display:false}},y:{ticks:{font:{size:9},callback:v=>Math.abs(v)>=1e6?(v/1e6).toFixed(1)+'M':Math.abs(v)>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'rgba(0,0,0,.05)'},border:{display:false}}}}});
+    {type:'line',label:'ЧДП2026',data:[...Array(12).fill(null),...n26],borderColor:'#B45309',borderDash:[4,3],backgroundColor:'transparent',pointRadius:4,pointBackgroundColor:'#B45309',tension:.3},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw!=null?` ${Math.round(c.raw).toLocaleString('ru-RU')} руб.`:null}}},scales:{x:{ticks:{font:{size:9.5}},grid:{display:false},border:{display:false}},y:{ticks:{font:{size:9},callback:v=>Math.abs(v)>=1e6?(v/1e6).toFixed(1)+'M':Math.abs(v)>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'rgba(16,24,20,.06)'},border:{display:false}}}}});
 
   // C2: динамика потоков
   const recA=ks.map(k=>(d.rec[k]||0)+(d.dep[k]||0));
@@ -970,13 +971,13 @@ function updateCharts(txns){
   const netA=ks.map((_,i)=>recA[i]+expA[i]);
   charts.c2=new Chart(document.getElementById('c2'),{type:'bar',data:{labels,datasets:[
     {label:'Поступления',data:recA,backgroundColor:'#00B874',borderRadius:4},
-    {label:'Расходы',data:expA,backgroundColor:'#ff6b6b',borderRadius:4},
-    {type:'line',label:'ЧДП',data:netA,borderColor:'#fbbf24',borderDash:[4,3],backgroundColor:'transparent',pointRadius:4,pointBackgroundColor:'#fbbf24',tension:.3},
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw!=null?` ${Math.abs(Math.round(c.raw)).toLocaleString('ru-RU')} руб.`:null}}},scales:{x:{ticks:{font:{size:10}},grid:{display:false},border:{display:false}},y:{ticks:{font:{size:9},callback:v=>Math.abs(v)>=1e6?(v/1e6).toFixed(1)+'M':Math.abs(v)>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'rgba(0,0,0,.05)'},border:{display:false}}}}});
+    {label:'Расходы',data:expA,backgroundColor:'#DC2626',borderRadius:4},
+    {type:'line',label:'ЧДП',data:netA,borderColor:'#B45309',borderDash:[4,3],backgroundColor:'transparent',pointRadius:4,pointBackgroundColor:'#B45309',tension:.3},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw!=null?` ${Math.abs(Math.round(c.raw)).toLocaleString('ru-RU')} руб.`:null}}},scales:{x:{ticks:{font:{size:10}},grid:{display:false},border:{display:false}},y:{ticks:{font:{size:9},callback:v=>Math.abs(v)>=1e6?(v/1e6).toFixed(1)+'M':Math.abs(v)>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'rgba(16,24,20,.06)'},border:{display:false}}}}});
 
   // C3: структура расходов (без дивидендов)
   const stT={};txns.filter(r=>r.cat==='opex'||r.cat==='fot'||r.cat==='inv').forEach(r=>{const s=r.cat==='fot'?'ФОТ':r.cat==='inv'?'Инвестиции':r.stat;stT[s]=(stT[s]||0)+Math.abs(r.s);});
-  const CLRS=['#00E38A','#00B874','#5eead4','#2f6d5a','#fb923c','#fbbf24','#22d3ee','#b79aff','#3d5049'];
+  const CLRS=['#00875A','#00B874','#5eead4','#2f6d5a','#fb923c','#B45309','#0E7490','#7C3AED','#3d5049'];
   const exI=Object.entries(stT).sort((a,b)=>b[1]-a[1]);const tot3=exI.reduce((s,[,v])=>s+v,0);
   document.getElementById('exleg').innerHTML=exI.slice(0,6).map(([l,v],i)=>`<div class="li"><div class="lsq" style="background:${CLRS[i]}"></div>${l} (${Math.round(v/tot3*100)}%)</div>`).join('');
   charts.c3=new Chart(document.getElementById('c3'),{type:'doughnut',data:{labels:exI.map(([l])=>l),datasets:[{data:exI.map(([,v])=>v),backgroundColor:CLRS,borderWidth:0,hoverBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${Math.round(c.raw).toLocaleString('ru-RU')} руб. (${Math.round(c.raw/tot3*100)}%)`}}}}});
@@ -1224,7 +1225,7 @@ function exportExcel(){
 const PF_SID='1-mIST6Tzn_s7nKEIHoQV2GPLpk7cTus9RAgZxVi-GZQ';
 const PF_PLAN_GID='397917950'; /* gid листа «План Менеджеры» — надёжнее, чем искать по названию */
 const PF_K_PLAN='irixplan:plan', PF_K_MANS='irixplan:mans2', PF_K_BRIDGE='irixplan:bridge', PF_K_PLAN_REV='irixplan:planrev', PF_K_EXCL='irixplan:excl';
-const PF_COL=['#00E38A','#22d3ee','#fbbf24','#b79aff','#ff6b6b','#7dd3fc','#a3e635','#f472b6','#facc15','#34d399'];
+const PF_COL=['#00875A','#0E7490','#B45309','#7C3AED','#DC2626','#7dd3fc','#a3e635','#f472b6','#facc15','#34d399'];
 const PF_NOMAN='— без менеджера —';
 
 function pfTodayIso(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate();}
@@ -1321,10 +1322,10 @@ const pfL=i=>i<0?'—':(i<26?String.fromCharCode(65+i):String.fromCharCode(64+Ma
 function pfToast(text,kind){
   let el=document.getElementById('pf-toast');
   if(!el){el=document.createElement('div');el.id='pf-toast';document.body.appendChild(el);}
-  const col=kind==='err'?'#ff6b6b':kind==='warn'?'#fbbf24':'#00E38A';
+  const col=kind==='err'?'#DC2626':kind==='warn'?'#B45309':'#00875A';
   el.style.cssText='position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:9999;max-width:640px;'
     +'padding:11px 18px;border-radius:10px;font-size:12.5px;line-height:1.5;font-family:inherit;'
-    +'border:1px solid '+col+';background:#19231F;color:'+col+';box-shadow:0 8px 30px rgba(0,0,0,.6)';
+    +'border:1px solid '+col+';background:#FFFFFF;color:'+col+';box-shadow:0 8px 30px rgba(16,24,20,.12)';
   el.innerHTML=text;
   clearTimeout(el._t); el._t=setTimeout(()=>{el.style.display='none';},6000);
   el.style.display='block';
@@ -1474,7 +1475,7 @@ async function pfLoad(withPlan){
 function pfMsg(html,kind){
   const el=document.getElementById('pf-msg');if(!el)return;
   if(!html){el.style.display='none';el.innerHTML='';return;}
-  const col=kind==='err'?'#ff6b6b':kind==='ok'?'#00E38A':'#fbbf24';
+  const col=kind==='err'?'#DC2626':kind==='ok'?'#00875A':'#B45309';
   el.style.cssText='display:block;margin-bottom:14px;padding:9px 13px;border-radius:8px;font-size:12px;line-height:1.6;border:1px solid '+col+'55;background:'+col+'14;color:'+col;
   el.innerHTML=html;
 }
@@ -1634,13 +1635,13 @@ function pfExclBox(){
   const el=document.getElementById('pf-excl-box');if(!el)return;
   el.style.display='';
   const chips=PF.excludeCtr.length
-    ? PF.excludeCtr.map((c,i)=>'<span style="display:inline-flex;align-items:center;gap:5px;margin:0 6px 5px 0;padding:3px 9px;font-size:11.5px;border:1px solid #44534C;border-radius:20px;background:rgba(255,255,255,.03);color:#F2F2F2">'+pfE(c)+' <span onclick="pfExclDel('+i+')" title="вернуть в факт" style="cursor:pointer;color:#ff6b6b;font-weight:700">×</span></span>').join('')
+    ? PF.excludeCtr.map((c,i)=>'<span style="display:inline-flex;align-items:center;gap:5px;margin:0 6px 5px 0;padding:3px 9px;font-size:11.5px;border:1px solid #C7D3CC;border-radius:20px;background:rgba(30,42,36,.045);color:#1E2A24">'+pfE(c)+' <span onclick="pfExclDel('+i+')" title="вернуть в факт" style="cursor:pointer;color:#DC2626;font-weight:700">×</span></span>').join('')
     : '<span style="color:#5d6b64;font-size:11.5px">список пуст</span>';
-  el.innerHTML='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 12px;border:1px solid #33403A;border-radius:8px;background:rgba(255,255,255,.02)">'
-    +'<span style="font-size:11.5px;color:#9fb0a8">Исключены из факта (не выручка — депозиты, проценты банка):</span>'
+  el.innerHTML='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 12px;border:1px solid #DCE6E0;border-radius:8px;background:rgba(30,42,36,.035)">'
+    +'<span style="font-size:11.5px;color:#5B6B63">Исключены из факта (не выручка — депозиты, проценты банка):</span>'
     +chips
-    +'<input id="pf-excl-inp" placeholder="контрагент…" onkeydown="if(event.key===\'Enter\')pfExclAdd()" style="min-width:180px;padding:4px 9px;border:1px solid #44534C;border-radius:6px;background:#1C2622;color:#F2F2F2;font-family:inherit;font-size:11.5px">'
-    +'<button onclick="pfExclAdd()" style="padding:4px 11px;font-size:11.5px;border:1px solid #44534C;border-radius:6px;background:transparent;color:#F2F2F2;cursor:pointer;font-family:inherit">+ Исключить</button>'
+    +'<input id="pf-excl-inp" placeholder="контрагент…" onkeydown="if(event.key===\'Enter\')pfExclAdd()" style="min-width:180px;padding:4px 9px;border:1px solid #C7D3CC;border-radius:6px;background:#F3F6F4;color:#1E2A24;font-family:inherit;font-size:11.5px">'
+    +'<button onclick="pfExclAdd()" style="padding:4px 11px;font-size:11.5px;border:1px solid #C7D3CC;border-radius:6px;background:transparent;color:#1E2A24;cursor:pointer;font-family:inherit">+ Исключить</button>'
     +'</div>';
 }
 function pfExclAdd(){
@@ -1704,9 +1705,9 @@ function pfExec(){
   if(marg){
     h='<thead><tr><th style="width:26px;min-width:26px"></th>'+th('Менеджер','man')+th('План (маржа)','plan')+th('Факт (с НДС)','fact')+th('НДС','nds')+th('Подрядчики','sub')+th('Маржа','factMarg')+th('Δ','diff')+th('% вып.','pct')+'<th style="width:110px">&nbsp;</th><th>Доля факта</th></tr></thead><tbody>';
     rows.forEach(x=>{
-      const p=x.pct,col=p==null?'#9fb0a8':p>=100?'#00E38A':p>=80?'#fbbf24':'#ff6b6b';
+      const p=x.pct,col=p==null?'#5B6B63':p>=100?'#00875A':p>=80?'#B45309':'#DC2626';
       const w=Math.max(0,Math.min(100,p||0)),op=!!PF.expMan[x.man];
-      h+='<tr><td style="text-align:center;cursor:pointer;color:#00E38A;font-family:inherit" onclick="pfTogMan(\''+pfQ(x.man)+'\')">'+(op?'▾':'▸')+'</td>'
+      h+='<tr><td style="text-align:center;cursor:pointer;color:#00875A;font-family:inherit" onclick="pfTogMan(\''+pfQ(x.man)+'\')">'+(op?'▾':'▸')+'</td>'
         +'<td style="cursor:pointer">'+pfE(x.man)+'</td>'
         +'<td>'+(x.plan?pfF(x.plan):'<span style="color:#5d6b64">—</span>')+'</td>'
         +'<td>'+(x.fact?pfF(x.fact):'<span style="color:#5d6b64">—</span>')+'</td>'
@@ -1715,35 +1716,49 @@ function pfExec(){
         +'<td class="c-am">'+(x.factMarg?pfF(x.factMarg):'<span style="color:#5d6b64">—</span>')+'</td>'
         +'<td class="'+(x.diff>=0?'c-gn':'c-rd')+'">'+(x.diff>=0?'+':'−')+pfF(Math.abs(x.diff))+'</td>'
         +'<td style="color:'+col+';font-weight:700">'+(p==null?'нет плана':p.toFixed(1)+' %')+'</td>'
-        +'<td><div style="height:6px;background:#1C2622;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+w+'%;background:'+col+';border-radius:3px"></div></div></td>'
+        +'<td><div style="height:6px;background:#F3F6F4;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+w+'%;background:'+col+';border-radius:3px"></div></div></td>'
         +'<td>'+(tf?(x.fact/tf*100).toFixed(1)+' %':'—')+'</td></tr>';
       if(op)h+=pfCtrRows(from,to,x.man,'marg');
     });
     h+='</tbody><tfoot><tr style="font-weight:700"><td></td><td>ИТОГО ПО ВСЕМ</td><td>'+pfF(tp)+'</td><td class="c-gn">'+pfF(tf)+'</td>'
       +'<td class="c-cy">'+pfF(tNds)+'</td><td class="c-rd">'+pfF(tSub)+'</td><td class="c-am">'+pfF(tMarg)+'</td>'
       +'<td class="'+(tMarg-tp>=0?'c-gn':'c-rd')+'">'+(tMarg-tp>=0?'+':'−')+pfF(Math.abs(tMarg-tp))+'</td>'
-      +'<td style="color:'+(pct==null?'#9fb0a8':pct>=100?'#00E38A':pct>=80?'#fbbf24':'#ff6b6b')+'">'+(pct==null?'—':pct.toFixed(1)+' %')+'</td><td></td><td>100 %</td></tr></tfoot>';
+      +'<td style="color:'+(pct==null?'#5B6B63':pct>=100?'#00875A':pct>=80?'#B45309':'#DC2626')+'">'+(pct==null?'—':pct.toFixed(1)+' %')+'</td><td></td><td>100 %</td></tr></tfoot>';
   }else{
     h='<thead><tr><th style="width:26px;min-width:26px"></th>'+th('Менеджер','man')+th('План','plan')+th('Факт','fact')+th('Δ','diff')+th('% выполнения','pct')+'<th style="width:140px">&nbsp;</th><th>Доля факта</th></tr></thead><tbody>';
     rows.forEach(x=>{
-      const p=x.pct,col=p==null?'#9fb0a8':p>=100?'#00E38A':p>=80?'#fbbf24':'#ff6b6b';
+      const p=x.pct,col=p==null?'#5B6B63':p>=100?'#00875A':p>=80?'#B45309':'#DC2626';
       const w=Math.max(0,Math.min(100,p||0)),op=!!PF.expMan[x.man];
-      h+='<tr><td style="text-align:center;cursor:pointer;color:#00E38A;font-family:inherit" onclick="pfTogMan(\''+pfQ(x.man)+'\')">'+(op?'▾':'▸')+'</td>'
+      h+='<tr><td style="text-align:center;cursor:pointer;color:#00875A;font-family:inherit" onclick="pfTogMan(\''+pfQ(x.man)+'\')">'+(op?'▾':'▸')+'</td>'
         +'<td style="cursor:pointer">'+pfE(x.man)+'</td>'
         +'<td>'+(x.plan?pfF(x.plan):'<span style="color:#5d6b64">—</span>')+'</td>'
         +'<td>'+(x.fact?pfF(x.fact):'<span style="color:#5d6b64">—</span>')+'</td>'
         +'<td class="'+(x.diff>=0?'c-gn':'c-rd')+'">'+(x.diff>=0?'+':'−')+pfF(Math.abs(x.diff))+'</td>'
         +'<td style="color:'+col+';font-weight:700">'+(p==null?'нет плана':p.toFixed(1)+' %')+'</td>'
-        +'<td><div style="height:6px;background:#1C2622;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+w+'%;background:'+col+';border-radius:3px"></div></div></td>'
+        +'<td><div style="height:6px;background:#F3F6F4;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+w+'%;background:'+col+';border-radius:3px"></div></div></td>'
         +'<td>'+(tf?(x.fact/tf*100).toFixed(1)+' %':'—')+'</td></tr>';
       if(op)h+=pfCtrRows(from,to,x.man,'dds');
     });
     h+='</tbody><tfoot><tr style="font-weight:700"><td></td><td>ИТОГО ПО ВСЕМ</td><td>'+pfF(tp)+'</td><td class="c-gn">'+pfF(tf)+'</td>'
       +'<td class="'+(tf-tp>=0?'c-gn':'c-rd')+'">'+(tf-tp>=0?'+':'−')+pfF(Math.abs(tf-tp))+'</td>'
-      +'<td style="color:'+(pct==null?'#9fb0a8':pct>=100?'#00E38A':pct>=80?'#fbbf24':'#ff6b6b')+'">'+(pct==null?'—':pct.toFixed(1)+' %')+'</td><td></td><td>100 %</td></tr></tfoot>';
+      +'<td style="color:'+(pct==null?'#5B6B63':pct>=100?'#00875A':pct>=80?'#B45309':'#DC2626')+'">'+(pct==null?'—':pct.toFixed(1)+' %')+'</td><td></td><td>100 %</td></tr></tfoot>';
   }
   if(!rows.length)h='<tbody><tr><td style="padding:34px;text-align:center;color:var(--ix-mut)">За выбранный период нет ни плана, ни поступлений</td></tr></tbody>';
-  document.getElementById('pf-tbl').innerHTML=h;
+  document.getElementById('pf-tbl').innerHTML=h;pfZebra();
+}
+// Зебра для таблиц вкладки «План/факт». Строки контрагентов (.pf-ctr)
+// пропускаются — они визуально относятся к строке менеджера над ними.
+function pfZebra(){
+  ['pf-tbl','pf-dyn','pf-mans-tbl','pf-ed-tbl','pf-card-tbl'].forEach(id=>{
+    const t=document.getElementById(id);if(!t||!t.tBodies[0])return;
+    let i=0;
+    [...t.tBodies[0].rows].forEach(r=>{
+      r.classList.remove('zeb');
+      if(r.classList.contains('pf-ctr'))return;
+      if(i%2)r.classList.add('zeb');
+      i++;
+    });
+  });
 }
 function pfSort(k){if(PF.sort.k===k)PF.sort.dir*=-1;else{PF.sort.k=k;PF.sort.dir=k==='man'?1:-1;}pfExec();}
 function pfTogMan(m){PF.expMan[m]=!PF.expMan[m];pfExec();}
@@ -1756,7 +1771,7 @@ function pfCtrBlock(from,to,man){
   const list=Object.keys(agg).sort((x,y)=>agg[y].s-agg[x].s);
   if(!list.length)return '<div style="color:#5d6b64;font-size:11.5px;padding:6px 0">поступлений нет</div>';
   const tot=list.reduce((s,k)=>s+agg[k].s,0);
-  let h='<div style="border:1px solid #33403A;border-radius:8px;overflow:hidden"><table class="dds" style="font-size:11.5px"><thead><tr><th>Контрагент</th><th>Платежей</th><th>Последний</th><th>Сумма</th><th>Доля</th></tr></thead><tbody>';
+  let h='<div style="border:1px solid #DCE6E0;border-radius:8px;overflow:hidden"><table class="dds" style="font-size:11.5px"><thead><tr><th>Контрагент</th><th>Платежей</th><th>Последний</th><th>Сумма</th><th>Доля</th></tr></thead><tbody>';
   list.forEach(k=>{h+='<tr><td>'+pfE(k)+'</td><td>'+agg[k].n+'</td><td>'+agg[k].last.split('-').reverse().join('.')+'</td><td class="c-gn">'+pfF(agg[k].s)+'</td><td>'+(agg[k].s/tot*100).toFixed(1)+' %</td></tr>';});
   return h+'</tbody></table></div>';
 }
@@ -1768,28 +1783,28 @@ function pfCtrRows(from,to,man,mode){
     agg[k].s+=r.s;agg[k].nds+=r.nds||0;agg[k].snd+=r.snd||0;agg[k].sub+=r.sub||0;agg[k].marg+=r.marg||0;agg[k].n++;if(r.d>agg[k].last)agg[k].last=r.d;});
   const list=Object.keys(agg).sort((x,y)=>agg[y].s-agg[x].s);
   const tf=list.reduce((s,k)=>s+agg[k].s,0);
-  const bg='background:rgba(255,255,255,.015)';
-  if(!list.length)return '<tr style="'+bg+'"><td></td><td colspan="'+(mode==='marg'?10:7)+'" style="color:#5d6b64;font-size:11.5px;padding:6px 0 6px 6px">поступлений нет</td></tr>';
+  const bg='background:rgba(30,42,36,.03)';
+  if(!list.length)return '<tr class="pf-ctr" style="'+bg+'"><td></td><td colspan="'+(mode==='marg'?10:7)+'" style="color:#5d6b64;font-size:11.5px;padding:6px 0 6px 6px">поступлений нет</td></tr>';
   let h='';
   list.forEach(k=>{
     const share=tf?(agg[k].s/tf*100).toFixed(1)+' %':'—';
-    const nm='<span style="color:#9fb0a8;font-size:11.5px">'+pfE(k)+'</span>'
+    const nm='<span style="color:#5B6B63;font-size:11.5px">'+pfE(k)+'</span>'
       +' <span style="color:#5d6b64;font-size:10.5px">· '+agg[k].n+' пл. · '+agg[k].last.split('-').reverse().join('.')+'</span>';
     if(mode==='marg'){
-      h+='<tr style="'+bg+'"><td></td><td style="padding-left:22px">'+nm+'</td>'
+      h+='<tr class="pf-ctr" style="'+bg+'"><td></td><td style="padding-left:22px">'+nm+'</td>'
         +'<td style="color:#5d6b64">—</td>'
         +'<td class="c-gn" style="font-size:11.5px">'+pfF(agg[k].s)+'</td>'
         +'<td class="c-cy" style="font-size:11.5px">'+(agg[k].nds?pfF(agg[k].nds):'—')+'</td>'
         +'<td class="c-rd" style="font-size:11.5px">'+(agg[k].sub?pfF(agg[k].sub):'—')+'</td>'
         +'<td class="c-am" style="font-size:11.5px">'+(agg[k].marg?pfF(agg[k].marg):'—')+'</td>'
         +'<td style="color:#5d6b64">—</td><td style="color:#5d6b64">—</td><td></td>'
-        +'<td style="font-size:11.5px;color:#9fb0a8">'+share+'</td></tr>';
+        +'<td style="font-size:11.5px;color:#5B6B63">'+share+'</td></tr>';
     }else{
-      h+='<tr style="'+bg+'"><td></td><td style="padding-left:22px">'+nm+'</td>'
+      h+='<tr class="pf-ctr" style="'+bg+'"><td></td><td style="padding-left:22px">'+nm+'</td>'
         +'<td style="color:#5d6b64">—</td>'
         +'<td class="c-gn" style="font-size:11.5px">'+pfF(agg[k].s)+'</td>'
         +'<td style="color:#5d6b64">—</td><td style="color:#5d6b64">—</td><td></td>'
-        +'<td style="font-size:11.5px;color:#9fb0a8">'+share+'</td></tr>';
+        +'<td style="font-size:11.5px;color:#5B6B63">'+share+'</td></tr>';
     }
   });
   return h;
@@ -1808,7 +1823,7 @@ function pfCardView(){
   const sel=document.getElementById('pf-card-sel');
   if(sel)sel.innerHTML=mans.length
     ?'<label>Менеджер</label><select onchange="PF.card.man=this.value;pfCardView()">'+mans.map(m=>'<option value="'+pfE(m)+'"'+(m===PF.card.man?' selected':'')+'>'+pfE(m)+'</option>').join('')+'</select>'
-    :'<span style="color:#9fb0a8">Нет ни одного менеджера — заполните справочник на вкладке «Менеджеры»</span>';
+    :'<span style="color:#5B6B63">Нет ни одного менеджера — заполните справочник на вкладке «Менеджеры»</span>';
   const man=PF.card.man;
   const R=man?pfCardRows(from,to,man):[];
   const pl=man?pfPlanIn(from,to,man):0;
@@ -1831,7 +1846,7 @@ function pfCardView(){
   let h='<thead><tr><th style="width:26px;min-width:26px"></th><th style="text-align:left">Счёт</th><th>Платежей</th><th>Последний</th><th>Сумма (с НДС)</th><th>НДС</th><th>Сумма без НДС</th><th>Доля</th></tr></thead><tbody>';
   list.forEach(k=>{
     const op=!!PF.cardExp[k];
-    h+='<tr><td style="text-align:center;cursor:pointer;color:#00E38A;font-family:inherit" onclick="pfCardTog(\''+pfQ(k)+'\')">'+(op?'▾':'▸')+'</td>'
+    h+='<tr><td style="text-align:center;cursor:pointer;color:#00875A;font-family:inherit" onclick="pfCardTog(\''+pfQ(k)+'\')">'+(op?'▾':'▸')+'</td>'
       +'<td style="text-align:left;cursor:pointer" onclick="pfCardTog(\''+pfQ(k)+'\')">'+pfE(k)+'</td>'
       +'<td>'+agg[k].n+'</td><td>'+agg[k].last.split('-').reverse().join('.')+'</td>'
       +'<td class="c-gn">'+pfF(agg[k].s)+'</td><td class="c-cy">'+pfF(agg[k].nds)+'</td><td class="c-am">'+pfF(agg[k].snd)+'</td>'
@@ -1841,7 +1856,7 @@ function pfCardView(){
   if(!list.length)h+='<tr><td colspan="8" style="padding:34px;text-align:center;color:var(--ix-mut)">'+(man?'За выбранный период у менеджера нет поступлений':'Выберите менеджера')+'</td></tr></tbody>';
   else h+='</tbody><tfoot><tr style="font-weight:700"><td></td><td style="text-align:left">ИТОГО</td><td>'+R.length+'</td><td></td>'
     +'<td class="c-gn">'+pfF(fa)+'</td><td class="c-cy">'+pfF(nds)+'</td><td class="c-am">'+pfF(snd)+'</td><td>100 %</td></tr></tfoot>';
-  document.getElementById('pf-card-tbl').innerHTML=h;
+  document.getElementById('pf-card-tbl').innerHTML=h;pfZebra();
 }
 function pfCardTog(k){PF.cardExp[k]=!PF.cardExp[k];pfCardView();}
 /* детализация по компаниям/контрагентам внутри счёта — под-строки, суммы под своими колонками */
@@ -1851,18 +1866,18 @@ function pfCardCoRows(R,acc,fa){
     const k=r.ctr||'без контрагента';if(!agg[k])agg[k]={s:0,nds:0,snd:0,n:0,last:''};
     agg[k].s+=r.s;agg[k].nds+=r.nds||0;agg[k].snd+=r.snd||0;agg[k].n++;if(r.d>agg[k].last)agg[k].last=r.d;});
   const list=Object.keys(agg).sort((x,y)=>agg[y].s-agg[x].s);
-  const bg='background:rgba(255,255,255,.015)';
-  if(!list.length)return '<tr style="'+bg+'"><td></td><td colspan="7" style="color:#5d6b64;font-size:11.5px;padding:6px 0 6px 6px">поступлений нет</td></tr>';
+  const bg='background:rgba(30,42,36,.03)';
+  if(!list.length)return '<tr class="pf-ctr" style="'+bg+'"><td></td><td colspan="7" style="color:#5d6b64;font-size:11.5px;padding:6px 0 6px 6px">поступлений нет</td></tr>';
   let h='';
   list.forEach(k=>{
     h+='<tr style="'+bg+'"><td></td>'
-      +'<td style="text-align:left;padding-left:26px"><span style="color:#9fb0a8;font-size:11.5px">'+pfE(k)+'</span></td>'
+      +'<td style="text-align:left;padding-left:26px"><span style="color:#5B6B63;font-size:11.5px">'+pfE(k)+'</span></td>'
       +'<td style="font-size:11.5px">'+agg[k].n+'</td>'
       +'<td style="font-size:11.5px">'+agg[k].last.split('-').reverse().join('.')+'</td>'
       +'<td class="c-gn" style="font-size:11.5px">'+pfF(agg[k].s)+'</td>'
       +'<td class="c-cy" style="font-size:11.5px">'+(agg[k].nds?pfF(agg[k].nds):'—')+'</td>'
       +'<td class="c-am" style="font-size:11.5px">'+(agg[k].snd?pfF(agg[k].snd):'—')+'</td>'
-      +'<td style="font-size:11.5px;color:#9fb0a8">'+(fa?(agg[k].s/fa*100).toFixed(1)+' %':'—')+'</td></tr>';
+      +'<td style="font-size:11.5px;color:#5B6B63">'+(fa?(agg[k].s/fa*100).toFixed(1)+' %':'—')+'</td></tr>';
   });
   return h;
 }
@@ -1914,8 +1929,8 @@ function pfDays(){
     const dt=new Date(D.y,D.m-1,d),dp=pfPlanIn(dt,dt);
     rt+=D.tot[d];runPlan+=dp;
     const op=!!PF.exp[d];
-    h+='<tr'+(d===td?' style="background:rgba(0,227,138,.07)"':'')+'>'
-      +'<td style="text-align:center;cursor:pointer;color:#00E38A;font-family:inherit" onclick="pfTogDay('+d+')">'+(op?'▾':'▸')+'</td>'
+    h+='<tr'+(d===td?' style="background:rgba(0,135,90,.07)"':'')+'>'
+      +'<td style="text-align:center;cursor:pointer;color:#00875A;font-family:inherit" onclick="pfTogDay('+d+')">'+(op?'▾':'▸')+'</td>'
       +'<td style="cursor:pointer" onclick="pfTogDay('+d+')">'+pfP2(d)+'.'+pfP2(D.m)+'.'+D.y+'</td>';
     D.mans.forEach(mn=>{
       run[mn]+=D.mx[mn][d];
@@ -1924,8 +1939,8 @@ function pfDays(){
     });
     const tv=cum?rt:D.tot[d],pv=cum?runPlan:dp,pc=pv>0?tv/pv*100:null;
     h+='<td style="font-weight:700">'+(tv?pfF(tv):'<span style="color:#3f4b45">·</span>')+'</td>'
-      +'<td style="color:#9fb0a8">'+(pv?pfF(pv):'—')+'</td>'
-      +'<td style="font-weight:700;color:'+(pc==null?'#5d6b64':pc>=100?'#00E38A':pc>=80?'#fbbf24':'#ff6b6b')+'">'+(pc==null?'—':pc.toFixed(0)+' %')+'</td></tr>';
+      +'<td style="color:#5B6B63">'+(pv?pfF(pv):'—')+'</td>'
+      +'<td style="font-weight:700;color:'+(pc==null?'#5d6b64':pc>=100?'#00875A':pc>=80?'#B45309':'#DC2626')+'">'+(pc==null?'—':pc.toFixed(0)+' %')+'</td></tr>';
     if(op)h+=pfDayRows(dt,D);
   }
   h+='</tbody><tfoot>';
@@ -1934,16 +1949,16 @@ function pfDays(){
   D.mans.forEach(mn=>{const s=D.mx[mn].reduce((x,v)=>x+v,0);grand+=s;h+='<td class="c-gn">'+pfF(s)+'</td>';});
   h+='<td class="c-gn">'+pfF(grand)+'</td><td>'+pfF(planM)+'</td><td>'+(planM?(grand/planM*100).toFixed(1)+' %':'—')+'</td></tr>';
   h+='<tr><td></td><td>План на месяц</td>';
-  D.mans.forEach(mn=>{h+='<td style="color:#9fb0a8">'+pfF(pfPlanOf(D.y,D.m,mn))+'</td>';});
-  h+='<td style="color:#9fb0a8">'+pfF(planM)+'</td><td></td><td></td></tr>';
+  D.mans.forEach(mn=>{h+='<td style="color:#5B6B63">'+pfF(pfPlanOf(D.y,D.m,mn))+'</td>';});
+  h+='<td style="color:#5B6B63">'+pfF(planM)+'</td><td></td><td></td></tr>';
   h+='<tr style="font-weight:700"><td></td><td>% выполнения</td>';
   D.mans.forEach(mn=>{
     const p=pfPlanOf(D.y,D.m,mn),f=D.mx[mn].reduce((x,v)=>x+v,0),pc=p>0?f/p*100:null;
-    h+='<td style="color:'+(pc==null?'#5d6b64':pc>=100?'#00E38A':pc>=80?'#fbbf24':'#ff6b6b')+'">'+(pc==null?'—':pc.toFixed(1)+' %')+'</td>';
+    h+='<td style="color:'+(pc==null?'#5d6b64':pc>=100?'#00875A':pc>=80?'#B45309':'#DC2626')+'">'+(pc==null?'—':pc.toFixed(1)+' %')+'</td>';
   });
   const gp=planM?grand/planM*100:null;
-  h+='<td style="color:'+(gp==null?'#5d6b64':gp>=100?'#00E38A':gp>=80?'#fbbf24':'#ff6b6b')+'">'+(gp==null?'—':gp.toFixed(1)+' %')+'</td><td></td><td></td></tr></tfoot>';
-  document.getElementById('pf-dyn').innerHTML=h;
+  h+='<td style="color:'+(gp==null?'#5d6b64':gp>=100?'#00875A':gp>=80?'#B45309':'#DC2626')+'">'+(gp==null?'—':gp.toFixed(1)+' %')+'</td><td></td><td></td></tr></tfoot>';
+  document.getElementById('pf-dyn').innerHTML=h;pfZebra();
   document.getElementById('pf-dyn-title').textContent='Накопленный факт против плана · '+MN_F[D.m]+' '+D.y;
   pfChart(D,planM);
 }
@@ -1980,7 +1995,7 @@ function pfChart(D,planM){
   const labels=[];for(let d=1;d<=D.nd;d++)labels.push(d);
   const ds=[],totC=[];let a=0;
   for(let d=1;d<=D.nd;d++){a+=D.tot[d];totC.push(a);}
-  ds.push({label:'План (равномерно)',data:labels.map(d=>planM*d/D.nd),borderColor:'#9fb0a8',borderDash:[6,4],borderWidth:2,pointRadius:0,fill:false,tension:0});
+  ds.push({label:'План (равномерно)',data:labels.map(d=>planM*d/D.nd),borderColor:'#5B6B63',borderDash:[6,4],borderWidth:2,pointRadius:0,fill:false,tension:0});
   ds.push({label:'Факт — всего',data:totC,borderColor:'#ffffff',borderWidth:2.5,pointRadius:0,fill:false,tension:.15});
   D.mans.forEach((mn,i)=>{
     const c=[];let s=0;for(let d=1;d<=D.nd;d++){s+=D.mx[mn][d];c.push(s);}
@@ -1989,10 +2004,10 @@ function pfChart(D,planM){
   if(PF.chart)PF.chart.destroy();
   PF.chart=new Chart(cv.getContext('2d'),{type:'line',data:{labels:labels,datasets:ds},
     options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-      plugins:{legend:{labels:{color:'#9fb0a8',boxWidth:12,font:{size:11}}},
+      plugins:{legend:{labels:{color:'#5B6B63',boxWidth:12,font:{size:11}}},
         tooltip:{callbacks:{label:c=>c.dataset.label+': '+pfF(c.parsed.y)+' ₽'}}},
-      scales:{x:{ticks:{color:'#9fb0a8',font:{size:10}},grid:{color:'#33403A'}},
-              y:{ticks:{color:'#9fb0a8',font:{size:10},callback:v=>pfF(v/1000)+'k'},grid:{color:'#33403A'}}}}});
+      scales:{x:{ticks:{color:'#5B6B63',font:{size:10}},grid:{color:'#DCE6E0'}},
+              y:{ticks:{color:'#5B6B63',font:{size:10},callback:v=>pfF(v/1000)+'k'},grid:{color:'#DCE6E0'}}}}});
 }
 function pfCum(v,btn){PF.cum=v;document.querySelectorAll('#pf-cum .ppill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');pfDays();}
 /* ══ ВЫГРУЗКИ И ПЕЧАТЬ ══ */
@@ -2116,13 +2131,13 @@ function pfMansView(){
   PF.mans.forEach((m,i)=>{
     let pm=0;pfPlanMonths().forEach(k=>{if(PF.plan[k][m]>0)pm++;});
     h+='<tr><td style="text-align:left">'+(i+1)+'</td>'
-      +'<td><input value="'+pfE(m)+'" onchange="pfManRename('+i+',this.value)" style="width:100%;padding:3px 7px;border:1px solid #33403A;border-radius:5px;background:#1C2622;color:#F2F2F2;font-family:inherit;font-size:12px"></td>'
+      +'<td><input value="'+pfE(m)+'" onchange="pfManRename('+i+',this.value)" style="width:100%;padding:3px 7px;border:1px solid #DCE6E0;border-radius:5px;background:#F3F6F4;color:#1E2A24;font-family:inherit;font-size:12px"></td>'
       +'<td>'+(cnt[m]||0)+'</td><td class="c-gn">'+pfF(sum[m]||0)+'</td><td>'+pm+'</td>'
-      +'<td><button onclick="pfManDel('+i+')" style="padding:2px 9px;font-size:11px;border:1px solid #44534C;border-radius:5px;background:transparent;color:#ff6b6b;cursor:pointer;font-family:inherit">удалить</button></td></tr>';
+      +'<td><button onclick="pfManDel('+i+')" style="padding:2px 9px;font-size:11px;border:1px solid #C7D3CC;border-radius:5px;background:transparent;color:#DC2626;cursor:pointer;font-family:inherit">удалить</button></td></tr>';
   });
   if(!PF.mans.length)h+='<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--ix-mut)">Справочник пуст. Впишите фамилию в поле выше и нажмите «Добавить» — или возьмите готовые имена из таблицы кнопками ниже.</td></tr>';
   h+='</tbody>';
-  document.getElementById('pf-mans-tbl').innerHTML=h;
+  document.getElementById('pf-mans-tbl').innerHTML=h;pfZebra();
 
   const cd=document.getElementById('pf-cols');
   if(cd){
@@ -2134,8 +2149,8 @@ function pfMansView(){
   if(unknown.length){
     box.style.display='';
     box.innerHTML='<div class="ctitle" style="margin-top:4px">Имена из столбца «Менеджер» таблицы — нажмите, чтобы добавить в справочник</div>'
-      +unknown.map(m=>'<button onclick="pfManAdd(\''+pfQ(m)+'\')" style="margin:0 6px 6px 0;padding:4px 11px;font-size:12px;border:1px solid rgba(0,227,138,.45);border-radius:20px;background:rgba(0,227,138,.1);color:#00E38A;cursor:pointer;font-family:inherit">+ '+pfE(m)+' <span style="color:#9fb0a8">('+cnt[m]+')</span></button>').join('')
-      +'<div style="font-size:11.5px;color:#9fb0a8;margin-top:6px">Имена сверяются символ в символ: «Сурин А.» и «Сурин А» — разные люди.</div>';
+      +unknown.map(m=>'<button onclick="pfManAdd(\''+pfQ(m)+'\')" style="margin:0 6px 6px 0;padding:4px 11px;font-size:12px;border:1px solid rgba(0,135,90,.45);border-radius:20px;background:rgba(0,135,90,.1);color:#00875A;cursor:pointer;font-family:inherit">+ '+pfE(m)+' <span style="color:#5B6B63">('+cnt[m]+')</span></button>').join('')
+      +'<div style="font-size:11.5px;color:#5B6B63;margin-top:6px">Имена сверяются символ в символ: «Сурин А.» и «Сурин А» — разные люди.</div>';
   }else box.style.display='none';
 }
 function pfManAdd(name){
@@ -2197,16 +2212,16 @@ function pfPlanView(){
   const free=PF.mans.filter(m=>PF.editBuf[m]==null);
   const add=document.getElementById('pf-ed-add');
   if(!PF.mans.length){
-    add.innerHTML='<div style="color:#fbbf24;font-size:12.5px">Справочник менеджеров пуст. '
-      +'<button onclick="pfGoView(\'mans\')" style="padding:3px 10px;font-size:12px;border:1px solid rgba(0,227,138,.45);border-radius:6px;background:rgba(0,227,138,.1);color:#00E38A;cursor:pointer;font-family:inherit">Перейти в справочник</button> и добавьте туда менеджеров.</div>';
+    add.innerHTML='<div style="color:#B45309;font-size:12.5px">Справочник менеджеров пуст. '
+      +'<button onclick="pfGoView(\'mans\')" style="padding:3px 10px;font-size:12px;border:1px solid rgba(0,135,90,.45);border-radius:6px;background:rgba(0,135,90,.1);color:#00875A;cursor:pointer;font-family:inherit">Перейти в справочник</button> и добавьте туда менеджеров.</div>';
   }else{
     add.innerHTML='<label>Менеджер</label>'
       +'<select id="pf-add-man" style="min-width:200px">'
       +(free.length?free.map(m=>'<option value="'+pfE(m)+'">'+pfE(m)+'</option>').join('')
                    :'<option value="">— все уже в плане —</option>')+'</select>'
       +'<label>План на месяц, ₽</label>'
-      +'<input type="number" id="pf-add-sum" step="1000" value="" placeholder="0" style="width:150px;text-align:right;padding:5px 9px;border:1px solid #44534C;border-radius:6px;background:#1C2622;color:#F2F2F2;font-family:\'Courier New\',monospace;font-size:12px" onkeydown="if(event.key===\'Enter\')pfEdAdd()">'
-      +'<button onclick="pfEdAdd()" '+(free.length?'':'disabled ')+'style="padding:5px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit">+&nbsp;Добавить в план</button>';
+      +'<input type="number" id="pf-add-sum" step="1000" value="" placeholder="0" style="width:150px;text-align:right;padding:5px 9px;border:1px solid #C7D3CC;border-radius:6px;background:#F3F6F4;color:#1E2A24;font-family:\'Courier New\',monospace;font-size:12px" onkeydown="if(event.key===\'Enter\')pfEdAdd()">'
+      +'<button onclick="pfEdAdd()" '+(free.length?'':'disabled ')+'style="padding:5px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,135,90,.45);border-radius:7px;background:rgba(0,135,90,.12);cursor:pointer;color:#00875A;font-family:inherit">+&nbsp;Добавить в план</button>';
   }
 
   const nd=pfDim(PF.edY,PF.edM),wd=pfWd(new Date(PF.edY,PF.edM-1,1),new Date(PF.edY,PF.edM-1,nd));
@@ -2224,20 +2239,20 @@ function pfPlanView(){
     const sh=PF.sheetPlans.filter(p=>p.y===PF.edY&&p.m===PF.edM&&p.man===m&&(p.kind||'cash')===sheetKind)[0];
     const inSheet=sh&&Math.round(sh.sum)===Math.round(v);
     const inLocal=saved[m]!=null&&Math.round(saved[m])===Math.round(v);
-    const st=inSheet?'<span style="color:#00E38A">в таблице</span>'
-      :inLocal?'<span style="color:#9fb0a8">этот компьютер</span>'
-      :'<span style="color:#fbbf24">не сохранён</span>';
+    const st=inSheet?'<span style="color:#00875A">в таблице</span>'
+      :inLocal?'<span style="color:#5B6B63">этот компьютер</span>'
+      :'<span style="color:#B45309">не сохранён</span>';
     const known=PF.mans.indexOf(m)>=0;
-    h+='<tr><td>'+pfE(m)+(known?'':' <span style="color:#fbbf24" title="нет в справочнике">•</span>')+'</td>'
-      +'<td><input type="number" step="1000" value="'+v+'" data-man="'+pfE(m)+'" oninput="pfEdIn(this)" style="width:100%;text-align:right;padding:4px 8px;border:1px solid #44534C;border-radius:6px;background:#1C2622;color:#F2F2F2;font-family:\'Courier New\',monospace;font-size:12px"></td>'
-      +'<td style="color:#9fb0a8">'+pfF(v/perDay)+'</td><td>'+st+'</td>'
-      +'<td style="color:#9fb0a8">'+(sh?pfF(sh.sum):'—')+'</td>'
-      +'<td><button onclick="pfEdDelMan(\''+pfQ(m)+'\')" title="убрать из плана" style="padding:1px 8px;font-size:13px;border:1px solid #44534C;border-radius:5px;background:transparent;color:#ff6b6b;cursor:pointer;font-family:inherit">×</button></td></tr>';
+    h+='<tr><td>'+pfE(m)+(known?'':' <span style="color:#B45309" title="нет в справочнике">•</span>')+'</td>'
+      +'<td><input type="number" step="1000" value="'+v+'" data-man="'+pfE(m)+'" oninput="pfEdIn(this)" style="width:100%;text-align:right;padding:4px 8px;border:1px solid #C7D3CC;border-radius:6px;background:#F3F6F4;color:#1E2A24;font-family:\'Courier New\',monospace;font-size:12px"></td>'
+      +'<td style="color:#5B6B63">'+pfF(v/perDay)+'</td><td>'+st+'</td>'
+      +'<td style="color:#5B6B63">'+(sh?pfF(sh.sum):'—')+'</td>'
+      +'<td><button onclick="pfEdDelMan(\''+pfQ(m)+'\')" title="убрать из плана" style="padding:1px 8px;font-size:13px;border:1px solid #C7D3CC;border-radius:5px;background:transparent;color:#DC2626;cursor:pointer;font-family:inherit">×</button></td></tr>';
   });
   const ncol=6;
   if(!mans.length)h+='<tr><td colspan="'+ncol+'" style="padding:22px;text-align:center;color:var(--ix-mut)">На '+MN_F[PF.edM]+' '+PF.edY+' плана пока нет. Выберите менеджера выше, впишите сумму и нажмите «Добавить в план».</td></tr>';
   h+='</tbody><tfoot><tr style="font-weight:700"><td>Итого за месяц</td><td id="pf-ed-tot">'+pfF(tot)+'</td><td>'+pfF(tot/perDay)+'</td><td></td><td></td><td></td></tr></tfoot>';
-  document.getElementById('pf-ed-tbl').innerHTML=h;
+  document.getElementById('pf-ed-tbl').innerHTML=h;pfZebra();
   if(!REV)pfBridgeBox();
   document.getElementById('pf-ed-hint').innerHTML=(REV?'План по марже читается из листа «План Менеджеры» — строки со значением «Маржа» в столбце «ДДС/Маржа»; на листе «Маржа» с ним сверяется факт − НДС − подрядчики. Правки хранятся в этом браузере поверх таблицы. ':'План (деньги) читается из строк со значением «ДДС» в столбце «ДДС/Маржа». ')
     +'В месяце '+nd+' календарных и '+wd+' рабочих дней; дневной план — это месячный, делённый на '+(PF.prorate==='work'?'рабочие':'календарные')+' дни.';
@@ -2249,25 +2264,25 @@ function pfBridgeBox(){
   const on=pfShared();
   if(!PF.bridgeOpen){
     el.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
-      +'<span style="font-size:12px;color:'+(on?'#00E38A':'#fbbf24')+'">'
+      +'<span style="font-size:12px;color:'+(on?'#00875A':'#B45309')+'">'
       +(on?'● План пишется в Google Таблицу — его видно с любого компьютера'
           :'● План хранится только в этом браузере')+'</span>'
-      +'<button onclick="PF.bridgeOpen=1;pfBridgeBox()" style="padding:4px 11px;font-size:12px;border:1px solid #44534C;border-radius:6px;background:transparent;color:#F2F2F2;cursor:pointer;font-family:inherit">'
+      +'<button onclick="PF.bridgeOpen=1;pfBridgeBox()" style="padding:4px 11px;font-size:12px;border:1px solid #C7D3CC;border-radius:6px;background:transparent;color:#1E2A24;cursor:pointer;font-family:inherit">'
       +(on?'Изменить':'Настроить запись в таблицу')+'</button>'
-      +(on?'<button onclick="pfBridgePing()" style="padding:4px 11px;font-size:12px;border:1px solid #44534C;border-radius:6px;background:transparent;color:#9fb0a8;cursor:pointer;font-family:inherit">Проверить связь</button>':'')
+      +(on?'<button onclick="pfBridgePing()" style="padding:4px 11px;font-size:12px;border:1px solid #C7D3CC;border-radius:6px;background:transparent;color:#5B6B63;cursor:pointer;font-family:inherit">Проверить связь</button>':'')
       +'</div>';
     return;
   }
   el.innerHTML='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
     +'<label>Адрес сервиса записи</label>'
-    +'<input id="pf-bridge-url" value="'+pfE(PF.bridge.url||'')+'" placeholder="https://script.google.com/macros/s/…/exec" style="flex:1;min-width:320px;padding:5px 9px;border:1px solid #44534C;border-radius:6px;background:#1C2622;color:#F2F2F2;font-family:inherit;font-size:12px">'
+    +'<input id="pf-bridge-url" value="'+pfE(PF.bridge.url||'')+'" placeholder="https://script.google.com/macros/s/…/exec" style="flex:1;min-width:320px;padding:5px 9px;border:1px solid #C7D3CC;border-radius:6px;background:#F3F6F4;color:#1E2A24;font-family:inherit;font-size:12px">'
     +'<label>Ключ</label>'
-    +'<input id="pf-bridge-key" value="'+pfE(PF.bridge.key||'')+'" placeholder="если задавали" style="width:120px;padding:5px 9px;border:1px solid #44534C;border-radius:6px;background:#1C2622;color:#F2F2F2;font-family:inherit;font-size:12px">'
-    +'<button onclick="pfBridgeSave()" style="padding:5px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,227,138,.45);border-radius:7px;background:rgba(0,227,138,.12);cursor:pointer;color:#00E38A;font-family:inherit">Применить адрес</button>'
-    +'<button onclick="pfBridgePing()" style="padding:5px 13px;font-size:12px;border:1px solid #44534C;border-radius:7px;background:transparent;color:#F2F2F2;cursor:pointer;font-family:inherit">Проверить связь</button>'
-    +'<button onclick="pfBridgeOff()" style="padding:5px 13px;font-size:12px;border:1px solid #44534C;border-radius:7px;background:transparent;color:#ff6b6b;cursor:pointer;font-family:inherit">Отключить</button>'
-    +'<button onclick="PF.bridgeOpen=0;pfBridgeBox()" style="padding:5px 11px;font-size:12px;border:1px solid #44534C;border-radius:7px;background:transparent;color:#9fb0a8;cursor:pointer;font-family:inherit">Свернуть</button>'
-    +'</div><div style="font-size:11.5px;color:#9fb0a8;margin-top:8px;line-height:1.6">Адрес выдаёт Google после публикации скрипта записи (инструкция приложена к файлу). Пока он не задан, план сохраняется только в этом браузере.</div>';
+    +'<input id="pf-bridge-key" value="'+pfE(PF.bridge.key||'')+'" placeholder="если задавали" style="width:120px;padding:5px 9px;border:1px solid #C7D3CC;border-radius:6px;background:#F3F6F4;color:#1E2A24;font-family:inherit;font-size:12px">'
+    +'<button onclick="pfBridgeSave()" style="padding:5px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,135,90,.45);border-radius:7px;background:rgba(0,135,90,.12);cursor:pointer;color:#00875A;font-family:inherit">Применить адрес</button>'
+    +'<button onclick="pfBridgePing()" style="padding:5px 13px;font-size:12px;border:1px solid #C7D3CC;border-radius:7px;background:transparent;color:#1E2A24;cursor:pointer;font-family:inherit">Проверить связь</button>'
+    +'<button onclick="pfBridgeOff()" style="padding:5px 13px;font-size:12px;border:1px solid #C7D3CC;border-radius:7px;background:transparent;color:#DC2626;cursor:pointer;font-family:inherit">Отключить</button>'
+    +'<button onclick="PF.bridgeOpen=0;pfBridgeBox()" style="padding:5px 11px;font-size:12px;border:1px solid #C7D3CC;border-radius:7px;background:transparent;color:#5B6B63;cursor:pointer;font-family:inherit">Свернуть</button>'
+    +'</div><div style="font-size:11.5px;color:#5B6B63;margin-top:8px;line-height:1.6">Адрес выдаёт Google после публикации скрипта записи (инструкция приложена к файлу). Пока он не задан, план сохраняется только в этом браузере.</div>';
 }
 function pfBridgeSave(){
   const u=(document.getElementById('pf-bridge-url').value||'').trim();
