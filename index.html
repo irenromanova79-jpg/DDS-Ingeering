@@ -83,6 +83,8 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
 .l2 td:first-child{padding-left:36px;color:#c3d0ca}
 .l3 td:first-child{padding-left:52px;color:var(--ix-mut);font-size:11.5px}
 .vp{color:var(--ix-green);font-weight:600}.vn{color:var(--ix-red);font-weight:600}.vd{color:#75857d}
+table.dds tr.zeb>td{background:rgba(255,255,255,.035)}
+table.dds tr.zeb.r-op-day>td{background:rgba(255,255,255,.055)}
 .tag{display:inline-block;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:5px;font-weight:700;vertical-align:middle}
 
 /* ── ОСТАТКИ ── */
@@ -171,6 +173,7 @@ table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
   .r-stat td,.r-stat-fin td,.r-stat-inv td{background:#f0f0f0!important;color:#111!important}
   .r-op td,.r-inv td,.r-fin td,.r-net td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .vd{color:#999!important}
+  table.dds tr.zeb>td{background:#f7f7f7!important}
   .blbl,.bal-title{color:#111!important}
   .brow{border-bottom-color:#eee!important}
   .brow.bsec,.brow.bbank{background:#f5f5f5!important}
@@ -592,8 +595,8 @@ function agg(txns,cols){
     const k=cKey(r,cols);if(!ks.includes(k))return;
     if(r.cat==='rec'){res.rec[k]+=r.s;const a=r.acc;if(!res.rec_by_acc[a])res.rec_by_acc[a]={tot:zero(),ctrs:{}};res.rec_by_acc[a].tot[k]+=r.s;const c=r.ctr||'Б/к';if(!res.rec_by_acc[a].ctrs[c])res.rec_by_acc[a].ctrs[c]=zero();res.rec_by_acc[a].ctrs[c][k]+=r.s;}
     else if(r.cat==='dep'){res.dep[k]+=r.s;}
-    else if(r.cat==='opex'){if(r.stat==='Дивиденды'){res.div[k]+=r.s;return;}if(r.stat&&r.stat.includes('Перемещение'))return;const st=r.stat;const c=r.ctr||'Б/к';if(!res.opex[st])res.opex[st]={tot:zero(),ctrs:{}};res.opex[st].tot[k]+=r.s;if(!res.opex[st].ctrs[c])res.opex[st].ctrs[c]=zero();res.opex[st].ctrs[c][k]+=r.s;const opkey=st+'||'+c;if(!res.opex_ops[opkey])res.opex_ops[opkey]=[];res.opex_ops[opkey].push({d:r.d,s:r.s,acc:r.acc});}
-    else if(r.cat==='fot'){const p=r.fot||'Прочие';if(!res.fot[p])res.fot[p]=zero();res.fot[p][k]+=Math.abs(r.s);if(!res.fot_ops[p])res.fot_ops[p]=[];res.fot_ops[p].push({d:r.d,s:r.s,acc:r.acc||'—'});}
+    else if(r.cat==='opex'){if(r.stat==='Дивиденды'){res.div[k]+=r.s;return;}if(r.stat&&r.stat.includes('Перемещение'))return;const st=r.stat;const c=r.ctr||'Б/к';if(!res.opex[st])res.opex[st]={tot:zero(),ctrs:{}};res.opex[st].tot[k]+=r.s;if(!res.opex[st].ctrs[c])res.opex[st].ctrs[c]=zero();res.opex[st].ctrs[c][k]+=r.s;const opkey=st+'||'+c;if(!res.opex_ops[opkey])res.opex_ops[opkey]=[];res.opex_ops[opkey].push({d:r.d,s:r.s,acc:r.acc,w:r.w,m:r.m});}
+    else if(r.cat==='fot'){const p=r.fot||'Прочие';if(!res.fot[p])res.fot[p]=zero();res.fot[p][k]+=Math.abs(r.s);if(!res.fot_ops[p])res.fot_ops[p]=[];res.fot_ops[p].push({d:r.d,s:r.s,acc:r.acc||'—',w:r.w,m:r.m});}
     else if(r.cat==='inv'){res.inv[k]+=r.s;}
     else if(r.cat==='div'){res.div[k]+=r.s;}
     else if(r.cat==='mv_in'){if(!res.mv_in[r.acc])res.mv_in[r.acc]={tot:zero(),ctrs:{}};res.mv_in[r.acc].tot[k]+=r.s;const c=r.ctr||'б/к';if(!res.mv_in[r.acc].ctrs[c])res.mv_in[r.acc].ctrs[c]=zero();res.mv_in[r.acc].ctrs[c][k]+=r.s;}
@@ -682,7 +685,7 @@ function buildDDS(){
 
   // Подраздел: ФОТ
   h+=`<tr class="r-exp l1 hid" id="ge" onclick="tgl('ee')"><td style="padding-left:20px"><span class="chev-d" id="ic-ee">▶</span>Заработная плата и ФОТ<span class="tag" style="background:rgba(251,191,36,.16);color:#fbbf24">ФОТ</span></td>${fotC}</tr>`;
-  h+=`<tr class="hid" id="ee" style="background:#2B3630"><td style="padding-left:52px;font-size:10px;font-weight:700;color:#8a9a92">Сотрудник</td>${mc?cols.map(c=>`<td style="font-size:10px;font-weight:700;color:#8a9a92;background:#2B3630">${c.short}</td>`).join('')+`<td style="font-size:10px;font-weight:700;color:#8a9a92;background:#2B3630">Итого</td>`:`<td style="font-size:10px;font-weight:700;color:#8a9a92;background:#2B3630">Итого</td>`}</tr>`;
+  h+=`<tr class="hid r-hdr" id="ee" style="background:#2B3630"><td style="padding-left:52px;font-size:10px;font-weight:700;color:#8a9a92">Сотрудник</td>${mc?cols.map(c=>`<td style="font-size:10px;font-weight:700;color:#8a9a92;background:#2B3630">${c.short}</td>`).join('')+`<td style="font-size:10px;font-weight:700;color:#8a9a92;background:#2B3630">Итого</td>`:`<td style="font-size:10px;font-weight:700;color:#8a9a92;background:#2B3630">Итого</td>`}</tr>`;
   fotE.forEach(([p,pv],ei)=>{
     const eid='fe'+ei;
     const eops=(d.fot_ops&&d.fot_ops[p])||[];
@@ -693,7 +696,7 @@ function buildDDS(){
       eops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
         const fdd=x=>{const q=x.split('-');return q[2]+'.'+q[1];};
         const oC=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`;
-        h+=`<tr class="hid" id="${eid}" data-par="ee" style="background:#1F2A25"><td style="padding-left:52px;font-size:11px;color:#8a9a92">${fdd(op.d)}&nbsp;<span style="background:rgba(251,191,36,.16);color:#fbbf24;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${oC}</tr>`;
+        h+=`<tr class="hid r-op-day" id="${eid}" data-par="ee" style="background:#1F2A25"><td style="padding-left:68px;font-size:11px;color:#8a9a92">${fdd(op.d)}&nbsp;<span style="background:rgba(251,191,36,.16);color:#fbbf24;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${oC}</tr>`;
       });
     } else {
       h+=`<tr class="l3 hid" id="ee" data-par="ge"><td>${p}</td>${pC}</tr>`;
@@ -719,7 +722,7 @@ function buildDDS(){
         ops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
           const fdd=d=>{const p=d.split('-');return p[2]+'.'+p[1];};
           const opC=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`;
-          h+=`<tr class="hid" id="${did}" data-par="${sid}" style="background:#1F2A25"><td style="padding-left:68px;font-size:11px;color:#8a9a92">${fdd(op.d)}&nbsp;<span style="background:rgba(255,107,107,.16);color:#ff8f8f;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opC}</tr>`;
+          h+=`<tr class="hid r-op-day" id="${did}" data-par="${sid}" style="background:#1F2A25"><td style="padding-left:68px;font-size:11px;color:#8a9a92">${fdd(op.d)}&nbsp;<span style="background:rgba(255,107,107,.16);color:#ff8f8f;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opC}</tr>`;
         });
       } else {
         h+=`<tr class="l3 hid" id="${sid}" data-par="oo"><td style="padding-left:52px">${ctr}</td>${ctrC}</tr>`;
@@ -875,6 +878,22 @@ function buildDDS(){
 
   document.getElementById('ddstbl').innerHTML=h;
   document.querySelectorAll('.hid').forEach(r=>r.style.display='none');
+  zebra();
+}
+
+// Чередование фона видимых строк. Счётчик сбрасывается на каждом разделе/итоге,
+// поэтому после свёртки-развёртки полосы всегда идут ровно.
+function zebra(){
+  const tb=document.getElementById('ddstbl');if(!tb)return;
+  const SKIP=['r-op','r-inv','r-fin','r-sub','r-net','r-tot','r-hdr'];
+  let i=0;
+  [...tb.rows].forEach(r=>{
+    r.classList.remove('zeb');
+    if(r.style.display==='none')return;
+    if(SKIP.some(c=>r.classList.contains(c))){i=0;return;}
+    if(i%2)r.classList.add('zeb');
+    i++;
+  });
 }
 
 function tgl(id){
@@ -884,6 +903,7 @@ function tgl(id){
   rows.forEach(r=>r.style.display=any?'none':'');
   if(icon)icon.classList.toggle('open',!any);
   if(any)hideKids(id);
+  zebra();
 }
 function hideKids(par){
   const kids=[...document.querySelectorAll('[data-par="'+par+'"]')];
