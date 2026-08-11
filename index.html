@@ -228,6 +228,7 @@ table.dds tr.zeb.r-op-day>td{background:rgba(30,42,36,.05)}
     <button class="tab" onclick="sw('dds',this)">Детальный ДДС</button>
     <button class="tab" onclick="sw('dash',this)">Дашборд</button>
     <button class="tab" onclick="sw('plan',this)">План/факт</button>
+    <button class="tab" onclick="sw('calc',this)">Калькулятор выручки</button>
   </div>
 </div>
 <div class="toolbar" id="toolbar" style="display:none">
@@ -432,6 +433,31 @@ table.dds tr.zeb.r-op-day>td{background:rgba(30,42,36,.05)}
       </span>
     </div>
     <div class="tbl-wrap"><table class="dds" id="pf-card-tbl"></table></div>
+  </div>
+</div>
+<div id="calc" class="screen">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+    <div class="period-pills" id="rc-pills">
+      <button class="ppill" onclick="rcSetMode('month',this)">Месяц</button>
+      <button class="ppill" onclick="rcSetMode('year',this)">Год</button>
+      <button class="ppill active" onclick="rcSetMode('custom',this)">Произвольный</button>
+    </div>
+    <div class="period-sub" id="rc-sub"></div>
+    <button onclick="rcResetAll()" style="margin-left:auto;padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">↺&nbsp;Сбросить план к среднему</button>
+  </div>
+  <div class="period-info" id="rc-info" style="margin-bottom:14px;display:inline-block"></div>
+  <div class="tbl-wrap" style="margin-bottom:16px"><table class="dds" id="rc-tbl-opex"></table></div>
+
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+    <div class="bal-title" style="font-size:15px;margin-bottom:0">Заработная плата и ФОТ</div>
+    <button onclick="rcAddEmployee()" style="margin-left:auto;padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,135,90,.45);border-radius:7px;background:rgba(0,135,90,.12);cursor:pointer;color:#00875A;font-family:inherit">+&nbsp;Добавить сотрудника (план найма)</button>
+  </div>
+  <div class="tbl-wrap" style="margin-bottom:16px"><table class="dds" id="rc-tbl-fot"></table></div>
+
+  <div class="tbl-wrap"><table class="dds" id="rc-tbl-total"></table></div>
+
+  <div class="footer-note" style="margin-top:12px"><div class="fdot"></div>
+    <span>Факт — среднее арифметическое по полностью закрытым календарным месяцам (текущий месяц в расчёт не берётся, пока не закончится). План по умолчанию равен среднему — впишите свою цифру, чтобы скорректировать вручную. Прибыль и найм новых сотрудников задаёт собственник.</span>
   </div>
 </div>
 <script>/*!
@@ -1083,6 +1109,7 @@ function sw(id,btn){
   document.getElementById('toolbar').style.display=(id==='dds'||id==='dash')?'flex':'none';
   if(id==='dds'||id==='dash')refresh();
   if(id==='plan'){ if(!PF.loaded&&!PF.busy)pfLoad(); else pfRender(); }
+  if(id==='calc'){ rcRender(); }
 }
 function refresh(){
   const txns=fTxns();updInfo();
@@ -2462,6 +2489,208 @@ function pfPlanImport(inp){
     }catch(e){pfToast('Файл не читается: '+e.message,'err');}
   };
   fr.readAsText(f);inp.value='';
+}
+
+/* ══════════ КАЛЬКУЛЯТОР ВЫРУЧКИ (план продаж = расходы + прибыль) ══════════ */
+const RC_K_OV='irixcalc:ov1', RC_K_NEWEMP='irixcalc:newemp1', RC_K_PROFIT='irixcalc:profit1', RC_K_RANGE='irixcalc:range2';
+let RC={ov:{},newEmp:[],profit:0,mode:'custom',myear:null,mmonth:null,yyear:null,from:null,to:null};
+try{RC.ov=JSON.parse(localStorage.getItem(RC_K_OV)||'{}');}catch(e){RC.ov={};}
+try{RC.newEmp=JSON.parse(localStorage.getItem(RC_K_NEWEMP)||'[]');}catch(e){RC.newEmp=[];}
+try{RC.profit=parseFloat(localStorage.getItem(RC_K_PROFIT)||'0')||0;}catch(e){RC.profit=0;}
+try{const rr=JSON.parse(localStorage.getItem(RC_K_RANGE)||'null');if(rr)Object.assign(RC,rr);}catch(e){}
+
+function rcSaveOv(){try{localStorage.setItem(RC_K_OV,JSON.stringify(RC.ov));}catch(e){}}
+function rcSaveNewEmp(){try{localStorage.setItem(RC_K_NEWEMP,JSON.stringify(RC.newEmp));}catch(e){}}
+function rcSaveProfit(){try{localStorage.setItem(RC_K_PROFIT,String(RC.profit));}catch(e){}}
+function rcSaveRange(){try{localStorage.setItem(RC_K_RANGE,JSON.stringify({mode:RC.mode,myear:RC.myear,mmonth:RC.mmonth,yyear:RC.yyear,from:RC.from,to:RC.to}));}catch(e){}}
+
+const rcMonthKey=(y,m)=>y*12+m;
+function rcMonthLabel(key){const y=Math.floor((key-1)/12),m=key-y*12;return MN_S[m]+' '+y;}
+function rcAllMonths(){const s=new Set();TXNS.forEach(t=>{if(t.y&&t.m)s.add(rcMonthKey(t.y,t.m));});return[...s].sort((a,b)=>a-b);}
+function rcAllYears(){return[...new Set(rcAllMonths().map(k=>Math.floor((k-1)/12)))].sort((a,b)=>a-b);}
+function rcCompleteMonths(){
+  const now=new Date();const curKey=rcMonthKey(now.getFullYear(),now.getMonth()+1);
+  return rcAllMonths().filter(k=>k<curKey);
+}
+function rcInitRange(){
+  const am=rcAllMonths(),cm=rcCompleteMonths(),years=rcAllYears();
+  const lastKey=am.length?am[am.length-1]:rcMonthKey(new Date().getFullYear(),new Date().getMonth()+1);
+  const lastY=Math.floor((lastKey-1)/12),lastM=lastKey-lastY*12;
+  if(RC.myear==null||!years.includes(RC.myear))RC.myear=years.length?years[years.length-1]:lastY;
+  if(RC.mmonth==null)RC.mmonth=lastM;
+  if(RC.yyear==null||!years.includes(RC.yyear))RC.yyear=years.length?years[years.length-1]:lastY;
+  if(!cm.length)return;
+  if(RC.from==null||!am.includes(RC.from))RC.from=cm[0];
+  if(RC.to==null||!am.includes(RC.to))RC.to=cm[cm.length-1];
+  if(RC.from>RC.to)RC.to=RC.from;
+}
+/* месяцы, попадающие в текущий выбор пользователя (месяц/год/произвольный) — БЕЗ фильтра на «закрытость» */
+function rcSelectedMonths(){
+  if(RC.mode==='month')return[rcMonthKey(RC.myear,RC.mmonth)];
+  if(RC.mode==='year'){const out=[];for(let m=1;m<=12;m++)out.push(rcMonthKey(RC.yyear,m));return out;}
+  const out=[];for(let k=RC.from;k<=RC.to;k++)out.push(k);return out;
+}
+/* пересечение выбора с фактически закрытыми месяцами — вот по ним и считаем среднее */
+function rcRangeMonths(){
+  const sel=new Set(rcSelectedMonths());
+  return rcCompleteMonths().filter(k=>sel.has(k));
+}
+
+function rcAggregate(){
+  const months=rcRangeMonths();const monthSet=new Set(months);
+  const opex={},fot={};
+  TXNS.forEach(t=>{
+    if(!monthSet.has(rcMonthKey(t.y,t.m)))return;
+    if(t.cat==='opex'){
+      const key=(t.stat||'').trim()||'Без статьи';
+      opex[key]=(opex[key]||0)+Math.abs(t.s);
+    }else if(t.cat==='fot'){
+      const key=(t.fot||'').trim()||'Без имени';
+      fot[key]=(fot[key]||0)+Math.abs(t.s);
+    }
+  });
+  const n=months.length||1;
+  const opexAvg={};Object.keys(opex).forEach(k=>opexAvg[k]=opex[k]/n);
+  const fotAvg={};Object.keys(fot).forEach(k=>fotAvg[k]=fot[k]/n);
+  return{months:months,n:months.length,opexAvg:opexAvg,fotAvg:fotAvg};
+}
+function rcPlanFor(key,avg){return(RC.ov[key]!=null)?RC.ov[key]:Math.round(avg);}
+
+function rcSetMode(m,btn){
+  RC.mode=m;
+  document.querySelectorAll('#rc-pills .ppill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  rcSaveRange();rcRender();
+}
+function rcSetMYear(v){RC.myear=+v;rcSaveRange();rcRender();}
+function rcSetMMonth(v){RC.mmonth=+v;rcSaveRange();rcRender();}
+function rcSetYYear(v){RC.yyear=+v;rcSaveRange();rcRender();}
+function rcSetFrom(v){RC.from=parseInt(v);if(RC.from>RC.to)RC.to=RC.from;rcSaveRange();rcRender();}
+function rcSetTo(v){RC.to=parseInt(v);if(RC.to<RC.from)RC.from=RC.to;rcSaveRange();rcRender();}
+function rcSetOv(key,v){
+  const n=parseFloat(v);
+  if(!isFinite(n)){delete RC.ov[key];}else{RC.ov[key]=n;}
+  rcSaveOv();rcRenderTotalsOnly();
+}
+function rcAddEmployee(){
+  const id='ne'+Date.now()+Math.floor(Math.random()*1000);
+  RC.newEmp.push({id:id,name:'',salary:0});
+  rcSaveNewEmp();rcRender();
+}
+function rcDelEmployee(id){
+  RC.newEmp=RC.newEmp.filter(e=>e.id!==id);
+  rcSaveNewEmp();rcRender();
+}
+function rcSetNewEmpName(id,v){const e=RC.newEmp.find(x=>x.id===id);if(e){e.name=v;rcSaveNewEmp();}}
+function rcSetNewEmpSalary(id,v){const e=RC.newEmp.find(x=>x.id===id);if(e){e.salary=parseFloat(v)||0;rcSaveNewEmp();rcRenderTotalsOnly();}}
+function rcSetProfit(v){RC.profit=parseFloat(v)||0;rcSaveProfit();rcRenderTotalsOnly();}
+function rcResetAll(){
+  if(!confirm('Сбросить все правки плана (статьи и ЗП) к рассчитанному среднему? Прибыль и список новых сотрудников не тронем.'))return;
+  RC.ov={};rcSaveOv();rcRender();
+}
+
+function rcCalcTotals(){
+  const agg=rcAggregate();
+  let opexPlan=0;Object.keys(agg.opexAvg).forEach(k=>{opexPlan+=rcPlanFor('opex:'+k,agg.opexAvg[k]);});
+  let fotPlan=0;Object.keys(agg.fotAvg).forEach(k=>{fotPlan+=rcPlanFor('fot:'+k,agg.fotAvg[k]);});
+  RC.newEmp.forEach(e=>{fotPlan+=(e.salary||0);});
+  const totalExp=opexPlan+fotPlan;
+  const salesPlan=totalExp+(RC.profit||0);
+  return{agg:agg,opexPlan:opexPlan,fotPlan:fotPlan,totalExp:totalExp,salesPlan:salesPlan};
+}
+
+function rcRenderTotalsOnly(){
+  const t=rcCalcTotals();
+  const el=document.getElementById('rc-tbl-total');
+  if(!el)return;
+  el.innerHTML=
+    '<tbody>'
+    +'<tr class="r-sub"><td>Итого статьи расходов (план)</td><td style="text-align:right">'+pfF(t.opexPlan)+'</td></tr>'
+    +'<tr class="r-sub"><td>Итого ЗП и ФОТ (план, вкл. новых сотрудников)</td><td style="text-align:right">'+pfF(t.fotPlan)+'</td></tr>'
+    +'<tr class="r-tot"><td>Итого расходы (план)</td><td style="text-align:right">'+pfF(t.totalExp)+'</td></tr>'
+    +'<tr><td style="padding:9px 12px">Прибыль (план, вписывает собственник)</td><td style="text-align:right;padding:6px 12px"><input type="number" value="'+Math.round(RC.profit||0)+'" oninput="rcSetProfit(this.value)" style="width:140px;text-align:right;padding:4px 8px;border:1px solid #C7D3CC;border-radius:6px;font-family:\'Courier New\',monospace;font-size:12.5px"></td></tr>'
+    +'<tr class="r-net"><td>План по продажам (выручка)</td><td style="text-align:right">'+pfF(t.salesPlan)+'</td></tr>'
+    +'</tbody>';
+}
+
+function rcRender(){
+  rcInitRange();
+  const years=rcAllYears();
+  const am=rcAllMonths();
+  const sub=document.getElementById('rc-sub');
+  document.querySelectorAll('#rc-pills .ppill').forEach(b=>{
+    b.classList.toggle('active', b.getAttribute('onclick').indexOf("'"+RC.mode+"'")>=0);
+  });
+
+  if(!years.length){
+    sub.innerHTML='<span style="color:#DC2626;font-weight:600">В данных нет ни одного месяца — считать не на чем.</span>';
+  }else if(RC.mode==='month'){
+    const yOpts=years.map(y=>'<option value="'+y+'"'+(y===RC.myear?' selected':'')+'>'+y+'</option>').join('');
+    const mOpts=[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>'<option value="'+m+'"'+(m===RC.mmonth?' selected':'')+'>'+MN_F[m]+'</option>').join('');
+    sub.innerHTML='<label>Год</label><select onchange="rcSetMYear(this.value)">'+yOpts+'</select>'
+      +'&ensp;<label>Месяц</label><select onchange="rcSetMMonth(this.value)">'+mOpts+'</select>';
+  }else if(RC.mode==='year'){
+    const yOpts=years.map(y=>'<option value="'+y+'"'+(y===RC.yyear?' selected':'')+'>'+y+'</option>').join('');
+    sub.innerHTML='<label>Год</label><select onchange="rcSetYYear(this.value)">'+yOpts+'</select>';
+  }else{
+    let optsFrom='',optsTo='';
+    am.forEach(k=>{
+      optsFrom+='<option value="'+k+'"'+(k===RC.from?' selected':'')+'>'+rcMonthLabel(k)+'</option>';
+      optsTo+='<option value="'+k+'"'+(k===RC.to?' selected':'')+'>'+rcMonthLabel(k)+'</option>';
+    });
+    sub.innerHTML='<label>С</label><select onchange="rcSetFrom(this.value)">'+optsFrom+'</select>'
+      +'<span class="period-sep">—</span><label>По</label><select onchange="rcSetTo(this.value)">'+optsTo+'</select>';
+  }
+
+  const agg=rcAggregate();
+  const now=new Date(),curKey=rcMonthKey(now.getFullYear(),now.getMonth()+1);
+  const hasOpenMonth=rcSelectedMonths().some(k=>k>=curKey);
+  let infoTxt=agg.n
+    ? 'Среднее берётся по '+agg.n+' полн'+(agg.n===1?'ому':'ым')+' закрыт'+(agg.n===1?'ому':'ым')+' календарн'+(agg.n===1?'ому месяцу':'ым месяцам')+'.'
+    : 'В выбранном периоде нет ни одного полностью закрытого месяца — фактических данных для среднего нет, но план можно вписать вручную.';
+  if(hasOpenMonth)infoTxt+=' Текущий незакончившийся месяц из расчёта среднего исключён.';
+  document.getElementById('rc-info').textContent=infoTxt;
+
+  const opexKeys=Object.keys(agg.opexAvg).sort((a,b)=>agg.opexAvg[b]-agg.opexAvg[a]);
+  let ho='<thead><tr><th style="text-align:left">Статья операционных расходов</th><th>Факт, ср./мес</th><th>План на месяц</th></tr></thead><tbody>';
+  opexKeys.forEach(k=>{
+    const avg=agg.opexAvg[k],ovKey='opex:'+k,plan=rcPlanFor(ovKey,avg);
+    ho+='<tr class="l1"><td>'+pfE(k)+'</td><td class="vd">'+pfF(avg)+'</td>'
+      +'<td><input type="number" value="'+Math.round(plan)+'" oninput="rcSetOv(\''+ovKey.replace(/'/g,"\\'")+'\',this.value)" style="width:120px;text-align:right;padding:3px 7px;border:1px solid #C7D3CC;border-radius:5px;font-family:\'Courier New\',monospace;font-size:11.5px"></td></tr>';
+  });
+  if(!opexKeys.length)ho+='<tr><td colspan="3" style="padding:16px;text-align:center;color:#5B6B63">Нет операционных расходов за выбранный период</td></tr>';
+  ho+='</tbody>';
+  document.getElementById('rc-tbl-opex').innerHTML=ho;
+
+  const fotKeys=Object.keys(agg.fotAvg).sort((a,b)=>agg.fotAvg[b]-agg.fotAvg[a]);
+  let hf='<thead><tr><th style="text-align:left">Сотрудник</th><th>Факт, ср./мес</th><th>План ЗП на месяц</th><th></th></tr></thead><tbody>';
+  fotKeys.forEach(k=>{
+    const avg=agg.fotAvg[k],ovKey='fot:'+k,plan=rcPlanFor(ovKey,avg);
+    hf+='<tr class="l1"><td>'+pfE(k)+'</td><td class="vd">'+pfF(avg)+'</td>'
+      +'<td><input type="number" value="'+Math.round(plan)+'" oninput="rcSetOv(\''+ovKey.replace(/'/g,"\\'")+'\',this.value)" style="width:120px;text-align:right;padding:3px 7px;border:1px solid #C7D3CC;border-radius:5px;font-family:\'Courier New\',monospace;font-size:11.5px"></td><td></td></tr>';
+  });
+  RC.newEmp.forEach(e=>{
+    hf+='<tr class="l1"><td><input type="text" value="'+pfE(e.name)+'" placeholder="Имя нового сотрудника" data-emp-name="'+e.id+'" style="width:210px;padding:3px 7px;border:1px solid #C7D3CC;border-radius:5px;font-family:inherit;font-size:12px"></td>'
+      +'<td class="vd">план найма</td>'
+      +'<td><input type="number" value="'+Math.round(e.salary||0)+'" data-emp-salary="'+e.id+'" style="width:120px;text-align:right;padding:3px 7px;border:1px solid #C7D3CC;border-radius:5px;font-family:\'Courier New\',monospace;font-size:11.5px"></td>'
+      +'<td><button data-emp-del="'+e.id+'" style="border:none;background:none;color:#DC2626;cursor:pointer;font-size:14px" title="Убрать">✕</button></td></tr>';
+  });
+  if(!fotKeys.length&&!RC.newEmp.length)hf+='<tr><td colspan="4" style="padding:16px;text-align:center;color:#5B6B63">Нет данных по ФОТ — добавьте сотрудника кнопкой выше</td></tr>';
+  hf+='</tbody>';
+  document.getElementById('rc-tbl-fot').innerHTML=hf;
+
+  /* события для новых сотрудников — через data-атрибуты, чтобы не экранировать имена/кавычки в onclick */
+  document.querySelectorAll('[data-emp-name]').forEach(inp=>{
+    inp.oninput=()=>rcSetNewEmpName(inp.getAttribute('data-emp-name'),inp.value);
+  });
+  document.querySelectorAll('[data-emp-salary]').forEach(inp=>{
+    inp.oninput=()=>rcSetNewEmpSalary(inp.getAttribute('data-emp-salary'),inp.value);
+  });
+  document.querySelectorAll('[data-emp-del]').forEach(btn=>{
+    btn.onclick=()=>rcDelEmployee(btn.getAttribute('data-emp-del'));
+  });
+
+  rcRenderTotalsOnly();
 }
 
 function printDDS(){
