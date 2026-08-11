@@ -443,7 +443,8 @@ table.dds tr.zeb.r-op-day>td{background:rgba(30,42,36,.05)}
       <button class="ppill active" onclick="rcSetMode('custom',this)">Произвольный</button>
     </div>
     <div class="period-sub" id="rc-sub"></div>
-    <button onclick="rcResetAll()" style="margin-left:auto;padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">↺&nbsp;Сбросить план к среднему</button>
+    <button id="rc-refresh-btn" onclick="rcRefreshData()" style="padding:6px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,135,90,.45);border-radius:7px;background:rgba(0,135,90,.12);cursor:pointer;color:#00875A;font-family:inherit;display:flex;align-items:center;gap:5px;margin-left:auto"><span id="rc-refresh-ico">⟳</span>&nbsp;Обновить данные из Sheets</button>
+    <button onclick="rcResetAll()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">↺&nbsp;Сбросить план к среднему</button>
   </div>
   <div class="period-info" id="rc-info" style="margin-bottom:14px;display:inline-block"></div>
   <div class="tbl-wrap" style="margin-bottom:16px"><table class="dds" id="rc-tbl-opex"></table></div>
@@ -457,7 +458,7 @@ table.dds tr.zeb.r-op-day>td{background:rgba(30,42,36,.05)}
   <div class="tbl-wrap"><table class="dds" id="rc-tbl-total"></table></div>
 
   <div class="footer-note" style="margin-top:12px"><div class="fdot"></div>
-    <span>Факт — среднее арифметическое по полностью закрытым календарным месяцам (текущий месяц в расчёт не берётся, пока не закончится). План по умолчанию равен среднему — впишите свою цифру, чтобы скорректировать вручную. Прибыль и найм новых сотрудников задаёт собственник.</span>
+    <span>Факт — среднее арифметическое по полностью закрытым календарным месяцам (текущий месяц в расчёт не берётся, пока не закончится). Если по нужному месяцу факт показывает 0 — скорее всего, свежие операции ещё не подтянуты из таблицы: нажмите «Обновить данные из Sheets» вверху. План по умолчанию равен среднему — впишите свою цифру, чтобы скорректировать вручную. Прибыль и найм новых сотрудников задаёт собственник.</span>
   </div>
 </div>
 <script>/*!
@@ -2594,6 +2595,20 @@ function rcSetProfit(v){RC.profit=parseFloat(v)||0;rcSaveProfit();rcRenderTotals
 function rcResetAll(){
   if(!confirm('Сбросить все правки плана (статьи и ЗП) к рассчитанному среднему? Прибыль и список новых сотрудников не тронем.'))return;
   RC.ov={};rcSaveOv();rcRender();
+}
+/* подтянуть свежие операции из Google Sheets (тот же источник, что и на вкладке «Детальный ДДС») и пересчитать калькулятор */
+async function rcRefreshData(){
+  const btn=document.getElementById('rc-refresh-btn'),ico=document.getElementById('rc-refresh-ico');
+  if(btn){btn.disabled=true;}
+  if(ico){ico.style.cssText='animation:spin .9s linear infinite;display:inline-block';}
+  try{
+    await refreshDDSData();
+  }catch(e){
+    alert('Не удалось обновить данные: '+e.message);
+  }
+  if(btn)btn.disabled=false;
+  if(ico){ico.style.cssText='';ico.textContent='⟳';}
+  rcRender();
 }
 
 function rcCalcTotals(){
