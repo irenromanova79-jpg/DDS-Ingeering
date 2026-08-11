@@ -2493,7 +2493,7 @@ function pfPlanImport(inp){
 
 /* ══════════ КАЛЬКУЛЯТОР ВЫРУЧКИ (план продаж = расходы + прибыль) ══════════ */
 const RC_K_OV='irixcalc:ov1', RC_K_NEWEMP='irixcalc:newemp1', RC_K_PROFIT='irixcalc:profit1', RC_K_RANGE='irixcalc:range2';
-let RC={ov:{},newEmp:[],profit:0,mode:'custom',myear:null,mmonth:null,yyear:null,from:null,to:null};
+let RC={ov:{},newEmp:[],profit:0,mode:'custom',myear:null,mmonth:null,yyear:null,from:null,to:null,collapse:{opex:false,fot:false}};
 try{RC.ov=JSON.parse(localStorage.getItem(RC_K_OV)||'{}');}catch(e){RC.ov={};}
 try{RC.newEmp=JSON.parse(localStorage.getItem(RC_K_NEWEMP)||'[]');}catch(e){RC.newEmp=[];}
 try{RC.profit=parseFloat(localStorage.getItem(RC_K_PROFIT)||'0')||0;}catch(e){RC.profit=0;}
@@ -2502,26 +2502,35 @@ try{const rr=JSON.parse(localStorage.getItem(RC_K_RANGE)||'null');if(rr)Object.a
 function rcSaveOv(){try{localStorage.setItem(RC_K_OV,JSON.stringify(RC.ov));}catch(e){}}
 function rcSaveNewEmp(){try{localStorage.setItem(RC_K_NEWEMP,JSON.stringify(RC.newEmp));}catch(e){}}
 function rcSaveProfit(){try{localStorage.setItem(RC_K_PROFIT,String(RC.profit));}catch(e){}}
-function rcSaveRange(){try{localStorage.setItem(RC_K_RANGE,JSON.stringify({mode:RC.mode,myear:RC.myear,mmonth:RC.mmonth,yyear:RC.yyear,from:RC.from,to:RC.to}));}catch(e){}}
+function rcSaveRange(){try{localStorage.setItem(RC_K_RANGE,JSON.stringify({mode:RC.mode,myear:RC.myear,mmonth:RC.mmonth,yyear:RC.yyear,from:RC.from,to:RC.to,collapse:RC.collapse}));}catch(e){}}
+function rcToggleGroup(g){RC.collapse[g]=!RC.collapse[g];rcSaveRange();rcRender();}
 
 const rcMonthKey=(y,m)=>y*12+m;
 function rcMonthLabel(key){const y=Math.floor((key-1)/12),m=key-y*12;return MN_S[m]+' '+y;}
 function rcAllMonths(){const s=new Set();TXNS.forEach(t=>{if(t.y&&t.m)s.add(rcMonthKey(t.y,t.m));});return[...s].sort((a,b)=>a-b);}
-function rcAllYears(){return[...new Set(rcAllMonths().map(k=>Math.floor((k-1)/12)))].sort((a,b)=>a-b);}
-function rcCompleteMonths(){
-  const now=new Date();const curKey=rcMonthKey(now.getFullYear(),now.getMonth()+1);
-  return rcAllMonths().filter(k=>k<curKey);
+function rcCurKey(){const now=new Date();return rcMonthKey(now.getFullYear(),now.getMonth()+1);}
+/* закрыт ли месяц — сравниваем с сегодняшней датой, а не с наличием строк в данных: календарный месяц может закончиться и без синхронизированных операций */
+function rcIsClosed(key){return key<rcCurKey();}
+/* непрерывный список месяцев от первого месяца в данных до текущего (включительно) — чтобы в выборе были «все месяцы», а не только те, где уже есть операции */
+function rcFullMonthRange(){
+  const am=rcAllMonths(),curKey=rcCurKey();
+  const startKey=am.length?am[0]:curKey;
+  const endKey=Math.max(curKey,am.length?am[am.length-1]:curKey);
+  const out=[];for(let k=startKey;k<=endKey;k++)out.push(k);
+  return out;
 }
+function rcAllYears(){return[...new Set(rcFullMonthRange().map(k=>Math.floor((k-1)/12)))].sort((a,b)=>a-b);}
+function rcCompleteMonths(){return rcFullMonthRange().filter(rcIsClosed);}
 function rcInitRange(){
-  const am=rcAllMonths(),cm=rcCompleteMonths(),years=rcAllYears();
-  const lastKey=am.length?am[am.length-1]:rcMonthKey(new Date().getFullYear(),new Date().getMonth()+1);
+  const fm=rcFullMonthRange(),cm=rcCompleteMonths(),years=rcAllYears();
+  const lastKey=cm.length?cm[cm.length-1]:fm[fm.length-1];
   const lastY=Math.floor((lastKey-1)/12),lastM=lastKey-lastY*12;
-  if(RC.myear==null||!years.includes(RC.myear))RC.myear=years.length?years[years.length-1]:lastY;
+  if(RC.myear==null||!years.includes(RC.myear))RC.myear=lastY;
   if(RC.mmonth==null)RC.mmonth=lastM;
-  if(RC.yyear==null||!years.includes(RC.yyear))RC.yyear=years.length?years[years.length-1]:lastY;
+  if(RC.yyear==null||!years.includes(RC.yyear))RC.yyear=lastY;
   if(!cm.length)return;
-  if(RC.from==null||!am.includes(RC.from))RC.from=cm[0];
-  if(RC.to==null||!am.includes(RC.to))RC.to=cm[cm.length-1];
+  if(RC.from==null||!fm.includes(RC.from))RC.from=cm[0];
+  if(RC.to==null||!fm.includes(RC.to))RC.to=cm[cm.length-1];
   if(RC.from>RC.to)RC.to=RC.from;
 }
 /* месяцы, попадающие в текущий выбор пользователя (месяц/год/произвольный) — БЕЗ фильтра на «закрытость» */
@@ -2530,11 +2539,9 @@ function rcSelectedMonths(){
   if(RC.mode==='year'){const out=[];for(let m=1;m<=12;m++)out.push(rcMonthKey(RC.yyear,m));return out;}
   const out=[];for(let k=RC.from;k<=RC.to;k++)out.push(k);return out;
 }
-/* пересечение выбора с фактически закрытыми месяцами — вот по ним и считаем среднее */
-function rcRangeMonths(){
-  const sel=new Set(rcSelectedMonths());
-  return rcCompleteMonths().filter(k=>sel.has(k));
-}
+/* из выбора оставляем только реально закрытые (по дате) месяцы — вот по ним и считаем среднее */
+function rcRangeMonths(){return rcSelectedMonths().filter(rcIsClosed);}
+
 
 function rcAggregate(){
   const months=rcRangeMonths();const monthSet=new Set(months);
@@ -2616,7 +2623,7 @@ function rcRenderTotalsOnly(){
 function rcRender(){
   rcInitRange();
   const years=rcAllYears();
-  const am=rcAllMonths();
+  const fm=rcFullMonthRange();
   const sub=document.getElementById('rc-sub');
   document.querySelectorAll('#rc-pills .ppill').forEach(b=>{
     b.classList.toggle('active', b.getAttribute('onclick').indexOf("'"+RC.mode+"'")>=0);
@@ -2634,7 +2641,7 @@ function rcRender(){
     sub.innerHTML='<label>Год</label><select onchange="rcSetYYear(this.value)">'+yOpts+'</select>';
   }else{
     let optsFrom='',optsTo='';
-    am.forEach(k=>{
+    fm.forEach(k=>{
       optsFrom+='<option value="'+k+'"'+(k===RC.from?' selected':'')+'>'+rcMonthLabel(k)+'</option>';
       optsTo+='<option value="'+k+'"'+(k===RC.to?' selected':'')+'>'+rcMonthLabel(k)+'</option>';
     });
@@ -2643,8 +2650,7 @@ function rcRender(){
   }
 
   const agg=rcAggregate();
-  const now=new Date(),curKey=rcMonthKey(now.getFullYear(),now.getMonth()+1);
-  const hasOpenMonth=rcSelectedMonths().some(k=>k>=curKey);
+  const hasOpenMonth=rcSelectedMonths().some(k=>!rcIsClosed(k));
   let infoTxt=agg.n
     ? 'Среднее берётся по '+agg.n+' полн'+(agg.n===1?'ому':'ым')+' закрыт'+(agg.n===1?'ому':'ым')+' календарн'+(agg.n===1?'ому месяцу':'ым месяцам')+'.'
     : 'В выбранном периоде нет ни одного полностью закрытого месяца — фактических данных для среднего нет, но план можно вписать вручную.';
@@ -2652,25 +2658,38 @@ function rcRender(){
   document.getElementById('rc-info').textContent=infoTxt;
 
   const opexKeys=Object.keys(agg.opexAvg).sort((a,b)=>agg.opexAvg[b]-agg.opexAvg[a]);
+  const opexRows=opexKeys.map(k=>{const avg=agg.opexAvg[k],ovKey='opex:'+k,plan=rcPlanFor(ovKey,avg);return{k:k,avg:avg,ovKey:ovKey,plan:plan};});
+  const opexFactTotal=opexRows.reduce((s,r)=>s+r.avg,0);
+  const opexPlanTotal=opexRows.reduce((s,r)=>s+r.plan,0);
+  const opexOpen=!RC.collapse.opex;
   let ho='<thead><tr><th style="text-align:left">Статья операционных расходов</th><th>Факт, ср./мес</th><th>План на месяц</th></tr></thead><tbody>';
-  opexKeys.forEach(k=>{
-    const avg=agg.opexAvg[k],ovKey='opex:'+k,plan=rcPlanFor(ovKey,avg);
-    ho+='<tr class="l1"><td>'+pfE(k)+'</td><td class="vd">'+pfF(avg)+'</td>'
-      +'<td><input type="number" value="'+Math.round(plan)+'" oninput="rcSetOv(\''+ovKey.replace(/'/g,"\\'")+'\',this.value)" style="width:120px;text-align:right;padding:3px 7px;border:1px solid #C7D3CC;border-radius:5px;font-family:\'Courier New\',monospace;font-size:11.5px"></td></tr>';
+  ho+='<tr class="r-exp r-sub" onclick="rcToggleGroup(\'opex\')"><td><span class="chev-d'+(opexOpen?' open':'')+'">▶</span>Операционные расходы — итого'
+    +'<span style="font-weight:400;color:#5B6B63">&nbsp;('+opexRows.length+(opexRows.length===1?' статья':opexRows.length<5?' статьи':' статей')+')</span></td>'
+    +'<td class="vd">'+pfF(opexFactTotal)+'</td><td>'+pfF(opexPlanTotal)+'</td></tr>';
+  opexRows.forEach(r=>{
+    ho+='<tr class="l1"'+(opexOpen?'':' style="display:none"')+'><td>'+pfE(r.k)+'</td><td class="vd">'+pfF(r.avg)+'</td>'
+      +'<td><input type="number" value="'+Math.round(r.plan)+'" oninput="rcSetOv(\''+r.ovKey.replace(/'/g,"\\'")+'\',this.value)" style="width:120px;text-align:right;padding:3px 7px;border:1px solid #C7D3CC;border-radius:5px;font-family:\'Courier New\',monospace;font-size:11.5px"></td></tr>';
   });
   if(!opexKeys.length)ho+='<tr><td colspan="3" style="padding:16px;text-align:center;color:#5B6B63">Нет операционных расходов за выбранный период</td></tr>';
   ho+='</tbody>';
   document.getElementById('rc-tbl-opex').innerHTML=ho;
 
   const fotKeys=Object.keys(agg.fotAvg).sort((a,b)=>agg.fotAvg[b]-agg.fotAvg[a]);
+  const fotRows=fotKeys.map(k=>{const avg=agg.fotAvg[k],ovKey='fot:'+k,plan=rcPlanFor(ovKey,avg);return{k:k,avg:avg,ovKey:ovKey,plan:plan};});
+  const fotFactTotal=fotRows.reduce((s,r)=>s+r.avg,0);
+  const fotPlanTotal=fotRows.reduce((s,r)=>s+r.plan,0)+RC.newEmp.reduce((s,e)=>s+(e.salary||0),0);
+  const fotOpen=!RC.collapse.fot;
+  const fotCount=fotRows.length+RC.newEmp.length;
   let hf='<thead><tr><th style="text-align:left">Сотрудник</th><th>Факт, ср./мес</th><th>План ЗП на месяц</th><th></th></tr></thead><tbody>';
-  fotKeys.forEach(k=>{
-    const avg=agg.fotAvg[k],ovKey='fot:'+k,plan=rcPlanFor(ovKey,avg);
-    hf+='<tr class="l1"><td>'+pfE(k)+'</td><td class="vd">'+pfF(avg)+'</td>'
-      +'<td><input type="number" value="'+Math.round(plan)+'" oninput="rcSetOv(\''+ovKey.replace(/'/g,"\\'")+'\',this.value)" style="width:120px;text-align:right;padding:3px 7px;border:1px solid #C7D3CC;border-radius:5px;font-family:\'Courier New\',monospace;font-size:11.5px"></td><td></td></tr>';
+  hf+='<tr class="r-exp r-sub" onclick="rcToggleGroup(\'fot\')"><td><span class="chev-d'+(fotOpen?' open':'')+'">▶</span>Заработная плата и ФОТ — итого'
+    +'<span style="font-weight:400;color:#5B6B63">&nbsp;('+fotCount+(fotCount===1?' сотрудник':fotCount>=2&&fotCount<=4?' сотрудника':' сотрудников')+')</span></td>'
+    +'<td class="vd">'+pfF(fotFactTotal)+'</td><td>'+pfF(fotPlanTotal)+'</td><td></td></tr>';
+  fotRows.forEach(r=>{
+    hf+='<tr class="l1"'+(fotOpen?'':' style="display:none"')+'><td>'+pfE(r.k)+'</td><td class="vd">'+pfF(r.avg)+'</td>'
+      +'<td><input type="number" value="'+Math.round(r.plan)+'" oninput="rcSetOv(\''+r.ovKey.replace(/'/g,"\\'")+'\',this.value)" style="width:120px;text-align:right;padding:3px 7px;border:1px solid #C7D3CC;border-radius:5px;font-family:\'Courier New\',monospace;font-size:11.5px"></td><td></td></tr>';
   });
   RC.newEmp.forEach(e=>{
-    hf+='<tr class="l1"><td><input type="text" value="'+pfE(e.name)+'" placeholder="Имя нового сотрудника" data-emp-name="'+e.id+'" style="width:210px;padding:3px 7px;border:1px solid #C7D3CC;border-radius:5px;font-family:inherit;font-size:12px"></td>'
+    hf+='<tr class="l1"'+(fotOpen?'':' style="display:none"')+'><td><input type="text" value="'+pfE(e.name)+'" placeholder="Имя нового сотрудника" data-emp-name="'+e.id+'" style="width:210px;padding:3px 7px;border:1px solid #C7D3CC;border-radius:5px;font-family:inherit;font-size:12px"></td>'
       +'<td class="vd">план найма</td>'
       +'<td><input type="number" value="'+Math.round(e.salary||0)+'" data-emp-salary="'+e.id+'" style="width:120px;text-align:right;padding:3px 7px;border:1px solid #C7D3CC;border-radius:5px;font-family:\'Courier New\',monospace;font-size:11.5px"></td>'
       +'<td><button data-emp-del="'+e.id+'" style="border:none;background:none;color:#DC2626;cursor:pointer;font-size:14px" title="Убрать">✕</button></td></tr>';
