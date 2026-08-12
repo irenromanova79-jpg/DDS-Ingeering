@@ -459,6 +459,7 @@ table.dds tr.zeb.r-op-day>td{background:rgba(30,42,36,.05)}
     <div style="font-weight:700;font-size:12.5px;color:#1E2A24;white-space:nowrap">Период плана:</div>
     <div class="period-sub" id="rc-plan-sub"></div>
     <button onclick="rcSaveVersion()" style="margin-left:auto;padding:6px 13px;font-size:12px;font-weight:700;border:none;border-radius:7px;background:#00875A;cursor:pointer;color:#fff;font-family:inherit">💾&nbsp;Сохранить как версию</button>
+    <button onclick="rcExportExcel()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:#fff;cursor:pointer;color:#1E2A24;font-family:inherit">📊&nbsp;Excel</button>
     <button onclick="rcPrint()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:#fff;cursor:pointer;color:#1E2A24;font-family:inherit">🖨&nbsp;Печать</button>
   </div>
   <div class="tbl-wrap" style="margin-bottom:16px"><table class="dds" id="rc-tbl-opex"></table></div>
@@ -2764,28 +2765,34 @@ function rcClearAllVersions(){
   rcRenderVersions();
 }
 function rcSaveVersion(){
-  const agg=rcAggregate();
-  const opexKeys=Object.keys(agg.opexAvg).sort((a,b)=>agg.opexAvg[b]-agg.opexAvg[a]);
-  const opexRows=opexKeys.map(k=>({stat:k,fact:agg.opexAvg[k],plan:rcPlanFor('opex:'+k,agg.opexAvg[k])}));
-  const fotKeys=Object.keys(agg.fotAvg).sort((a,b)=>agg.fotAvg[b]-agg.fotAvg[a]);
-  const fotRows=fotKeys.map(k=>({name:k,fact:agg.fotAvg[k],plan:rcPlanFor('fot:'+k,agg.fotAvg[k])}));
-  const newEmp=RC.newEmp.map(e=>({name:e.name||'',salary:e.salary||0}));
-  const t=rcCalcTotals();
-  const key=rcVersionKey(RC.planYear,RC.planMonth);
-  const versions=rcLoadVersions();
-  if(versions[key]&&!confirm('На «'+rcVersionLabel(key)+'» уже есть сохранённая версия плана (от '+new Date(versions[key].savedAt).toLocaleString('ru-RU')+'). Заменить её текущими цифрами?'))return;
-  const ver={
-    savedAt:new Date().toISOString(),
-    sourceLabel:rcSourceLabel(),
-    opexRows:opexRows,fotRows:fotRows,newEmp:newEmp,profit:RC.profit||0,
-    opexPlan:t.opexPlan,fotPlan:t.fotPlan,totalExp:t.totalExp,salesPlan:t.salesPlan
-  };
-  versions[key]=ver;
-  rcSaveVersionsStore(versions);
-  rcRender();
-  if(pfShared()){
-    pfBridgePost({action:'calcSave',key:key,label:rcVersionLabel(key),version:ver},()=>{},
-      e=>alert('Сохранено в этом браузере, но не удалось записать в Google Таблицу: '+e));
+  try{
+    const agg=rcAggregate();
+    const opexKeys=Object.keys(agg.opexAvg).sort((a,b)=>agg.opexAvg[b]-agg.opexAvg[a]);
+    const opexRows=opexKeys.map(k=>({stat:k,fact:agg.opexAvg[k],plan:rcPlanFor('opex:'+k,agg.opexAvg[k])}));
+    const fotKeys=Object.keys(agg.fotAvg).sort((a,b)=>agg.fotAvg[b]-agg.fotAvg[a]);
+    const fotRows=fotKeys.map(k=>({name:k,fact:agg.fotAvg[k],plan:rcPlanFor('fot:'+k,agg.fotAvg[k])}));
+    const newEmp=RC.newEmp.map(e=>({name:e.name||'',salary:e.salary||0}));
+    const t=rcCalcTotals();
+    const key=rcVersionKey(RC.planYear,RC.planMonth);
+    const versions=rcLoadVersions();
+    if(versions[key]&&!confirm('На «'+rcVersionLabel(key)+'» уже есть сохранённая версия плана (от '+new Date(versions[key].savedAt).toLocaleString('ru-RU')+'). Заменить её текущими цифрами?'))return;
+    const ver={
+      savedAt:new Date().toISOString(),
+      sourceLabel:rcSourceLabel(),
+      opexRows:opexRows,fotRows:fotRows,newEmp:newEmp,profit:RC.profit||0,
+      opexPlan:t.opexPlan,fotPlan:t.fotPlan,totalExp:t.totalExp,salesPlan:t.salesPlan
+    };
+    versions[key]=ver;
+    rcSaveVersionsStore(versions);
+    rcRender();
+    pfToast('✓ Версия «'+rcVersionLabel(key)+'» сохранена (выручка: '+pfF(t.salesPlan)+' ₽).','ok');
+    if(pfShared()){
+      pfBridgePost({action:'calcSave',key:key,label:rcVersionLabel(key),version:ver},
+        ()=>{pfToast('✓ Записано и в Google Таблицу.','ok');},
+        e=>pfToast('Сохранено в этом браузере, но не удалось записать в Google Таблицу: '+e,'err'));
+    }
+  }catch(e){
+    pfToast('Не удалось сохранить версию: '+e.message,'err');
   }
 }
 function rcLoadVersionToEditor(key){
@@ -2802,9 +2809,47 @@ function rcLoadVersionToEditor(key){
 function rcDeleteVersion(key){
   if(!confirm('Удалить сохранённую версию плана на «'+rcVersionLabel(key)+'»? Это необратимо.'))return;
   const versions=rcLoadVersions();delete versions[key];rcSaveVersionsStore(versions);rcRender();
+  pfToast('Версия «'+rcVersionLabel(key)+'» удалена.','ok');
   if(pfShared()){
     pfBridge({action:'calcDelete',dkey:key},()=>{},
-      e=>alert('Удалено в этом браузере, но не удалось удалить в Google Таблице: '+e));
+      e=>pfToast('Удалено в этом браузере, но не удалось удалить в Google Таблице: '+e,'err'));
+  }
+}
+/* экспорт текущего вида калькулятора (то, что сейчас в редакторе) в Excel — тот же движок, что и у остальных вкладок */
+function rcExportExcel(){
+  if(typeof XLSX==='undefined'){
+    pfToast('Библиотека Excel не загрузилась (нужен интернет).','warn');
+    return;
+  }
+  try{
+    const agg=rcAggregate(),t=rcCalcTotals();
+    const opexKeys=Object.keys(agg.opexAvg).sort((a,b)=>agg.opexAvg[b]-agg.opexAvg[a]);
+    const fotKeys=Object.keys(agg.fotAvg).sort((a,b)=>agg.fotAvg[b]-agg.fotAvg[a]);
+    const rows=[
+      ['План по продажам — '+rcPlanLabel()],
+      ['Расходы усреднены за: '+rcSourceLabel()+' · сформировано '+new Date().toLocaleString('ru-RU')],
+      [],
+      ['Статья операционных расходов','Факт, ср./мес','План на месяц']
+    ];
+    opexKeys.forEach(k=>{const avg=agg.opexAvg[k];rows.push([k,Math.round(avg),Math.round(rcPlanFor('opex:'+k,avg))]);});
+    rows.push(['Итого статьи расходов (план)','',Math.round(t.opexPlan)]);
+    rows.push([]);
+    rows.push(['Сотрудник','Факт, ср./мес','План ЗП на месяц']);
+    fotKeys.forEach(k=>{const avg=agg.fotAvg[k];rows.push([k,Math.round(avg),Math.round(rcPlanFor('fot:'+k,avg))]);});
+    RC.newEmp.forEach(e=>{rows.push([(e.name||'(без имени)')+' — план найма','',Math.round(e.salary||0)]);});
+    rows.push(['Итого ЗП и ФОТ (план)','',Math.round(t.fotPlan)]);
+    rows.push([]);
+    rows.push(['Итого расходы (план)','',Math.round(t.totalExp)]);
+    rows.push(['Прибыль (план)','',Math.round(RC.profit||0)]);
+    rows.push(['План по продажам (выручка)','',Math.round(t.salesPlan)]);
+    const wb=XLSX.utils.book_new();
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:34},{wch:16},{wch:16}];
+    XLSX.utils.book_append_sheet(wb,ws,'План выручки');
+    XLSX.writeFile(wb,'план-выручка_'+RC.planYear+'-'+String(RC.planMonth).padStart(2,'0')+'.xlsx');
+    pfToast('Файл Excel сохранён.','ok');
+  }catch(e){
+    pfToast('Не удалось собрать Excel: '+e.message,'err');
   }
 }
 function rcPrint(planLabelOverride,sourceLabelOverride,savedAtOverride){
@@ -2840,12 +2885,14 @@ function rcRenderVersions(){
       +'<td class="vd">'+pfF(v.totalExp)+'</td><td class="vd">'+pfF(v.profit)+'</td><td style="font-weight:700">'+pfF(v.salesPlan)+'</td>'
       +'<td style="white-space:nowrap"><button data-v-load="'+key+'" style="border:none;background:none;color:#00875A;cursor:pointer;font-size:12px;font-weight:600;margin-right:12px">Открыть</button>'
       +'<button data-v-print="'+key+'" style="border:none;background:none;color:#465650;cursor:pointer;font-size:12px;font-weight:600;margin-right:12px">Печать</button>'
+      +'<button data-v-xls="'+key+'" style="border:none;background:none;color:#465650;cursor:pointer;font-size:12px;font-weight:600;margin-right:12px">Excel</button>'
       +'<button data-v-del="'+key+'" style="border:none;background:none;color:#DC2626;cursor:pointer;font-size:13px" title="Удалить">✕</button></td></tr>';
   });
   h+='</tbody>';
   el.innerHTML=h;
   el.querySelectorAll('[data-v-load]').forEach(b=>{b.onclick=()=>rcLoadVersionToEditor(b.getAttribute('data-v-load'));});
   el.querySelectorAll('[data-v-print]').forEach(b=>{b.onclick=()=>rcPrintVersion(b.getAttribute('data-v-print'));});
+  el.querySelectorAll('[data-v-xls]').forEach(b=>{b.onclick=()=>{rcLoadVersionToEditor(b.getAttribute('data-v-xls'));rcExportExcel();};});
   el.querySelectorAll('[data-v-del]').forEach(b=>{b.onclick=()=>rcDeleteVersion(b.getAttribute('data-v-del'));});
 }
 
