@@ -472,7 +472,10 @@ table.dds tr.zeb.r-op-day>td{background:rgba(30,42,36,.05)}
   <div class="tbl-wrap"><table class="dds" id="rc-tbl-total"></table></div>
 
   <div id="rc-versions-section" style="margin-top:22px">
-    <div class="bal-title" style="font-size:15px;margin-bottom:10px">Сохранённые версии плана</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div class="bal-title" style="font-size:15px;margin-bottom:0">Сохранённые версии плана</div>
+      <button onclick="rcClearAllVersions()" style="margin-left:auto;padding:5px 12px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:transparent;color:#DC2626;cursor:pointer;font-family:inherit">Очистить все версии</button>
+    </div>
     <div id="rc-bridge" style="margin-bottom:10px"></div>
     <div class="tbl-wrap"><table class="dds" id="rc-versions-tbl"></table></div>
   </div>
@@ -2731,19 +2734,33 @@ async function rcSyncVersionsFromSheet(){
     if(r.ok){
       const txt=await r.text();
       if(!/^\s*</.test(txt)){
-        const rows=pfCsv(txt),local=rcLoadVersions();
-        for(let i=1;i<rows.length;i++){
-          const c=rows[i];if(!c||c.length<5||!c[0])continue;
-          try{
-            const obj=JSON.parse(c[4]);
-            local[c[0]]={savedAt:obj.savedAt,sourceLabel:obj.sourceLabel,opexRows:obj.opexRows||[],fotRows:obj.fotRows||[],newEmp:obj.newEmp||[],profit:obj.profit||0,opexPlan:obj.opexPlan||0,fotPlan:obj.fotPlan||0,totalExp:obj.totalExp||0,salesPlan:obj.salesPlan||0};
-          }catch(e){}
+        const rows=pfCsv(txt);
+        /* защита от «не того» листа: Google иногда молча подставляет первый лист книги,
+           если лист с таким именем ещё не создан (например, скрипт-мост ни разу не вызывался).
+           Поэтому доверяем данным только если шапка точно наша. */
+        const hdr=(rows[0]||[]).map(x=>String(x||'').trim());
+        if(hdr[0]==='Key'&&hdr[4]==='JSON'){
+          const local=rcLoadVersions();
+          for(let i=1;i<rows.length;i++){
+            const c=rows[i];if(!c||c.length<5||!c[0])continue;
+            if(!/^\d{4}-\d{2}$/.test(c[0]))continue; /* ключ должен быть в формате ГГГГ-ММ */
+            try{
+              const obj=JSON.parse(c[4]);
+              if(!obj||typeof obj!=='object'||(!Array.isArray(obj.opexRows)&&!Array.isArray(obj.fotRows)))continue;
+              local[c[0]]={savedAt:obj.savedAt,sourceLabel:obj.sourceLabel,opexRows:obj.opexRows||[],fotRows:obj.fotRows||[],newEmp:obj.newEmp||[],profit:obj.profit||0,opexPlan:obj.opexPlan||0,fotPlan:obj.fotPlan||0,totalExp:obj.totalExp||0,salesPlan:obj.salesPlan||0};
+            }catch(e){}
+          }
+          rcSaveVersionsStore(local);
         }
-        rcSaveVersionsStore(local);
       }
     }
   }catch(e){}
   RC.syncing=false;
+  rcRenderVersions();
+}
+function rcClearAllVersions(){
+  if(!confirm('Удалить ВСЕ сохранённые версии плана в этом браузере? Если настроена синхронизация с таблицей, там они останутся — сотрутся только локально.'))return;
+  rcSaveVersionsStore({});
   rcRenderVersions();
 }
 function rcSaveVersion(){
