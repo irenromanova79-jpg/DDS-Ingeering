@@ -137,6 +137,7 @@ table.dds tr.zeb.r-op-day>td{background:rgba(30,42,36,.05)}
 #pf-v-days table.dds thead th:nth-child(2){left:26px;z-index:7}
 #pf-v-days table.dds tfoot td{position:sticky;bottom:0;background:#F3F6F4;z-index:5}
 #pf-print-head{display:none}
+#rc-print-head{display:none}
 /* строки детализации дня */
 #pf-v-days tr.pf-det td{background:#20292500;font-size:11px;padding-top:3px;padding-bottom:3px;border-bottom:1px dotted #DCE6E0}
 #pf-v-days tr.pf-det:hover td{background:rgba(30,42,36,.045)}
@@ -185,6 +186,12 @@ table.dds tr.zeb.r-op-day>td{background:rgba(30,42,36,.05)}
   .chev-d{color:#888!important}
   .dash-grid{break-inside:avoid}
   .ccard{break-inside:avoid;page-break-inside:avoid}
+  #rc-plan-row,#rc-versions-section,#calc .period-pills,#calc .period-sub{display:none!important}
+  #rc-print-head{display:block!important;margin-bottom:12px}
+  #rc-print-head h2{font-size:15px;margin:0 0 4px;color:#111}
+  #rc-print-head div{font-size:10.5px;color:#555;line-height:1.5}
+  #calc input[type=number],#calc input[type=text]{border:none!important;background:transparent!important;padding:0!important;font-family:'Courier New',monospace!important;color:#111!important}
+  #calc input[type=number]{text-align:right!important}
   @page{margin:10mm;size:A4 landscape}
 }
 
@@ -447,6 +454,13 @@ table.dds tr.zeb.r-op-day>td{background:rgba(30,42,36,.05)}
     <button onclick="rcResetAll()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">↺&nbsp;Сбросить план к среднему</button>
   </div>
   <div class="period-info" id="rc-info" style="margin-bottom:14px;display:inline-block"></div>
+  <div id="rc-print-head"></div>
+  <div id="rc-plan-row" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 16px;padding:10px 14px;background:rgba(0,135,90,.06);border:1px solid rgba(0,135,90,.25);border-radius:10px">
+    <div style="font-weight:700;font-size:12.5px;color:#1E2A24;white-space:nowrap">Период плана:</div>
+    <div class="period-sub" id="rc-plan-sub"></div>
+    <button onclick="rcSaveVersion()" style="margin-left:auto;padding:6px 13px;font-size:12px;font-weight:700;border:none;border-radius:7px;background:#00875A;cursor:pointer;color:#fff;font-family:inherit">💾&nbsp;Сохранить как версию</button>
+    <button onclick="rcPrint()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:#fff;cursor:pointer;color:#1E2A24;font-family:inherit">🖨&nbsp;Печать</button>
+  </div>
   <div class="tbl-wrap" style="margin-bottom:16px"><table class="dds" id="rc-tbl-opex"></table></div>
 
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
@@ -457,8 +471,14 @@ table.dds tr.zeb.r-op-day>td{background:rgba(30,42,36,.05)}
 
   <div class="tbl-wrap"><table class="dds" id="rc-tbl-total"></table></div>
 
+  <div id="rc-versions-section" style="margin-top:22px">
+    <div class="bal-title" style="font-size:15px;margin-bottom:10px">Сохранённые версии плана</div>
+    <div id="rc-bridge" style="margin-bottom:10px"></div>
+    <div class="tbl-wrap"><table class="dds" id="rc-versions-tbl"></table></div>
+  </div>
+
   <div class="footer-note" style="margin-top:12px"><div class="fdot"></div>
-    <span>Факт — среднее арифметическое по полностью закрытым календарным месяцам (текущий месяц в расчёт не берётся, пока не закончится). Если по нужному месяцу факт показывает 0 — скорее всего, свежие операции ещё не подтянуты из таблицы: нажмите «Обновить данные из Sheets» вверху. План по умолчанию равен среднему — впишите свою цифру, чтобы скорректировать вручную. Прибыль и найм новых сотрудников задаёт собственник.</span>
+    <span>Факт — среднее арифметическое по полностью закрытым календарным месяцам (текущий месяц в расчёт не берётся, пока не закончится). Если по нужному месяцу факт показывает 0 — скорее всего, свежие операции ещё не подтянуты из таблицы: нажмите «Обновить данные из Sheets» вверху. План по умолчанию равен среднему — впишите свою цифру, чтобы скорректировать вручную. Прибыль и найм новых сотрудников задаёт собственник. «Период плана» — на какой месяц вы планируете; «Сохранить как версию» замораживает текущие цифры под этим месяцем, к ним можно будет вернуться или распечатать позже.</span>
   </div>
 </div>
 <script>/*!
@@ -1110,7 +1130,7 @@ function sw(id,btn){
   document.getElementById('toolbar').style.display=(id==='dds'||id==='dash')?'flex':'none';
   if(id==='dds'||id==='dash')refresh();
   if(id==='plan'){ if(!PF.loaded&&!PF.busy)pfLoad(); else pfRender(); }
-  if(id==='calc'){ rcRender(); }
+  if(id==='calc'){ rcRender(); rcSyncVersionsFromSheet(); }
 }
 function refresh(){
   const txns=fTxns();updInfo();
@@ -1414,6 +1434,19 @@ function pfBridge(params,ok,err){
   sc.onerror=()=>{if(!done){fin();err&&err('сервис недоступен — проверьте адрес и что развёртывание открыто «для всех»');}};
   setTimeout(()=>{if(!done){fin();err&&err('сервис не ответил за 20 секунд');}},20000);
   sc.src=url;document.body.appendChild(sc);
+}
+/* POST-вариант — для крупных пейлоадов (напр. версии калькулятора с десятками статей/сотрудников), которые не влезают в длину URL при GET/JSONP.
+   text/plain избегает preflight-запроса, поэтому работает с Apps Script без дополнительной настройки CORS. */
+async function pfBridgePost(bodyObj,ok,err){
+  if(!pfShared()){err&&err('Адрес сервиса записи не задан');return;}
+  try{
+    const url=PF.bridge.url+(PF.bridge.key?(PF.bridge.url.indexOf('?')>=0?'&':'?')+'key='+encodeURIComponent(PF.bridge.key):'');
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(bodyObj)});
+    let res=null;try{res=await r.json();}catch(e){}
+    if(res&&res.ok)ok&&ok(res);else err&&err((res&&res.error)||'сервис вернул ошибку или недоступен');
+  }catch(e){
+    err&&err('сервис недоступен: '+e.message);
+  }
 }
 
 /* ── загрузка факта (и плана-источника) из Sheets ── */
@@ -2493,8 +2526,9 @@ function pfPlanImport(inp){
 }
 
 /* ══════════ КАЛЬКУЛЯТОР ВЫРУЧКИ (план продаж = расходы + прибыль) ══════════ */
-const RC_K_OV='irixcalc:ov1', RC_K_NEWEMP='irixcalc:newemp1', RC_K_PROFIT='irixcalc:profit1', RC_K_RANGE='irixcalc:range2';
-let RC={ov:{},newEmp:[],profit:0,mode:'custom',myear:null,mmonth:null,yyear:null,from:null,to:null,collapse:{opex:false,fot:false}};
+const RC_K_OV='irixcalc:ov1', RC_K_NEWEMP='irixcalc:newemp1', RC_K_PROFIT='irixcalc:profit1', RC_K_RANGE='irixcalc:range2', RC_K_VERSIONS='irixcalc:versions1';
+const RC_SHEET_VERSIONS='Калькулятор_Версии';
+let RC={ov:{},newEmp:[],profit:0,mode:'custom',myear:null,mmonth:null,yyear:null,from:null,to:null,collapse:{opex:false,fot:false},planYear:null,planMonth:null,bridgeOpen:0,syncing:false};
 try{RC.ov=JSON.parse(localStorage.getItem(RC_K_OV)||'{}');}catch(e){RC.ov={};}
 try{RC.newEmp=JSON.parse(localStorage.getItem(RC_K_NEWEMP)||'[]');}catch(e){RC.newEmp=[];}
 try{RC.profit=parseFloat(localStorage.getItem(RC_K_PROFIT)||'0')||0;}catch(e){RC.profit=0;}
@@ -2503,7 +2537,7 @@ try{const rr=JSON.parse(localStorage.getItem(RC_K_RANGE)||'null');if(rr)Object.a
 function rcSaveOv(){try{localStorage.setItem(RC_K_OV,JSON.stringify(RC.ov));}catch(e){}}
 function rcSaveNewEmp(){try{localStorage.setItem(RC_K_NEWEMP,JSON.stringify(RC.newEmp));}catch(e){}}
 function rcSaveProfit(){try{localStorage.setItem(RC_K_PROFIT,String(RC.profit));}catch(e){}}
-function rcSaveRange(){try{localStorage.setItem(RC_K_RANGE,JSON.stringify({mode:RC.mode,myear:RC.myear,mmonth:RC.mmonth,yyear:RC.yyear,from:RC.from,to:RC.to,collapse:RC.collapse}));}catch(e){}}
+function rcSaveRange(){try{localStorage.setItem(RC_K_RANGE,JSON.stringify({mode:RC.mode,myear:RC.myear,mmonth:RC.mmonth,yyear:RC.yyear,from:RC.from,to:RC.to,collapse:RC.collapse,planYear:RC.planYear,planMonth:RC.planMonth}));}catch(e){}}
 function rcToggleGroup(g){RC.collapse[g]=!RC.collapse[g];rcSaveRange();rcRender();}
 
 const rcMonthKey=(y,m)=>y*12+m;
@@ -2529,11 +2563,26 @@ function rcInitRange(){
   if(RC.myear==null||!years.includes(RC.myear))RC.myear=lastY;
   if(RC.mmonth==null)RC.mmonth=lastM;
   if(RC.yyear==null||!years.includes(RC.yyear))RC.yyear=lastY;
+  if(RC.planYear==null||RC.planMonth==null){
+    const nk=rcCurKey()+1,py=Math.floor((nk-1)/12),pm=nk-py*12;
+    RC.planYear=py;RC.planMonth=pm;
+  }
   if(!cm.length)return;
   if(RC.from==null||!fm.includes(RC.from))RC.from=cm[0];
   if(RC.to==null||!fm.includes(RC.to))RC.to=cm[cm.length-1];
   if(RC.from>RC.to)RC.to=RC.from;
 }
+/* годы для выбора периода плана — планировать можно и на будущий год, поэтому диапазон немного шире, чем годы с фактическими данными */
+function rcPlanYears(){
+  const now=new Date(),curY=now.getFullYear();
+  const dataYears=rcAllYears();
+  const minY=dataYears.length?Math.min(dataYears[0],curY):curY;
+  const out=[];for(let y=minY;y<=curY+1;y++)out.push(y);
+  return out;
+}
+function rcSetPlanYear(v){RC.planYear=+v;rcSaveRange();rcRender();}
+function rcSetPlanMonth(v){RC.planMonth=+v;rcSaveRange();rcRender();}
+function rcPlanLabel(){return MN_F[RC.planMonth]+' '+RC.planYear;}
 /* месяцы, попадающие в текущий выбор пользователя (месяц/год/произвольный) — БЕЗ фильтра на «закрытость» */
 function rcSelectedMonths(){
   if(RC.mode==='month')return[rcMonthKey(RC.myear,RC.mmonth)];
@@ -2621,6 +2670,168 @@ function rcCalcTotals(){
   return{agg:agg,opexPlan:opexPlan,fotPlan:fotPlan,totalExp:totalExp,salesPlan:salesPlan};
 }
 
+/* ---- версии плана: «план на август», «план на сентябрь» и т.д., каждая хранится как замороженный снимок ---- */
+function rcLoadVersions(){try{return JSON.parse(localStorage.getItem(RC_K_VERSIONS)||'{}');}catch(e){return{};}}
+function rcSaveVersionsStore(v){try{localStorage.setItem(RC_K_VERSIONS,JSON.stringify(v));}catch(e){}}
+function rcVersionKey(y,m){return y+'-'+String(m).padStart(2,'0');}
+function rcVersionLabel(key){const p=key.split('-');return MN_F[+p[1]]+' '+p[0];}
+function rcSourceLabel(){
+  if(RC.mode==='month')return 'месяц '+MN_F[RC.mmonth]+' '+RC.myear;
+  if(RC.mode==='year')return 'год '+RC.yyear;
+  return 'период '+rcMonthLabel(RC.from)+' — '+rcMonthLabel(RC.to);
+}
+/* адрес и ключ моста — те же, что и на вкладке «План/факт» (PF.bridge), настройка одна на весь файл */
+function rcBridgeBox(){
+  const el=document.getElementById('rc-bridge');if(!el)return;
+  const on=pfShared();
+  if(!RC.bridgeOpen){
+    el.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+      +'<span style="font-size:12px;color:'+(on?'#00875A':'#B45309')+'">'
+      +(on?'● Версии синхронизируются с Google Таблицей — доступны с любого устройства'
+          :'● Версии хранятся только в этом браузере — на другом устройстве их не будет видно')+'</span>'
+      +'<button onclick="RC.bridgeOpen=1;rcBridgeBox()" style="padding:4px 11px;font-size:12px;border:1px solid #C7D3CC;border-radius:6px;background:transparent;color:#1E2A24;cursor:pointer;font-family:inherit">'
+      +(on?'Изменить':'Настроить синхронизацию')+'</button>'
+      +(on?'<button onclick="rcBridgePing()" style="padding:4px 11px;font-size:12px;border:1px solid #C7D3CC;border-radius:6px;background:transparent;color:#5B6B63;cursor:pointer;font-family:inherit">Проверить связь</button>'
+          +'<button onclick="rcSyncVersionsFromSheet()" style="padding:4px 11px;font-size:12px;border:1px solid #C7D3CC;border-radius:6px;background:transparent;color:#5B6B63;cursor:pointer;font-family:inherit">Обновить список</button>':'')
+      +'</div>';
+    return;
+  }
+  el.innerHTML='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+    +'<label>Адрес сервиса записи</label>'
+    +'<input id="rc-bridge-url" value="'+pfE(PF.bridge.url||'')+'" placeholder="https://script.google.com/macros/s/…/exec" style="flex:1;min-width:320px;padding:5px 9px;border:1px solid #C7D3CC;border-radius:6px;background:#F3F6F4;color:#1E2A24;font-family:inherit;font-size:12px">'
+    +'<label>Ключ</label>'
+    +'<input id="rc-bridge-key" value="'+pfE(PF.bridge.key||'')+'" placeholder="если задавали" style="width:120px;padding:5px 9px;border:1px solid #C7D3CC;border-radius:6px;background:#F3F6F4;color:#1E2A24;font-family:inherit;font-size:12px">'
+    +'<button onclick="rcBridgeSaveCfg()" style="padding:5px 13px;font-size:12px;font-weight:700;border:1px solid rgba(0,135,90,.45);border-radius:7px;background:rgba(0,135,90,.12);cursor:pointer;color:#00875A;font-family:inherit">Применить адрес</button>'
+    +'<button onclick="rcBridgePing()" style="padding:5px 13px;font-size:12px;border:1px solid #C7D3CC;border-radius:7px;background:transparent;color:#1E2A24;cursor:pointer;font-family:inherit">Проверить связь</button>'
+    +'<button onclick="pfBridgeOff();rcBridgeBox();rcRender();" style="padding:5px 13px;font-size:12px;border:1px solid #C7D3CC;border-radius:7px;background:transparent;color:#DC2626;cursor:pointer;font-family:inherit">Отключить</button>'
+    +'<button onclick="RC.bridgeOpen=0;rcBridgeBox()" style="padding:5px 11px;font-size:12px;border:1px solid #C7D3CC;border-radius:7px;background:transparent;color:#5B6B63;cursor:pointer;font-family:inherit">Свернуть</button>'
+    +'</div><div style="font-size:11.5px;color:#5B6B63;margin-top:8px;line-height:1.6">Тот же адрес можно использовать и для вкладки «План/факт» — настройка общая на весь файл. Адрес выдаёт Google после публикации скрипта записи (см. инструкцию к калькулятору). Пока адрес не задан, версии хранятся только в этом браузере.</div>';
+}
+function rcBridgeSaveCfg(){
+  const u=(document.getElementById('rc-bridge-url').value||'').trim();
+  const k=(document.getElementById('rc-bridge-key').value||'').trim();
+  if(u&&!/^https:\/\/script\.google\.com\//.test(u)){alert('Адрес должен начинаться с https://script.google.com/');return;}
+  PF.bridge={url:u,key:k};
+  try{localStorage.setItem(PF_K_BRIDGE,JSON.stringify(PF.bridge));}catch(e){}
+  RC.bridgeOpen=0;
+  rcBridgeBox();
+  if(u)rcSyncVersionsFromSheet();else rcRenderVersions();
+}
+function rcBridgePing(){
+  if(!pfShared()){alert('Сначала впишите адрес и нажмите «Применить адрес».');return;}
+  pfBridge({action:'ping'},
+    res=>alert('✓ Связь есть, лист «'+(res.sheet||RC_SHEET_VERSIONS)+'» доступен для записи.'),
+    e=>alert('Связи нет: '+e));
+}
+/* подтянуть версии из листа «Калькулятор_Версии» — публичное чтение, работает без ключа (как и остальные листы файла) */
+async function rcSyncVersionsFromSheet(){
+  if(RC.syncing)return;RC.syncing=true;
+  try{
+    const r=await fetch('https://docs.google.com/spreadsheets/d/'+PF_SID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent(RC_SHEET_VERSIONS)+'&cb='+Date.now(),{cache:'no-store'});
+    if(r.ok){
+      const txt=await r.text();
+      if(!/^\s*</.test(txt)){
+        const rows=pfCsv(txt),local=rcLoadVersions();
+        for(let i=1;i<rows.length;i++){
+          const c=rows[i];if(!c||c.length<5||!c[0])continue;
+          try{
+            const obj=JSON.parse(c[4]);
+            local[c[0]]={savedAt:obj.savedAt,sourceLabel:obj.sourceLabel,opexRows:obj.opexRows||[],fotRows:obj.fotRows||[],newEmp:obj.newEmp||[],profit:obj.profit||0,opexPlan:obj.opexPlan||0,fotPlan:obj.fotPlan||0,totalExp:obj.totalExp||0,salesPlan:obj.salesPlan||0};
+          }catch(e){}
+        }
+        rcSaveVersionsStore(local);
+      }
+    }
+  }catch(e){}
+  RC.syncing=false;
+  rcRenderVersions();
+}
+function rcSaveVersion(){
+  const agg=rcAggregate();
+  const opexKeys=Object.keys(agg.opexAvg).sort((a,b)=>agg.opexAvg[b]-agg.opexAvg[a]);
+  const opexRows=opexKeys.map(k=>({stat:k,fact:agg.opexAvg[k],plan:rcPlanFor('opex:'+k,agg.opexAvg[k])}));
+  const fotKeys=Object.keys(agg.fotAvg).sort((a,b)=>agg.fotAvg[b]-agg.fotAvg[a]);
+  const fotRows=fotKeys.map(k=>({name:k,fact:agg.fotAvg[k],plan:rcPlanFor('fot:'+k,agg.fotAvg[k])}));
+  const newEmp=RC.newEmp.map(e=>({name:e.name||'',salary:e.salary||0}));
+  const t=rcCalcTotals();
+  const key=rcVersionKey(RC.planYear,RC.planMonth);
+  const versions=rcLoadVersions();
+  if(versions[key]&&!confirm('На «'+rcVersionLabel(key)+'» уже есть сохранённая версия плана (от '+new Date(versions[key].savedAt).toLocaleString('ru-RU')+'). Заменить её текущими цифрами?'))return;
+  const ver={
+    savedAt:new Date().toISOString(),
+    sourceLabel:rcSourceLabel(),
+    opexRows:opexRows,fotRows:fotRows,newEmp:newEmp,profit:RC.profit||0,
+    opexPlan:t.opexPlan,fotPlan:t.fotPlan,totalExp:t.totalExp,salesPlan:t.salesPlan
+  };
+  versions[key]=ver;
+  rcSaveVersionsStore(versions);
+  rcRender();
+  if(pfShared()){
+    pfBridgePost({action:'calcSave',key:key,label:rcVersionLabel(key),version:ver},()=>{},
+      e=>alert('Сохранено в этом браузере, но не удалось записать в Google Таблицу: '+e));
+  }
+}
+function rcLoadVersionToEditor(key){
+  const versions=rcLoadVersions(),v=versions[key];if(!v)return;
+  RC.ov={};
+  v.opexRows.forEach(r=>{RC.ov['opex:'+r.stat]=r.plan;});
+  v.fotRows.forEach(r=>{RC.ov['fot:'+r.name]=r.plan;});
+  RC.newEmp=v.newEmp.map((e,i)=>({id:'v'+key.replace('-','')+'_'+i,name:e.name,salary:e.salary}));
+  RC.profit=v.profit||0;
+  const p=key.split('-');RC.planYear=+p[0];RC.planMonth=+p[1];
+  rcSaveOv();rcSaveNewEmp();rcSaveProfit();rcSaveRange();
+  rcRender();
+}
+function rcDeleteVersion(key){
+  if(!confirm('Удалить сохранённую версию плана на «'+rcVersionLabel(key)+'»? Это необратимо.'))return;
+  const versions=rcLoadVersions();delete versions[key];rcSaveVersionsStore(versions);rcRender();
+  if(pfShared()){
+    pfBridge({action:'calcDelete',dkey:key},()=>{},
+      e=>alert('Удалено в этом браузере, но не удалось удалить в Google Таблице: '+e));
+  }
+}
+function rcPrint(planLabelOverride,sourceLabelOverride,savedAtOverride){
+  const h=document.getElementById('rc-print-head');
+  if(h){
+    h.innerHTML='<h2>План по продажам — '+pfE(planLabelOverride||rcPlanLabel())+'</h2>'
+      +'<div>Расходы усреднены за: '+pfE(sourceLabelOverride||rcSourceLabel())
+      +(savedAtOverride?' &middot; версия сохранена '+pfE(savedAtOverride):'')
+      +' &middot; распечатано '+pfE(new Date().toLocaleString('ru-RU'))+'</div>';
+  }
+  setTimeout(()=>window.print(),80);
+}
+function rcPrintVersion(key){
+  const versions=rcLoadVersions(),v=versions[key];if(!v)return;
+  rcLoadVersionToEditor(key);
+  const savedAt=new Date(v.savedAt).toLocaleString('ru-RU');
+  setTimeout(()=>rcPrint(rcVersionLabel(key),v.sourceLabel,savedAt),60);
+}
+function rcRenderVersions(){
+  const el=document.getElementById('rc-versions-tbl');
+  if(!el)return;
+  const versions=rcLoadVersions();
+  const keys=Object.keys(versions).sort((a,b)=>b.localeCompare(a));
+  if(!keys.length){
+    el.innerHTML='<tbody><tr><td style="padding:16px;text-align:center;color:#5B6B63">Пока нет сохранённых версий плана — заполните цифры и нажмите «Сохранить как версию»</td></tr></tbody>';
+    return;
+  }
+  let h='<thead><tr><th style="text-align:left">Период плана</th><th style="text-align:left">Сохранено</th><th>Расходы (план)</th><th>Прибыль</th><th>Выручка (план)</th><th></th></tr></thead><tbody>';
+  keys.forEach(key=>{
+    const v=versions[key];
+    h+='<tr class="l1"><td>'+pfE(rcVersionLabel(key))+(key===rcVersionKey(RC.planYear,RC.planMonth)?' <span style="color:#00875A;font-weight:600">(текущий)</span>':'')+'</td>'
+      +'<td class="vd" style="text-align:left">'+pfE(new Date(v.savedAt).toLocaleString('ru-RU'))+'</td>'
+      +'<td class="vd">'+pfF(v.totalExp)+'</td><td class="vd">'+pfF(v.profit)+'</td><td style="font-weight:700">'+pfF(v.salesPlan)+'</td>'
+      +'<td style="white-space:nowrap"><button data-v-load="'+key+'" style="border:none;background:none;color:#00875A;cursor:pointer;font-size:12px;font-weight:600;margin-right:12px">Открыть</button>'
+      +'<button data-v-print="'+key+'" style="border:none;background:none;color:#465650;cursor:pointer;font-size:12px;font-weight:600;margin-right:12px">Печать</button>'
+      +'<button data-v-del="'+key+'" style="border:none;background:none;color:#DC2626;cursor:pointer;font-size:13px" title="Удалить">✕</button></td></tr>';
+  });
+  h+='</tbody>';
+  el.innerHTML=h;
+  el.querySelectorAll('[data-v-load]').forEach(b=>{b.onclick=()=>rcLoadVersionToEditor(b.getAttribute('data-v-load'));});
+  el.querySelectorAll('[data-v-print]').forEach(b=>{b.onclick=()=>rcPrintVersion(b.getAttribute('data-v-print'));});
+  el.querySelectorAll('[data-v-del]').forEach(b=>{b.onclick=()=>rcDeleteVersion(b.getAttribute('data-v-del'));});
+}
+
 function rcRenderTotalsOnly(){
   const t=rcCalcTotals();
   const el=document.getElementById('rc-tbl-total');
@@ -2671,6 +2882,15 @@ function rcRender(){
     : 'В выбранном периоде нет ни одного полностью закрытого месяца — фактических данных для среднего нет, но план можно вписать вручную.';
   if(hasOpenMonth)infoTxt+=' Текущий незакончившийся месяц из расчёта среднего исключён.';
   document.getElementById('rc-info').textContent=infoTxt;
+
+  const planSub=document.getElementById('rc-plan-sub');
+  if(planSub){
+    const py=rcPlanYears();
+    const pyOpts=py.map(y=>'<option value="'+y+'"'+(y===RC.planYear?' selected':'')+'>'+y+'</option>').join('');
+    const pmOpts=[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>'<option value="'+m+'"'+(m===RC.planMonth?' selected':'')+'>'+MN_F[m]+'</option>').join('');
+    planSub.innerHTML='<select onchange="rcSetPlanMonth(this.value)">'+pmOpts+'</select>'
+      +'<select onchange="rcSetPlanYear(this.value)" style="margin-left:6px">'+pyOpts+'</select>';
+  }
 
   const opexKeys=Object.keys(agg.opexAvg).sort((a,b)=>agg.opexAvg[b]-agg.opexAvg[a]);
   const opexRows=opexKeys.map(k=>{const avg=agg.opexAvg[k],ovKey='opex:'+k,plan=rcPlanFor(ovKey,avg);return{k:k,avg:avg,ovKey:ovKey,plan:plan};});
@@ -2725,6 +2945,8 @@ function rcRender(){
   });
 
   rcRenderTotalsOnly();
+  rcBridgeBox();
+  rcRenderVersions();
 }
 
 function printDDS(){
