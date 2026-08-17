@@ -320,6 +320,7 @@ table.dds tr.zeb.r-op-day>td{background:rgba(30,42,36,.05)}
       <button class="ppill" onclick="pfSetView('mans',this)">Менеджеры</button>
       <button class="ppill" onclick="pfSetView('plan',this)">План</button>
       <button class="ppill" onclick="pfSetView('card',this)">Карточка менеджера</button>
+      <button class="ppill" onclick="pfSetView('recon',this)">Сверка с ДДС</button>
     </div>
     <div class="period-pills" id="pf-pills">
       <button class="ppill" onclick="pfSetMode('day',this)">День</button>
@@ -334,8 +335,8 @@ table.dds tr.zeb.r-op-day>td{background:rgba(30,42,36,.05)}
     <label>Факт считаем как</label>
     <select onchange="PF.src=this.value;pfRender()">
       <option value="buyer">поступления от покупателей</option>
-      <option value="in">все поступления</option>
-      <option value="all">все строки с суммой плюс</option>
+      <option value="in">все поступления (без депозита)</option>
+      <option value="all">все строки с плюсом (без депозита)</option>
     </select>
     <label>Дневной план</label>
     <select onchange="PF.prorate=this.value;pfRender()">
@@ -365,6 +366,19 @@ table.dds tr.zeb.r-op-day>td{background:rgba(30,42,36,.05)}
       </span>
     </div>
     <div class="tbl-wrap"><table class="dds" id="pf-tbl"></table></div>
+  </div>
+
+  <div id="pf-v-recon" style="display:none">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <span class="pf-hint" style="font-size:11px;color:#5B6B63">почему «Поступления» в Детальном ДДС и «Факт» здесь отличаются — построчно за выбранный период</span>
+      <span style="margin-left:auto;display:flex;gap:8px">
+        <button onclick="pfPrint(0)" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">🖨&nbsp;Печать</button>
+        <button onclick="pfCsvOut()" style="padding:6px 13px;font-size:12px;font-weight:600;border:1px solid #C7D3CC;border-radius:7px;background:rgba(30,42,36,.05);cursor:pointer;color:#1E2A24;font-family:inherit">↓&nbsp;CSV</button>
+      </span>
+    </div>
+    <div id="pf-recon-msg"></div>
+    <div class="tbl-wrap"><table class="dds" id="pf-recon"></table></div>
+    <div id="pf-recon-note" style="font-size:11.5px;color:#5B6B63;margin-top:12px;line-height:1.65"></div>
   </div>
 
   <div id="pf-v-days" style="display:none">
@@ -646,6 +660,19 @@ function updInfo(){
   document.getElementById('pinfo').textContent=txns.length+' операций';
 }
 
+
+/* номер недели по ISO — нужен, когда столбец «Неделя» в таблице пуст:
+   такие строки раньше молча выпадали из месячного отчёта */
+function ixWeek(iso){
+  if(!iso)return 0;
+  const p=String(iso).split('-');
+  const d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));
+  if(isNaN(d.getTime()))return 0;
+  const day=d.getUTCDay()||7;
+  d.setUTCDate(d.getUTCDate()+4-day);
+  const y0=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  return Math.ceil(((d-y0)/86400000+1)/7);
+}
 // ── KPI ───────────────────────────────────────────────
 const fm=n=>Math.abs(Math.round(n)).toLocaleString('ru-RU');
 function agg(txns,cols){
@@ -691,7 +718,7 @@ function renderKPIs(elId,txns){
   const inv=S(d.inv);const div=S(d.div);
   const net=rec+opex-fot+inv+div;
   document.getElementById(elId).innerHTML=[
-    `<div class="kpi kpi-rec"><div class="kpi-lbl">Поступления</div><div class="kpi-val c-bl">${fm(rec)}</div><div class="kpi-sub">руб.</div></div>`,
+    `<div class="kpi kpi-rec"><div class="kpi-lbl">Поступления</div><div class="kpi-val c-bl">${fm(rec)}</div><div class="kpi-sub">${S(d.dep)?'в т.ч. депозит '+fm(S(d.dep))+' · без него '+fm(S(d.rec)):'руб.'}</div></div>`,
     `<div class="kpi kpi-exp"><div class="kpi-lbl">Общие расходы</div><div class="kpi-val c-rd">${fm(Math.abs(opex)+fot)}</div><div class="kpi-sub">ФОТ + операц.</div></div>`,
     `<div class="kpi" style="border-left:4px solid #b45309"><div class="kpi-lbl">Расходы + инвестиции</div><div class="kpi-val" style="color:#b45309">${fm(Math.abs(opex)+fot+Math.abs(inv))}</div><div class="kpi-sub">ФОТ + операц. + инвест.</div></div>`,
     `<div class="kpi kpi-div"><div class="kpi-lbl">Дивиденды</div><div class="kpi-val c-pu">${fm(Math.abs(div))}</div><div class="kpi-sub">руб.</div></div>`,
@@ -1105,7 +1132,7 @@ async function refreshDDSData(){
       const suma=pNum(cols[4]);
       if(!suma||(year!==2025&&year!==2026)){skipped++;continue;}
       const month=parseInt(cols[1])||parseInt(ds.slice(5,7))||0;
-      const week=parseInt(cols[2])||0;
+      const week=parseInt(cols[2])||ixWeek(ds);
       const op=(cols[5]||'').trim();
       const acc=ACC_MAP[(cols[6]||'').trim()]||(cols[6]||'').trim();
       const stat=normStat((cols[9]||'').trim());
@@ -1119,8 +1146,10 @@ async function refreshDDSData(){
       else if(op==='Расход'&&stat==='Заработная плата')cat='fot';
       else if(op==='Расход'&&stat&&stat.includes('Перемещение'))cat='mv_out';
       else if(op==='Расход')cat='opex';
+      else if(op==='Поступление'&&stat&&stat.includes('Перемещение'))cat='mv_in';
       else if(op==='Поступление'&&stat==='Доход по депозиту')cat='dep';
       else if(op==='Поступление')cat='rec';
+      else if(op&&op.includes('еремещ'))cat=suma>0?'mv_in':'mv_out';
       else{skipped++;continue;}
       newT.push({d:ds,y:year,m:month,w:week,s:suma,cat,acc,stat,ctr,fot,man:(cols[12]||'').trim()});
       parsed++;
@@ -1160,7 +1189,7 @@ const STAT_RENAME={'Ремонт авто':'Ремонт и обслуживан
 function normStat(s){s=(s||'').trim();return STAT_RENAME[s]||s;}
 
 // ── INIT ──────────────────────────────────────────────
-TXNS.forEach(t=>{t.stat=normStat(t.stat);});
+TXNS.forEach(t=>{t.stat=normStat(t.stat);if(!t.w)t.w=ixWeek(t.d);});
 renderBal(BALANCE);buildSub();updInfo();
 
 // ── ЭКСПОРТ В EXCEL ──────────────────────────────────
@@ -1594,6 +1623,9 @@ function pfFacts(){
   if(PF.src==='all')base=PF.rows;
   else if(PF.src==='in')base=PF.rows.filter(r=>pfNorm(r.op).indexOf('поступлен')>=0);
   else base=PF.rows.filter(r=>pfNorm(r.st).indexOf('поступление от покупателей')>=0);
+  /* доход по депозиту и перемещения между счетами — не выручка,
+     в факт выполнения плана не входят ни в одном режиме */
+  base=base.filter(r=>!pfIsDep(r)&&!pfIsMove(r));
   if(PF.excludeCtr&&PF.excludeCtr.length)base=base.filter(r=>!pfExcluded(r));
   return base;
 }
@@ -1678,9 +1710,9 @@ function pfSetView(v,btn){
   PF.view=v;
   document.querySelectorAll('#pf-views .ppill').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  ['exec','days','mans','plan','card'].forEach(k=>{document.getElementById('pf-v-'+k).style.display=(k===v?'':'none');});
-  document.getElementById('pf-pills').style.display=(v==='exec'||v==='card'?'flex':'none');
-  document.getElementById('pf-sub').style.display=(v==='exec'||v==='days'||v==='card')?'flex':'none';
+  ['exec','days','mans','plan','card','recon'].forEach(k=>{const el=document.getElementById('pf-v-'+k);if(el)el.style.display=(k===v?'':'none');});
+  document.getElementById('pf-pills').style.display=(v==='exec'||v==='card'||v==='recon'?'flex':'none');
+  document.getElementById('pf-sub').style.display=(v==='exec'||v==='days'||v==='card'||v==='recon')?'flex':'none';
   document.getElementById('pf-opts').style.display=(v==='mans')?'none':'flex';
   const eb=document.getElementById('pf-excl-box');if(eb&&v!=='exec')eb.style.display='none';
   pfRender();
@@ -1688,6 +1720,7 @@ function pfSetView(v,btn){
 
 /* ── общий рендер ── */
 function pfRender(){
+  if(PF.view==='recon'){pfBar();pfRecon();return;}
   if(PF.view==='mans'){pfMansView();return;}
   if(PF.view==='plan'){pfPlanView();return;}
   if(!PF.loaded){
@@ -2207,6 +2240,102 @@ function pfMansClear(){
   PF.mans=[];pfSaveMansLS();PF.editBuf=null;
   pfToast('Справочник очищен. Добавьте менеджеров заново.','warn');
   if(PF.view==='plan')pfPlanView(); else pfMansView();
+}
+
+
+/* ══ СВЕРКА: почему «Поступления» в ДДС и «Факт» в План/факте расходятся ══ */
+function pfIsIncome(r){return pfNorm(r.op).indexOf('поступлен')>=0;}
+function pfIsDep(r){return pfNorm(r.st).indexOf('доход по депозиту')>=0;}
+function pfIsBuyer(r){return pfNorm(r.st).indexOf('поступление от покупателей')>=0;}
+function pfIsMove(r){return pfNorm(r.st).indexOf('перемещен')>=0||pfNorm(r.op).indexOf('перемещен')>=0;}
+
+/* приход по счетам из листа «Свод по счетам» за период */
+function pfReconData(){
+  const [from,to]=pfRange(),a=pfIso(from),b=pfIso(to);
+  const rows=PF.rows.filter(r=>r.d>=a&&r.d<=b&&r.s>0&&pfIsIncome(r)&&!pfIsMove(r));
+  const bag={all:0,dep:0,other:0,excl:0,buyer:0,otherBy:{},exclBy:{},depBy:{},allByAcc:{},buyerByAcc:{},buyerByMan:{}};
+  rows.forEach(r=>{
+    const acc=r.co||'без счёта';
+    bag.all+=r.s;
+    bag.allByAcc[acc]=(bag.allByAcc[acc]||0)+r.s;
+    if(pfIsDep(r)){bag.dep+=r.s;bag.depBy[r.ctr]=(bag.depBy[r.ctr]||0)+r.s;return;}
+    if(!pfIsBuyer(r)){const k=r.st||'без статьи';bag.other+=r.s;bag.otherBy[k]=(bag.otherBy[k]||0)+r.s;return;}
+    if(pfExcluded(r)){bag.excl+=r.s;bag.exclBy[r.ctr]=(bag.exclBy[r.ctr]||0)+r.s;return;}
+    bag.buyer+=r.s;
+    bag.buyerByAcc[acc]=(bag.buyerByAcc[acc]||0)+r.s;
+    bag.buyerByMan[r.man]=(bag.buyerByMan[r.man]||0)+r.s;
+  });
+  /* та же выборка глазами Детального ДДС */
+  let dds=null,ddsLast='',sheetLast='';
+  try{
+    if(typeof TXNS!=='undefined'&&TXNS.length){
+      const t=TXNS.filter(r=>r.d>=a&&r.d<=b&&(r.cat==='rec'||r.cat==='dep'));
+      dds=t.reduce((x,r)=>x+r.s,0);
+      ddsLast=TXNS.map(r=>r.d).sort().pop()||'';
+    }
+  }catch(e){}
+  sheetLast=PF.rows.length?PF.rows.map(r=>r.d).sort().pop():'';
+  return {from:from,to:to,bag:bag,dds:dds,ddsLast:ddsLast,sheetLast:sheetLast,n:rows.length};
+}
+
+function pfRecon(){
+  const el=document.getElementById('pf-recon');if(!el)return;
+  if(!PF.loaded){el.innerHTML='<tbody><tr><td style="padding:34px;text-align:center;color:#5B6B63">Нажмите «Обновить факт», чтобы загрузить лист «Свод по счетам»</td></tr></tbody>';return;}
+  const D=pfReconData(),B=D.bag;
+  const dl=pfIso(D.from).split('-').reverse().join('.')+(pfIso(D.from)===pfIso(D.to)?'':' — '+pfIso(D.to).split('-').reverse().join('.'));
+  const money=v=>pfF(v);
+  const sub=(obj,cls)=>Object.keys(obj).sort((x,y)=>obj[y]-obj[x]).map(k=>
+    '<tr class="l3"><td>'+pfE(k)+'</td><td class="'+cls+'">'+money(obj[k])+'</td><td></td></tr>').join('');
+
+  let h='<thead><tr><th>Показатель</th><th style="width:190px">Сумма, ₽</th><th style="width:300px">Откуда берётся</th></tr></thead><tbody>';
+  h+='<tr class="r-sub r-exp" onclick="tgl(\'rc-all\')"><td><span class="chev-d" id="ic-rc-all">▶</span>Приход по счетам за '+dl+'</td><td class="vp" style="font-weight:700">'+money(B.all)+'</td>'
+    +'<td style="text-align:left;font-family:inherit;color:#5B6B63">лист «Свод по счетам», операция «Поступление», '+D.n+' строк (без перемещений)</td></tr>';
+  h+=sub(B.allByAcc,'vp').replace(/class="l3"/g,'class="l3 hid" id="rc-all"');
+  h+='<tr class="r-exp" onclick="tgl(\'rc-dep\')"><td><span class="chev-d" id="ic-rc-dep">▶</span>− Доход по депозиту</td><td class="vn">'+money(B.dep)+'</td>'
+    +'<td style="text-align:left;font-family:inherit;color:#5B6B63">не выручка, в План/факт не входит</td></tr>';
+  h+=sub(B.depBy,'vn').replace(/class="l3"/g,'class="l3 hid" id="rc-dep"');
+  h+='<tr class="r-exp" onclick="tgl(\'rc-oth\')"><td><span class="chev-d" id="ic-rc-oth">▶</span>− Прочие приходы (не от покупателей)</td><td class="vn">'+money(B.other)+'</td>'
+    +'<td style="text-align:left;font-family:inherit;color:#5B6B63">займы, личные, возвраты и т.п.</td></tr>';
+  h+=sub(B.otherBy,'vn').replace(/class="l3"/g,'class="l3 hid" id="rc-oth"');
+  h+='<tr class="r-exp" onclick="tgl(\'rc-ex\')"><td><span class="chev-d" id="ic-rc-ex">▶</span>− Исключённые контрагенты</td><td class="vn">'+money(B.excl)+'</td>'
+    +'<td style="text-align:left;font-family:inherit;color:#5B6B63">'+(PF.excludeCtr.length?pfE(PF.excludeCtr.join(', ')):'список пуст')+'</td></tr>';
+  h+=sub(B.exclBy,'vn').replace(/class="l3"/g,'class="l3 hid" id="rc-ex"');
+
+  const netIn=B.all-B.dep;
+  h+='<tr class="r-sub"><td>Приход по счетам без депозита</td><td class="vp" style="font-weight:700">'+money(netIn)+'</td>'
+    +'<td style="text-align:left;font-family:inherit;color:#5B6B63">Точка, Альфа, ИП Коробейникова, наличка, карта</td></tr>';
+  h+='<tr class="r-net r-exp" onclick="tgl(\'rc-fin\')"><td style="font-size:13px"><span class="chev" id="ic-rc-fin">▶</span>Факт в разделе «Выполнение»</td><td style="font-weight:800">'+money(B.buyer)+'</td>'
+    +'<td style="text-align:left;font-family:inherit">поступления от покупателей</td></tr>';
+  h+='<tr class="l1 hid" id="rc-fin"><td style="font-weight:600;color:#5B6B63">по счетам</td><td></td><td></td></tr>';
+  h+=sub(B.buyerByAcc,'vp').replace(/class="l3"/g,'class="l3 hid" id="rc-fin"');
+  h+='<tr class="l1 hid" id="rc-fin"><td style="font-weight:600;color:#5B6B63">по менеджерам</td><td></td><td></td></tr>';
+  h+=sub(B.buyerByMan,'vp').replace(/class="l3"/g,'class="l3 hid" id="rc-fin"');
+  h+='</tbody>';
+  el.innerHTML=h;
+  el.querySelectorAll('.hid').forEach(r=>r.style.display='none');
+
+  /* сходится ли то, что показывает Детальный ДДС */
+  const msg=document.getElementById('pf-recon-msg');
+  let m='';
+  if(D.dds==null)m='<div style="padding:9px 13px;border-radius:8px;font-size:12px;border:1px solid rgba(180,83,9,.45);background:rgba(180,83,9,.1);color:#B45309;margin-bottom:12px">Данные Детального ДДС не загружены — сравнить не с чем.</div>';
+  else{
+    const diff=Math.round(B.all-D.dds);
+    const okc='rgba(0,135,90,.45)',okb='rgba(0,135,90,.1)',okt='#00875A';
+    const bad='rgba(180,83,9,.45)',badb='rgba(180,83,9,.1)',badt='#B45309';
+    const stale=D.ddsLast&&D.sheetLast&&D.ddsLast<D.sheetLast;
+    m='<div style="padding:9px 13px;border-radius:8px;font-size:12px;line-height:1.6;margin-bottom:12px;border:1px solid '+(diff?bad:okc)+';background:'+(diff?badb:okb)+';color:'+(diff?badt:okt)+'">'
+      +'Детальный ДДС за этот период показывает <b>'+money(D.dds)+' ₽</b>, лист даёт <b>'+money(B.all)+' ₽</b>. '
+      +(diff?('Расхождение <b>'+(diff>0?'+':'−')+money(Math.abs(diff))+' ₽</b>. '
+          +(stale?'Данные вкладки «Детальный ДДС» старше: последняя операция там '+D.ddsLast.split('-').reverse().join('.')+', в листе '+D.sheetLast.split('-').reverse().join('.')+'. Нажмите «Обновить данные» на вкладке «Детальный ДДС».'
+                 :'Обновите обе вкладки кнопками «Обновить данные» и «Обновить факт» — они читают таблицу независимо.'))
+        :'Цифры совпадают.')
+      +'</div>';
+  }
+  msg.innerHTML=m;
+  document.getElementById('pf-recon-note').innerHTML=
+    'Детальный ДДС в строке «Поступления» показывает приход по счетам <b>вместе</b> с доходом по депозиту (он раскрывается отдельной строкой внутри). '
+    +'План/факт берёт только поступления от покупателей — из них и складывается выполнение плана менеджерами. '
+    +'Разница между двумя цифрами — это ровно строки, перечисленные выше со знаком минус.';
 }
 
 /* ══ 3. СПРАВОЧНИК МЕНЕДЖЕРОВ ══ */
