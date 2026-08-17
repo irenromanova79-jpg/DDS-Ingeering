@@ -65,9 +65,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;ba
 .tbl-wrap{background:var(--ix-card);border:1px solid var(--ix-line);border-radius:12px;overflow:auto}
 table.dds{width:100%;border-collapse:collapse;font-size:12px}
 table.dds th{padding:9px 12px;text-align:right;font-size:10.5px;font-weight:700;color:var(--ix-mut);background:var(--ix-bg);border-bottom:1px solid var(--ix-line2);white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
-table.dds th:first-child{text-align:left;min-width:250px}
+table.dds th:first-child{text-align:left;min-width:190px}
 table.dds td{padding:5px 12px;text-align:right;border-bottom:1px solid var(--ix-line);font-family:'Courier New',monospace;font-size:11.5px;white-space:nowrap;color:var(--ix-txt)}
 table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
+table.dds td:first-child:not([colspan]){max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .r-op td{background:linear-gradient(90deg,#00E38A,#00B874);color:#06120d;font-weight:800;font-size:11.5px;padding:9px 12px;border-bottom:none}
 .r-inv td{background:linear-gradient(90deg,#0e7c66,#0a5f4e);color:#eafff7;font-weight:800;font-size:11.5px;padding:9px 12px;border-bottom:none}
 .r-fin td{background:linear-gradient(90deg,#4a3a7a,#3a2d5e);color:#f0eaff;font-weight:800;font-size:11.5px;padding:9px 12px;border-bottom:none}
@@ -136,6 +137,10 @@ table.dds tr.zeb.r-op-day>td{background:rgba(30,42,36,.05)}
 #pf-v-days table.dds thead th:nth-child(1){left:0;z-index:7}
 #pf-v-days table.dds thead th:nth-child(2){left:26px;z-index:7}
 #pf-v-days table.dds tfoot td{position:sticky;bottom:0;background:#F3F6F4;z-index:5}
+
+/* ── ДДС: закреплённая шапка (недели/дни/месяцы не убегают при скролле) ── */
+#dds .tbl-wrap{max-height:calc(100vh - 230px)}
+#dds table.dds thead th{position:sticky;top:0;z-index:6;background:#F3F6F4;box-shadow:inset 0 -1px 0 #C7D3CC}
 #pf-print-head{display:none}
 #rc-print-head{display:none}
 /* строки детализации дня */
@@ -145,7 +150,8 @@ table.dds tr.zeb.r-op-day>td{background:rgba(30,42,36,.05)}
 #pf-v-days tr.pf-det td:nth-child(1),#pf-v-days tr.pf-det td:nth-child(2){background:#FFFFFF}
 @media print{
   body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  #pf-v-days .tbl-wrap,#pf-v-exec .tbl-wrap{max-height:none!important;overflow:visible!important;border:none!important}
+  #pf-v-days .tbl-wrap,#pf-v-exec .tbl-wrap,#dds .tbl-wrap{max-height:none!important;overflow:visible!important;border:none!important}
+  #dds table.dds thead th{position:static!important;box-shadow:none!important}
   #plan table.dds thead th,#plan table.dds tbody td,#plan table.dds tfoot td{position:static!important;box-shadow:none!important}
   #plan table.dds tbody td,#plan table.dds tfoot td{background:#fff!important}
   #plan table.dds thead th{background:#f4f4f4!important}
@@ -938,8 +944,14 @@ function buildDDS(){
 
 // Чередование фона видимых строк. Счётчик сбрасывается на каждом разделе/итоге,
 // поэтому после свёртки-развёртки полосы всегда идут ровно.
+function ddsTitles(){
+  document.querySelectorAll('#ddstbl td:first-child:not([colspan])').forEach(td=>{
+    if(!td.title)td.title=td.textContent.trim();
+  });
+}
 function zebra(){
   const tb=document.getElementById('ddstbl');if(!tb)return;
+  ddsTitles();
   const SKIP=['r-op','r-inv','r-fin','r-sub','r-net','r-tot','r-hdr'];
   let i=0;
   [...tb.rows].forEach(r=>{
