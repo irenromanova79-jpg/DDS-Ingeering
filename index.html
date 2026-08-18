@@ -1670,6 +1670,18 @@ function pfFactIn(from,to,man,rows){
   (rows||pfFacts()).forEach(r=>{if(r.d<a||r.d>b)return;if(man&&r.man!==man)return;out+=r.s;});
   return out;
 }
+/* количество записей о платежах (счетов) за период */
+function pfCountIn(from,to,man,rows){
+  const a=pfIso(from),b=pfIso(to);let n=0;
+  (rows||pfFacts()).forEach(r=>{if(r.d<a||r.d>b)return;if(man&&r.man!==man)return;n++;});
+  return n;
+}
+function pfDeclSc(n){
+  const t=n%100,o=n%10;
+  if(t>=11&&t<=14)return 'счетов';
+  if(o===1)return 'счёт'; if(o>=2&&o<=4)return 'счёта';
+  return 'счетов';
+}
 function pfFieldIn(from,to,man,rows,field){
   const a=pfIso(from),b=pfIso(to);let out=0;
   (rows||pfFacts()).forEach(r=>{if(r.d<a||r.d>b)return;if(man&&r.man!==man)return;out+=r[field]||0;});
@@ -1782,11 +1794,12 @@ function pfExec(){
           faSub=pfFieldIn(from,to,m,R,'sub'),
           faMarg=pfFieldIn(from,to,m,R,'marg');
     const factForPct=marg?faMarg:fa;
-    return {man:m,plan:pl,fact:fa,nds:faNds,factNet:faNet,sub:faSub,factMarg:faMarg,diff:factForPct-pl,pct:pl>0?factForPct/pl*100:null};
+    return {man:m,plan:pl,fact:fa,cnt:pfCountIn(from,to,m,R),nds:faNds,factNet:faNet,sub:faSub,factMarg:faMarg,diff:factForPct-pl,pct:pl>0?factForPct/pl*100:null};
   }).filter(x=>x.plan>0.5||x.fact>0.5||x.man===PF_NOMAN);
   const tp=rows.reduce((s,x)=>s+x.plan,0),tf=rows.reduce((s,x)=>s+x.fact,0);
   const tNds=pfFieldIn(from,to,null,R,'nds'),tSnd=pfFieldIn(from,to,null,R,'snd'),
         tSub=pfFieldIn(from,to,null,R,'sub'),tMarg=pfFieldIn(from,to,null,R,'marg');
+  const tCnt=pfCountIn(from,to,null,R);
   const tFactForPct=marg?tMarg:tf;
   const pct=tp>0?tFactForPct/tp*100:null;
 
@@ -1801,14 +1814,15 @@ function pfExec(){
       +K('kpi-ndsy','НДС','<span class="c-cy">'+pfF(tNds)+'</span>','из листа «Свод по счетам»')
       +K('kpi-exp','Подрядчики','<span class="c-rd">'+pfF(tSub)+'</span>','из листа «Свод по счетам»')
       +K('kpi-ndsn','Маржа','<span class="c-am">'+pfF(tMarg)+'</span>','факт − НДС − подрядчики')
-      +K('kpi-div','Выполнение, всего',pct==null?'—':'<span class="'+(pct>=100?'c-gn':pct>=80?'c-am':'c-rd')+'">'+pct.toFixed(1)+' %</span>','маржа к плану · менеджеров: '+rows.length);
+      +K('kpi-div','Выполнение, всего',pct==null?'—':'<span class="'+(pct>=100?'c-gn':pct>=80?'c-am':'c-rd')+'">'+pct.toFixed(1)+' %</span>','менеджеров: '+rows.length+' · счетов: '+pfF(tCnt));
   }else{
-    kpis.style.gridTemplateColumns='repeat(4,1fr)';
+    kpis.style.gridTemplateColumns='repeat(5,1fr)';
     kpis.innerHTML=
        K('kpi-inv','План на период',pfF(tp),dl)
       +K('kpi-rec','Факт','<span class="c-gn">'+pfF(tf)+'</span>',PF.src==='buyer'?'поступления от покупателей':PF.src==='in'?'все поступления':'все строки с плюсом')
       +K(tf-tp>=0?'kpi-net':'kpi-exp','Отклонение','<span class="'+(tf-tp>=0?'c-gn':'c-rd')+'">'+(tf-tp>=0?'+':'−')+pfF(Math.abs(tf-tp))+'</span>','')
-      +K('kpi-div','Выполнение, всего',pct==null?'—':'<span class="'+(pct>=100?'c-gn':pct>=80?'c-am':'c-rd')+'">'+pct.toFixed(1)+' %</span>','менеджеров в расчёте: '+rows.length);
+      +K('kpi-div','Выполнение, всего',pct==null?'—':'<span class="'+(pct>=100?'c-gn':pct>=80?'c-am':'c-rd')+'">'+pct.toFixed(1)+' %</span>','менеджеров в расчёте: '+rows.length)
+      +K('kpi-fot','Оплаченных счетов','<span class="c-cy">'+pfF(tCnt)+'</span>',tCnt?'средний счёт '+pfF(tf/tCnt)+' ₽':'записей о платежах');
   }
 
   const k=PF.sort.k,dir=PF.sort.dir;
@@ -1843,7 +1857,7 @@ function pfExec(){
       +'<td class="'+(tMarg-tp>=0?'c-gn':'c-rd')+'">'+(tMarg-tp>=0?'+':'−')+pfF(Math.abs(tMarg-tp))+'</td>'
       +'<td style="color:'+(pct==null?'#5B6B63':pct>=100?'#00875A':pct>=80?'#B45309':'#DC2626')+'">'+(pct==null?'—':pct.toFixed(1)+' %')+'</td><td></td><td>100 %</td></tr></tfoot>';
   }else{
-    h='<thead><tr><th style="width:26px;min-width:26px"></th>'+th('Менеджер','man')+th('План','plan')+th('Факт','fact')+th('Δ','diff')+th('% выполнения','pct')+'<th style="width:140px">&nbsp;</th><th>Доля факта</th></tr></thead><tbody>';
+    h='<thead><tr><th style="width:26px;min-width:26px"></th>'+th('Менеджер','man')+th('План','plan')+th('Факт','fact')+th('Счетов','cnt')+th('Δ','diff')+th('% выполнения','pct')+'<th style="width:140px">&nbsp;</th><th>Доля факта</th></tr></thead><tbody>';
     rows.forEach(x=>{
       const p=x.pct,col=p==null?'#5B6B63':p>=100?'#00875A':p>=80?'#B45309':'#DC2626';
       const w=Math.max(0,Math.min(100,p||0)),op=!!PF.expMan[x.man];
@@ -1852,6 +1866,7 @@ function pfExec(){
         +'<td style="cursor:pointer'+(noMan?';color:#B45309;font-weight:700':'')+'">'+(noMan?'⚠ ':'')+pfE(x.man)+'</td>'
         +'<td>'+(x.plan?pfF(x.plan):'<span style="color:#5d6b64">—</span>')+'</td>'
         +'<td>'+(x.fact?pfF(x.fact):'<span style="color:#5d6b64">—</span>')+'</td>'
+        +'<td class="c-cy">'+(x.cnt||'<span style="color:#5d6b64">—</span>')+'</td>'
         +'<td class="'+(x.diff>=0?'c-gn':'c-rd')+'">'+(x.diff>=0?'+':'−')+pfF(Math.abs(x.diff))+'</td>'
         +'<td style="color:'+col+';font-weight:700">'+(p==null?'нет плана':p.toFixed(1)+' %')+'</td>'
         +'<td><div style="height:6px;background:#F3F6F4;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+w+'%;background:'+col+';border-radius:3px"></div></div></td>'
@@ -1859,6 +1874,7 @@ function pfExec(){
       if(op)h+=pfCtrRows(from,to,x.man,'dds');
     });
     h+='</tbody><tfoot><tr style="font-weight:700"><td></td><td>ИТОГО ПО ВСЕМ</td><td>'+pfF(tp)+'</td><td class="c-gn">'+pfF(tf)+'</td>'
+      +'<td class="c-cy">'+pfF(tCnt)+'</td>'
       +'<td class="'+(tf-tp>=0?'c-gn':'c-rd')+'">'+(tf-tp>=0?'+':'−')+pfF(Math.abs(tf-tp))+'</td>'
       +'<td style="color:'+(pct==null?'#5B6B63':pct>=100?'#00875A':pct>=80?'#B45309':'#DC2626')+'">'+(pct==null?'—':pct.toFixed(1)+' %')+'</td><td></td><td>100 %</td></tr></tfoot>';
   }
@@ -1903,7 +1919,7 @@ function pfCtrRows(from,to,man,mode){
   const list=Object.keys(agg).sort((x,y)=>agg[y].s-agg[x].s);
   const tf=list.reduce((s,k)=>s+agg[k].s,0);
   const bg='background:rgba(30,42,36,.03)';
-  if(!list.length)return '<tr class="pf-ctr" style="'+bg+'"><td></td><td colspan="'+(mode==='marg'?10:7)+'" style="color:#5d6b64;font-size:11.5px;padding:6px 0 6px 6px">поступлений нет</td></tr>';
+  if(!list.length)return '<tr class="pf-ctr" style="'+bg+'"><td></td><td colspan="'+(mode==='marg'?10:8)+'" style="color:#5d6b64;font-size:11.5px;padding:6px 0 6px 6px">поступлений нет</td></tr>';
   let h='';
   list.forEach(k=>{
     const share=tf?(agg[k].s/tf*100).toFixed(1)+' %':'—';
@@ -1922,6 +1938,7 @@ function pfCtrRows(from,to,man,mode){
       h+='<tr class="pf-ctr" style="'+bg+'"><td></td><td style="padding-left:22px">'+nm+'</td>'
         +'<td style="color:#5d6b64">—</td>'
         +'<td class="c-gn" style="font-size:11.5px">'+pfF(agg[k].s)+'</td>'
+        +'<td class="c-cy" style="font-size:11.5px">'+agg[k].n+'</td>'
         +'<td style="color:#5d6b64">—</td><td style="color:#5d6b64">—</td><td></td>'
         +'<td style="font-size:11.5px;color:#5B6B63">'+share+'</td></tr>';
     }
