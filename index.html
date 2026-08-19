@@ -1792,10 +1792,62 @@ function pfExclBox(){
   el.innerHTML='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 12px;border:1px solid #DCE6E0;border-radius:8px;background:rgba(30,42,36,.035)">'
     +'<span style="font-size:11.5px;color:#5B6B63">Исключены из факта (не выручка — депозиты, проценты банка):</span>'
     +chips
-    +'<input id="pf-excl-inp" placeholder="контрагент…" onkeydown="if(event.key===\'Enter\')pfExclAdd()" style="min-width:180px;padding:4px 9px;border:1px solid #C7D3CC;border-radius:6px;background:#F3F6F4;color:#1E2A24;font-family:inherit;font-size:11.5px">'
+    +'<input id="pf-excl-inp" placeholder="начните набирать: регион…" autocomplete="off" oninput="pfExclSuggest()" onkeydown="if(event.key===\'Enter\')pfExclAdd();if(event.key===\'Escape\')pfExclSugHide()" style="min-width:220px;padding:4px 9px;border:1px solid #C7D3CC;border-radius:6px;background:#F3F6F4;color:#1E2A24;font-family:inherit;font-size:11.5px">'
     +'<button onclick="pfExclAdd()" style="padding:4px 11px;font-size:11.5px;border:1px solid #C7D3CC;border-radius:6px;background:transparent;color:#1E2A24;cursor:pointer;font-family:inherit">+ Исключить</button>'
     +'</div>'
+    +'<div id="pf-excl-sug" style="display:none;margin-top:6px;border:1px solid #DCE6E0;border-radius:8px;background:#FFFFFF;overflow:hidden;max-height:290px;overflow-y:auto"></div>'
     +pfExclPayBox();
+}
+/* поиск контрагента по части названия: набрали «регион» — видим, кто подпадает,
+   и исключаем либо одного, либо всех разом */
+function pfExclSugHide(){
+  const box=document.getElementById('pf-excl-sug');
+  if(box){box.style.display='none';box.innerHTML='';}
+}
+function pfExclSuggest(){
+  const inp=document.getElementById('pf-excl-inp'),box=document.getElementById('pf-excl-sug');
+  if(!inp||!box)return;
+  const v=(inp.value||'').trim();
+  if(v.length<2){pfExclSugHide();return;}
+  const n=pfNorm(v),agg={};
+  PF.rows.forEach(r=>{
+    if(r.s<=0)return;
+    if(pfNorm(r.ctr).indexOf(n)<0)return;
+    if(!agg[r.ctr])agg[r.ctr]={s:0,c:0,last:''};
+    agg[r.ctr].s+=r.s;agg[r.ctr].c++;
+    if(r.d>agg[r.ctr].last)agg[r.ctr].last=r.d;
+  });
+  const list=Object.keys(agg).sort((a,b)=>agg[b].s-agg[a].s);
+  box.style.display='';
+  if(!list.length){
+    box.innerHTML='<div style="padding:9px 12px;font-size:11.5px;color:#5d6b64">По «'+pfE(v)+'» ничего не найдено. Можно всё равно нажать «+ Исключить» — правило сработает на будущих платежах.</div>';
+    return;
+  }
+  const tot=list.reduce((x,k)=>x+agg[k].s,0),cnt=list.reduce((x,k)=>x+agg[k].c,0);
+  let h='';
+  if(list.length>1)
+    h+='<div onclick="pfExclAdd()" style="padding:8px 12px;font-size:11.5px;cursor:pointer;background:rgba(0,135,90,.08);border-bottom:1px solid #DCE6E0;color:#00875A;font-weight:600">'
+      +'Исключить всех по слову «'+pfE(v)+'» — контрагентов: '+list.length+', платежей: '+cnt+', на '+pfF(tot)+' ₽</div>';
+  list.slice(0,12).forEach(k=>{
+    const off=pfExcludedName(k);
+    h+='<div onclick="'+(off?'':'pfExclPick(\''+pfQ(k)+'\')')+'" style="display:flex;align-items:center;gap:10px;padding:7px 12px;font-size:11.5px;border-bottom:1px solid #EEF3F0;'+(off?'opacity:.55':'cursor:pointer')+'">'
+      +'<span style="flex:1;color:#1E2A24">'+pfE(k)+'</span>'
+      +'<span style="color:#5B6B63">'+agg[k].c+' пл. · '+agg[k].last.split('-').reverse().join('.')+'</span>'
+      +'<span class="c-gn" style="min-width:110px;text-align:right;font-family:\'Courier New\',monospace">'+pfF(agg[k].s)+'</span>'
+      +'<span style="min-width:96px;text-align:right;color:'+(off?'#5d6b64':'#DC2626')+'">'+(off?'уже исключён':'✕ исключить')+'</span>'
+      +'</div>';
+  });
+  if(list.length>12)h+='<div style="padding:7px 12px;font-size:11px;color:#5d6b64">…и ещё '+(list.length-12)+'</div>';
+  box.innerHTML=h;
+}
+function pfExcludedName(name){
+  const c=pfNorm(name);
+  return PF.excludeCtr.some(x=>{const q=pfNorm(x);return q&&c.indexOf(q)>=0;});
+}
+function pfExclPick(name){
+  const inp=document.getElementById('pf-excl-inp');
+  if(inp)inp.value=name;
+  pfExclAdd();
 }
 /* отдельные платежи, исключённые из плана (в ДДС они остаются) */
 function pfExclPayBox(){
@@ -1817,8 +1869,12 @@ function pfExclAdd(){
   const inp=document.getElementById('pf-excl-inp');const v=(inp&&inp.value||'').trim();
   if(!v)return;
   if(PF.excludeCtr.some(x=>pfNorm(x)===pfNorm(v))){pfToast('«'+pfE(v)+'» уже в списке исключений.','warn');return;}
+  const n=pfNorm(v);let cnt=0,sum=0,names={};
+  PF.rows.forEach(r=>{if(r.s>0&&pfNorm(r.ctr).indexOf(n)>=0){cnt++;sum+=r.s;names[r.ctr]=1;}});
   PF.excludeCtr.push(v);pfSaveExclLS();
-  pfToast('«'+pfE(v)+'» исключён из факта.','ok');
+  pfExclSugHide();
+  pfToast(cnt?'Исключено по «'+pfE(v)+'»: контрагентов '+Object.keys(names).length+', платежей '+cnt+' на '+pfF(sum)+' ₽. В Детальном ДДС они остались.'
+             :'«'+pfE(v)+'» добавлен в исключения — совпадений пока нет, правило сработает на будущих платежах.','ok');
   pfExec();
 }
 function pfExclDel(i){
