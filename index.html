@@ -733,11 +733,20 @@ const fm=n=>Math.abs(Math.round(n)).toLocaleString('ru-RU');
 function agg(txns,cols){
   const ks=cols.map(c=>c.key);
   const zero=()=>Object.fromEntries(ks.map(k=>[k,0]));
-  const res={rec:zero(),dep:zero(),inv:zero(),div:zero(),rec_by_acc:{},opex:{},fot:{},mv_in:{},mv_out:{},opex_ops:{},fot_ops:{}};
+  const res={rec:zero(),dep:zero(),inv:zero(),div:zero(),oth:zero(),oth_by_stat:{},rec_by_acc:{},opex:{},fot:{},mv_in:{},mv_out:{},opex_ops:{},fot_ops:{}};
   txns.forEach(r=>{
     const k=cKey(r,cols);if(!ks.includes(k))return;
     if(r.cat==='rec'){res.rec[k]+=r.s;const a=r.acc;if(!res.rec_by_acc[a])res.rec_by_acc[a]={tot:zero(),ctrs:{}};res.rec_by_acc[a].tot[k]+=r.s;const c=r.ctr||'Б/к';if(!res.rec_by_acc[a].ctrs[c])res.rec_by_acc[a].ctrs[c]=zero();res.rec_by_acc[a].ctrs[c][k]+=r.s;}
     else if(r.cat==='dep'){res.dep[k]+=r.s;}
+    else if(r.cat==='oth'){
+      res.oth[k]+=r.s;
+      const st=r.stat||'Без статьи',c=r.ctr||'Б/к';
+      if(!res.oth_by_stat[st])res.oth_by_stat[st]={tot:zero(),ctrs:{},ops:[]};
+      res.oth_by_stat[st].tot[k]+=r.s;
+      if(!res.oth_by_stat[st].ctrs[c])res.oth_by_stat[st].ctrs[c]=zero();
+      res.oth_by_stat[st].ctrs[c][k]+=r.s;
+      res.oth_by_stat[st].ops.push({d:r.d,s:r.s,acc:r.acc,ctr:c,w:r.w,m:r.m});
+    }
     else if(r.cat==='opex'){if(r.stat==='Дивиденды'){res.div[k]+=r.s;return;}if(r.stat&&r.stat.includes('Перемещение'))return;const st=r.stat;const c=r.ctr||'Б/к';if(!res.opex[st])res.opex[st]={tot:zero(),ctrs:{}};res.opex[st].tot[k]+=r.s;if(!res.opex[st].ctrs[c])res.opex[st].ctrs[c]=zero();res.opex[st].ctrs[c][k]+=r.s;const opkey=st+'||'+c;if(!res.opex_ops[opkey])res.opex_ops[opkey]=[];res.opex_ops[opkey].push({d:r.d,s:r.s,acc:r.acc,w:r.w,m:r.m});}
     else if(r.cat==='fot'){const p=r.fot||'Прочие';if(!res.fot[p])res.fot[p]=zero();res.fot[p][k]+=Math.abs(r.s);if(!res.fot_ops[p])res.fot_ops[p]=[];res.fot_ops[p].push({d:r.d,s:r.s,acc:r.acc||'—',w:r.w,m:r.m});}
     else if(r.cat==='inv'){res.inv[k]+=r.s;}
@@ -978,6 +987,23 @@ function buildDDS(){
   } else h+=`<tr class="l1"><td>Дивиденды</td>${mc?cols.map(()=>`<td class="vd">—</td>`).join('')+`<td class="vd">—</td>`:`<td class="vd">—</td>`}</tr>`;
   h+=`<tr class="r-sub"><td style="color:#6D4AA8;font-size:12.5px">Итого финансовая</td>${wC(d.div,false)}</tr>`;
 
+  // ПРОЧИЕ ПОСТУПЛЕНИЯ (не выручка): по суду, займы, личные и т.п.
+  const othTot=S(d.oth);
+  const othStats=Object.entries(d.oth_by_stat||{}).sort((a,b)=>S(b[1].tot)-S(a[1].tot));
+  if(othTot!==0||othStats.length){
+    h+=`<tr class="r-inv"><td colspan="${mc?cols.length+2:2}">Прочие поступления (не выручка)</td></tr>`;
+    othStats.forEach(([st,sv],si)=>{
+      const sid='oth'+si;
+      const stC=mc?ks.map(k=>(sv.tot[k]||0)?`<td class="vp">${fm(sv.tot[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp" style="font-weight:600">${fm(S(sv.tot))}</td>`:`<td class="vp" style="font-weight:600">${fm(S(sv.tot))}</td>`;
+      h+=`<tr class="r-exp l1" onclick="tgl('${sid}')"><td><span class="chev-d" id="ic-${sid}">▶</span>${st}</td>${stC}</tr>`;
+      Object.entries(sv.ctrs).sort((a,b)=>S(b[1])-S(a[1])).forEach(([ctr,cv])=>{
+        const cC=mc?ks.map(k=>(cv[k]||0)?`<td class="vp" style="font-size:11px">${fm(cv[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp" style="font-size:11px">${fm(S(cv))}</td>`:`<td class="vp" style="font-size:11px">${fm(S(cv))}</td>`;
+        h+=`<tr class="l3 hid" id="${sid}"><td style="padding-left:40px;font-size:11.5px;color:#5E6D67">${ctr}</td>${cC}</tr>`;
+      });
+    });
+    h+=`<tr class="r-sub"><td style="color:#28778A;font-size:12.5px">Итого прочие поступления</td>${wC(d.oth,false)}</tr>`;
+  }
+
   // IV. ПЕРЕМЕЩЕНИЯ МЕЖДУ СЧЕТАМИ
   const mvInByAcc=Object.entries(d.mv_in).sort((a,b)=>S(b[1].tot)-S(a[1].tot));
   const mvOutByAcc=Object.entries(d.mv_out).sort((a,b)=>S(a[1].tot)-S(b[1].tot));
@@ -1015,8 +1041,8 @@ function buildDDS(){
   h+=`<tr class="r-sub"><td style="color:#64736D">Нетто перемещений</td>${mvNetC}</tr>`;
 
   // ЧИСТЫЙ ПОТОК
-  const netTot=S(d.rec)+S(d.dep)+opTot-fotTot+invTot+divTot;
-  const netC=mc?ks.map(k=>{const v=(d.rec[k]||0)+(d.dep[k]||0)+opE.reduce((s,[,ov])=>s+(ov.tot[k]||0),0)-fotE.reduce((s,[,fv])=>s+(fv[k]||0),0)+(d.inv[k]||0)+(d.div[k]||0);return`<td>${v<0?'−':''}${fm(v)}</td>`;}).join('')+`<td style="font-size:16px">${netTot<0?'−':''}${fm(netTot)}</td>`:`<td style="font-size:16px">${netTot<0?'−':''}${fm(netTot)}</td>`;
+  const netTot=S(d.rec)+S(d.dep)+S(d.oth)+opTot-fotTot+invTot+divTot;
+  const netC=mc?ks.map(k=>{const v=(d.rec[k]||0)+(d.dep[k]||0)+(d.oth[k]||0)+opE.reduce((s,[,ov])=>s+(ov.tot[k]||0),0)-fotE.reduce((s,[,fv])=>s+(fv[k]||0),0)+(d.inv[k]||0)+(d.div[k]||0);return`<td>${v<0?'−':''}${fm(v)}</td>`;}).join('')+`<td style="font-size:16px">${netTot<0?'−':''}${fm(netTot)}</td>`:`<td style="font-size:16px">${netTot<0?'−':''}${fm(netTot)}</td>`;
   h+=`<tr class="r-net${netTot<0?' neg':''}"><td style="font-size:14px">Чистый денежный поток</td>${netC}</tr>`;
 
   document.getElementById('ddstbl').innerHTML=h;
@@ -1203,7 +1229,8 @@ async function refreshDDSData(){
       else if(op==='Расход')cat='opex';
       else if(op==='Поступление'&&stat&&stat.includes('Перемещение'))cat='mv_in';
       else if(op==='Поступление'&&stat==='Доход по депозиту')cat='dep';
-      else if(op==='Поступление')cat='rec';
+      else if(op==='Поступление'&&stat&&/поступлени[ея] от покупател/i.test(stat.replace(/ё/g,'е')))cat='rec';
+      else if(op==='Поступление')cat='oth';
       else if(op&&op.includes('еремещ'))cat=suma>0?'mv_in':'mv_out';
       else{skipped++;continue;}
       newT.push({d:ds,y:year,m:month,w:week,s:suma,cat,acc,stat,ctr,fot,man:(cols[12]||'').trim()});
@@ -1317,11 +1344,15 @@ function exportExcel(){
       ddsRows.push(['ЧДП с учётом инвестиций',...ks.map(k=>(d.rec[k]||0)+(d.dep[k]||0)+opE.reduce((s,[,ov])=>s+(ov.tot[k]||0),0)-fotE.reduce((s,[,fv])=>s+(fv[k]||0),0)+(d.inv[k]||0)),cdpInv]);
 
       // III Финансовая
+      if(S(d.oth)!==0){
+        ddsRows.push(['Прочие поступления (не выручка)',...ks.map(k=>d.oth[k]||0),S(d.oth)]);
+        Object.entries(d.oth_by_stat||{}).forEach(([st,sv])=>ddsRows.push(['   '+st,...ks.map(k=>sv.tot[k]||0),S(sv.tot)]));
+      }
       ddsRows.push(['III. Финансовая деятельность — Дивиденды',...Array(ks.length+1).fill('')]);
       addRow('Дивиденды',d.div,false,'');
 
       // Чистый поток
-      const netTot=recTot+opTot-fotTot+invTot+S(d.div);
+      const netTot=recTot+S(d.oth)+opTot-fotTot+invTot+S(d.div);
       const netObj=Object.fromEntries(ks.map(k=>[(k),(d.rec[k]||0)+(d.dep[k]||0)+opE.reduce((s,[,ov])=>s+(ov.tot[k]||0),0)-fotE.reduce((s,[,fv])=>s+(fv[k]||0),0)+(d.inv[k]||0)+(d.div[k]||0)]));
       ddsRows.push(['ЧИСТЫЙ ДЕНЕЖНЫЙ ПОТОК',...ks.map(k=>netObj[k]||0),netTot]);
 
@@ -2534,14 +2565,14 @@ function pfRecon(){
   let m='';
   if(D.dds==null)m='<div style="padding:9px 13px;border-radius:8px;font-size:12px;border:1px solid rgba(180,83,9,.45);background:rgba(180,83,9,.1);color:#A85D0E;margin-bottom:12px">Данные Детального ДДС не загружены — сравнить не с чем.</div>';
   else{
-    const allCmp=B.all-(B.exclPayAll||0);
+    const allCmp=B.dep+B.buyer+B.excl;
     const diff=Math.round(allCmp-D.dds);
     const okc='rgba(0,135,90,.45)',okb='rgba(0,135,90,.1)',okt='#087A5B';
     const bad='rgba(180,83,9,.45)',badb='rgba(180,83,9,.1)',badt='#A85D0E';
     const stale=D.ddsLast&&D.sheetLast&&D.ddsLast<D.sheetLast;
     m='<div style="padding:9px 13px;border-radius:8px;font-size:12px;line-height:1.6;margin-bottom:12px;border:1px solid '+(diff?bad:okc)+';background:'+(diff?badb:okb)+';color:'+(diff?badt:okt)+'">'
       +'Детальный ДДС за этот период показывает <b>'+money(D.dds)+' ₽</b>, лист даёт <b>'+money(allCmp)+' ₽</b>'
-      +((B.exclPayAll||0)?' (без '+money(B.exclPayAll)+' ₽ исключённых платежей)':'')+'. '
+      +' (покупатели и депозит, без прочих поступлений'+((B.exclPayAll||0)?' и исключённых платежей':'')+')'+'. '
       +(diff?('Расхождение <b>'+(diff>0?'+':'−')+money(Math.abs(diff))+' ₽</b>. '
           +(stale?'Данные вкладки «Детальный ДДС» старше: последняя операция там '+D.ddsLast.split('-').reverse().join('.')+', в листе '+D.sheetLast.split('-').reverse().join('.')+'. Нажмите «Обновить данные» на вкладке «Детальный ДДС».'
                  :'Обновите обе вкладки кнопками «Обновить данные» и «Обновить факт» — они читают таблицу независимо.'))
