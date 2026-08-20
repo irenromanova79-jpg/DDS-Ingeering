@@ -304,6 +304,7 @@ table.dds tr.r-net.neg td{color:var(--danger)}
 </div>
 <div id="dds" class="screen">
   <div class="kpis" id="kpis1"></div>
+  <div id="dds-excl-note" style="display:none;margin-bottom:12px;padding:9px 13px;border-radius:8px;font-size:12px;line-height:1.6;border:1px solid #E8BE87;background:#FFF3E4;color:#8A4B0A"></div>
   <div class="tbl-wrap"><table class="dds"><thead id="ddshd"></thead><tbody id="ddstbl"></tbody></table></div>
 </div>
 <div id="dash" class="screen">
@@ -659,7 +660,25 @@ function getRange(){
   if(pMode==='year')return{from:`${y}-01-01`,to:`${y}-12-31`};
   return{from:pDateFrom,to:pDateTo};
 }
-function fTxns(){const{from,to}=getRange();return TXNS.filter(r=>r.y===pYear&&r.d>=from&&r.d<=to);}
+function fTxns(){const{from,to}=getRange();return TXNS.filter(r=>r.y===pYear&&r.d>=from&&r.d<=to&&!ixPayExcluded(r));}
+/* платежи, отмеченные «не учитывать»: убираются и из План/факта, и из Детального ДДС */
+function ixPayExcluded(r){
+  try{
+    if(!PF||!PF.exclPay||!PF.exclPay.length)return false;
+    const ctr=String(r.ctr==null?'':r.ctr).replace(/\u00a0/g,' ').replace(/ё/gi,'е').trim().toLowerCase().replace(/\s+/g,' ');
+    return PF.exclPay.indexOf(r.d+'|'+Math.round(r.s)+'|'+ctr)>=0;
+  }catch(e){return false;}
+}
+/* сколько и на какую сумму сейчас исключено — для подписи на вкладке ДДС */
+function ixExclStat(){
+  const out={n:0,s:0};
+  try{
+    if(!PF||!PF.exclPay)return out;
+    const {from,to}=getRange();
+    TXNS.forEach(r=>{if(r.y===pYear&&r.d>=from&&r.d<=to&&ixPayExcluded(r)){out.n++;out.s+=r.s;}});
+  }catch(e){}
+  return out;
+}
 
 function buildSub(){
   const el=document.getElementById('psub');
@@ -684,7 +703,16 @@ function updInfo(){
   const txns=fTxns();const{from,to}=getRange();
   const lab=from===to?fd(from)+'.'+pYear:fd(from)+'—'+fd(to)+'.'+pYear;
   document.getElementById('hdr-period').textContent=lab+' · '+txns.length+' оп.';
-  document.getElementById('pinfo').textContent=txns.length+' операций';
+  const ex=ixExclStat();
+  document.getElementById('pinfo').textContent=txns.length+' операций'+(ex.n?' · исключено '+ex.n:'');
+  const note=document.getElementById('dds-excl-note');
+  if(note){
+    if(ex.n){
+      note.style.display='';
+      note.innerHTML='Исключено вручную: '+ex.n+' платеж'+(ex.n===1?'':ex.n<5?'а':'ей')+' на '+Math.round(Math.abs(ex.s)).toLocaleString('ru-RU')
+        +' ₽ — они не учитываются ни здесь, ни в План/факте. Список и возврат — на вкладке «План/факт».';
+    }else{note.style.display='none';note.innerHTML='';}
+  }
 }
 
 
@@ -1375,18 +1403,18 @@ function pfPayKey(r){return r.d+'|'+Math.round(r.s)+'|'+pfNorm(r.ctr);}
 function pfPayExcluded(r){return PF.exclPay.indexOf(pfPayKey(r))>=0;}
 function pfExclPayAdd(key,label){
   if(PF.exclPay.indexOf(key)<0){PF.exclPay.push(key);pfSaveExclPayLS();}
-  pfToast('Платёж исключён из плана: '+label+'. В Детальном ДДС он остался.','ok');
-  pfRender();
+  pfToast('Платёж исключён: '+label+'. Он убран и из План/факта, и из Детального ДДС.','ok');
+  pfRender();ixAfterExcl();
 }
 function pfExclPayDel(i){
   PF.exclPay.splice(i,1);pfSaveExclPayLS();
   pfToast('Платёж возвращён в факт.','ok');
-  pfRender();
+  pfRender();ixAfterExcl();
 }
 function pfExclPayClear(){
   if(!PF.exclPay.length){pfToast('Исключённых платежей нет.','warn');return;}
   if(!confirm('Вернуть в факт все исключённые платежи ('+PF.exclPay.length+')?'))return;
-  PF.exclPay=[];pfSaveExclPayLS();pfToast('Все платежи возвращены в факт.','ok');pfRender();
+  PF.exclPay=[];pfSaveExclPayLS();pfToast('Все платежи возвращены в факт.','ok');pfRender();ixAfterExcl();
 }
 function pfTogCtr(man,ctr){
   const k=man+'|'+ctr;PF.expCtr[k]=!PF.expCtr[k];pfRender();
@@ -1890,7 +1918,7 @@ function pfExclPayBox(){
       +' <span onclick="pfExclPayDel('+i+')" title="вернуть в факт" style="cursor:pointer;color:#A82F2F;font-weight:700">×</span></span>';
   }).join('');
   return '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 12px;border:1px solid #D5DEDA;border-radius:8px;background:rgba(30,42,36,.035);margin-top:8px">'
-    +'<span style="font-size:11.5px;color:#64736D">Отдельные платежи вне плана (в Детальном ДДС учитываются):</span>'
+    +'<span style="font-size:11.5px;color:#64736D">Платежи, исключённые из отчётов (не идут ни в План/факт, ни в Детальный ДДС):</span>'
     +chips
     +'<button onclick="pfExclPayClear()" style="padding:4px 11px;font-size:11.5px;border:1px solid #C3CFCA;border-radius:6px;background:transparent;color:#26332E;cursor:pointer;font-family:inherit">вернуть все</button>'
     +'</div>';
@@ -2095,8 +2123,8 @@ function pfPayRows(from,to,man,ctr,cols){
       +'<td style="color:#5F6D67">—</td>'
       +'<td class="c-gn" style="font-size:11px">'+pfF(r.s)+'</td>'
       +'<td colspan="'+(cols-4)+'" style="text-align:right">'
-      +'<button onclick="event.stopPropagation();pfExclPayAdd(\''+pfQ(key)+'\',\''+pfQ(lbl)+'\')" title="не считать в план (в ДДС останется)" '
-      +'style="padding:1px 9px;font-size:11px;border:1px solid #C3CFCA;border-radius:5px;background:transparent;color:#C93C3C;cursor:pointer;font-family:inherit">✕ не в план</button>'
+      +'<button onclick="event.stopPropagation();pfExclPayAdd(\''+pfQ(key)+'\',\''+pfQ(lbl)+'\')" title="не учитывать этот платёж ни в План/факте, ни в ДДС" '
+      +'style="padding:1px 9px;font-size:11px;border:1px solid #C3CFCA;border-radius:5px;background:transparent;color:#C93C3C;cursor:pointer;font-family:inherit">✕ не учитывать</button>'
       +'</td></tr>';
   });
   return h;
@@ -2420,6 +2448,11 @@ function pfMansClear(){
 /* цвет показателя выполнения: от 90 % — зелёный, 70–89,9 % — оранжевый, ниже — красный */
 function pfPctColor(p){return p==null?'#5F6D67':p>=90?'#12704F':p>=70?'#A85D0E':'#C93C3C';}
 function pfPctCls(p){return p==null?'':p>=90?'c-ok':p>=70?'c-am':'c-rd';}
+
+/* пересобрать Детальный ДДС и дашборд после изменения списка исключений */
+function ixAfterExcl(){
+  try{if(typeof refresh==='function')refresh();}catch(e){}
+}
 /* ══ СВЕРКА: почему «Поступления» в ДДС и «Факт» в План/факте расходятся ══ */
 function pfIsIncome(r){return pfNorm(r.op).indexOf('поступлен')>=0;}
 function pfIsDep(r){return pfNorm(r.st).indexOf('доход по депозиту')>=0;}
@@ -2430,13 +2463,15 @@ function pfIsMove(r){return pfNorm(r.st).indexOf('перемещен')>=0||pfNor
 function pfReconData(){
   const [from,to]=pfRange(),a=pfIso(from),b=pfIso(to);
   const rows=PF.rows.filter(r=>r.d>=a&&r.d<=b&&r.s>0&&pfIsIncome(r)&&!pfIsMove(r));
-  const bag={all:0,dep:0,other:0,excl:0,buyer:0,otherBy:{},exclBy:{},depBy:{},allByAcc:{},buyerByAcc:{},buyerByMan:{}};
+  const bag={all:0,dep:0,other:0,excl:0,exclPay:0,exclPayAll:0,exclPayBy:{},buyer:0,otherBy:{},exclBy:{},depBy:{},allByAcc:{},buyerByAcc:{},buyerByMan:{}};
   rows.forEach(r=>{
     const acc=r.co||'без счёта';
     bag.all+=r.s;
     bag.allByAcc[acc]=(bag.allByAcc[acc]||0)+r.s;
+    if(pfPayExcluded(r))bag.exclPayAll=(bag.exclPayAll||0)+r.s;
     if(pfIsDep(r)){bag.dep+=r.s;bag.depBy[r.ctr]=(bag.depBy[r.ctr]||0)+r.s;return;}
     if(!pfIsBuyer(r)){const k=r.st||'без статьи';bag.other+=r.s;bag.otherBy[k]=(bag.otherBy[k]||0)+r.s;return;}
+    if(pfPayExcluded(r)){bag.exclPay+=r.s;bag.exclPayBy[r.ctr]=(bag.exclPayBy[r.ctr]||0)+r.s;return;}
     if(pfExcluded(r)){bag.excl+=r.s;bag.exclBy[r.ctr]=(bag.exclBy[r.ctr]||0)+r.s;return;}
     bag.buyer+=r.s;
     bag.buyerByAcc[acc]=(bag.buyerByAcc[acc]||0)+r.s;
@@ -2446,7 +2481,7 @@ function pfReconData(){
   let dds=null,ddsLast='',sheetLast='';
   try{
     if(typeof TXNS!=='undefined'&&TXNS.length){
-      const t=TXNS.filter(r=>r.d>=a&&r.d<=b&&(r.cat==='rec'||r.cat==='dep'));
+      const t=TXNS.filter(r=>r.d>=a&&r.d<=b&&(r.cat==='rec'||r.cat==='dep')&&!ixPayExcluded(r));
       dds=t.reduce((x,r)=>x+r.s,0);
       ddsLast=TXNS.map(r=>r.d).sort().pop()||'';
     }
@@ -2474,8 +2509,11 @@ function pfRecon(){
   h+='<tr class="r-exp" onclick="tgl(\'rc-oth\')"><td><span class="chev-d" id="ic-rc-oth">▶</span>− Прочие приходы (не от покупателей)</td><td class="vn">'+money(B.other)+'</td>'
     +'<td style="text-align:left;font-family:inherit;color:#64736D">займы, личные, возвраты и т.п.</td></tr>';
   h+=sub(B.otherBy,'vn').replace(/class="l3"/g,'class="l3 hid" id="rc-oth"');
-  h+='<tr class="r-exp" onclick="tgl(\'rc-ex\')"><td><span class="chev-d" id="ic-rc-ex">▶</span>− Исключено вручную (контрагенты и платежи)</td><td class="vn">'+money(B.excl)+'</td>'
-    +'<td style="text-align:left;font-family:inherit;color:#64736D">'+(PF.excludeCtr.length?pfE(PF.excludeCtr.join(', ')):'')+(PF.exclPay.length?(PF.excludeCtr.length?' · ':'')+'отдельных платежей: '+PF.exclPay.length:'')+(PF.excludeCtr.length||PF.exclPay.length?'':'список пуст')+'</td></tr>';
+  h+='<tr class="r-exp" onclick="tgl(\'rc-xp\')"><td><span class="chev-d" id="ic-rc-xp">▶</span>− Исключённые платежи (убраны и из ДДС)</td><td class="vn">'+money(B.exclPay)+'</td>'
+    +'<td style="text-align:left;font-family:inherit;color:var(--ix-mut)">'+(PF.exclPay.length?'отмечены вручную: '+PF.exclPay.length:'список пуст')+'</td></tr>';
+  h+=sub(B.exclPayBy,'vn').replace(/class="l3"/g,'class="l3 hid" id="rc-xp"');
+  h+='<tr class="r-exp" onclick="tgl(\'rc-ex\')"><td><span class="chev-d" id="ic-rc-ex">▶</span>− Исключённые контрагенты (только План/факт)</td><td class="vn">'+money(B.excl)+'</td>'
+    +'<td style="text-align:left;font-family:inherit;color:#64736D">'+(PF.excludeCtr.length?pfE(PF.excludeCtr.join(', ')):'список пуст')+'</td></tr>';
   h+=sub(B.exclBy,'vn').replace(/class="l3"/g,'class="l3 hid" id="rc-ex"');
 
   const netIn=B.all-B.dep;
@@ -2496,12 +2534,14 @@ function pfRecon(){
   let m='';
   if(D.dds==null)m='<div style="padding:9px 13px;border-radius:8px;font-size:12px;border:1px solid rgba(180,83,9,.45);background:rgba(180,83,9,.1);color:#A85D0E;margin-bottom:12px">Данные Детального ДДС не загружены — сравнить не с чем.</div>';
   else{
-    const diff=Math.round(B.all-D.dds);
+    const allCmp=B.all-(B.exclPayAll||0);
+    const diff=Math.round(allCmp-D.dds);
     const okc='rgba(0,135,90,.45)',okb='rgba(0,135,90,.1)',okt='#087A5B';
     const bad='rgba(180,83,9,.45)',badb='rgba(180,83,9,.1)',badt='#A85D0E';
     const stale=D.ddsLast&&D.sheetLast&&D.ddsLast<D.sheetLast;
     m='<div style="padding:9px 13px;border-radius:8px;font-size:12px;line-height:1.6;margin-bottom:12px;border:1px solid '+(diff?bad:okc)+';background:'+(diff?badb:okb)+';color:'+(diff?badt:okt)+'">'
-      +'Детальный ДДС за этот период показывает <b>'+money(D.dds)+' ₽</b>, лист даёт <b>'+money(B.all)+' ₽</b>. '
+      +'Детальный ДДС за этот период показывает <b>'+money(D.dds)+' ₽</b>, лист даёт <b>'+money(allCmp)+' ₽</b>'
+      +((B.exclPayAll||0)?' (без '+money(B.exclPayAll)+' ₽ исключённых платежей)':'')+'. '
       +(diff?('Расхождение <b>'+(diff>0?'+':'−')+money(Math.abs(diff))+' ₽</b>. '
           +(stale?'Данные вкладки «Детальный ДДС» старше: последняя операция там '+D.ddsLast.split('-').reverse().join('.')+', в листе '+D.sheetLast.split('-').reverse().join('.')+'. Нажмите «Обновить данные» на вкладке «Детальный ДДС».'
                  :'Обновите обе вкладки кнопками «Обновить данные» и «Обновить факт» — они читают таблицу независимо.'))
