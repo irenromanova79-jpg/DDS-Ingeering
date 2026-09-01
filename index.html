@@ -75,10 +75,11 @@ input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0
 .tbl-wrap{background:var(--ix-card);border:1px solid var(--ix-line);border-radius:12px;overflow:auto}
 table.dds{width:100%;border-collapse:collapse;font-size:12px}
 table.dds th{padding:9px 12px;text-align:right;font-size:10.5px;font-weight:700;color:#4F5D57;background:var(--table-head);border-bottom:1px solid var(--ix-line2);white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
-table.dds th:first-child{text-align:left;min-width:190px}
+table.dds th:first-child{text-align:left;min-width:260px}
 table.dds td{padding:5px 12px;text-align:right;border-bottom:1px solid var(--ix-line);font-family:'Courier New',monospace;font-size:11.5px;white-space:nowrap;color:var(--ix-txt)}
 table.dds td:first-child{text-align:left;font-family:inherit;font-size:12px}
-table.dds td:first-child:not([colspan]){max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+table.dds td:first-child:not([colspan]){max-width:420px;white-space:normal;overflow-wrap:anywhere;line-height:1.35}
+table.dds tr.l3>td:first-child{padding-top:5px;padding-bottom:5px}
 .r-op td{background:#E6F3EE;color:var(--text);font-weight:800;font-size:11.5px;padding:9px 12px;border-bottom:none;box-shadow:inset 4px 0 0 var(--primary)}
 .r-inv td{background:#E7F0F3;color:var(--text);font-weight:800;font-size:11.5px;padding:9px 12px;border-bottom:none;box-shadow:inset 4px 0 0 var(--info)}
 .r-fin td{background:#F5EEE4;color:var(--text);font-weight:800;font-size:11.5px;padding:9px 12px;border-bottom:none;box-shadow:inset 4px 0 0 var(--warning)}
@@ -229,6 +230,40 @@ table.dds tr.r-net.neg td{color:var(--danger)}
 }
 
 </style>
+<script>
+/* ── проверка обновлений: страницу на GitHub Pages браузер держит в кэше,
+      поэтому файл сам сверяет свою версию с той, что лежит на сервере ── */
+const APP_VERSION='01.09.2026 13:47';
+function ixVerBanner(v){
+  if(document.getElementById('ix-upd'))return;
+  const d=document.createElement('div');d.id='ix-upd';
+  d.style.cssText='position:fixed;left:0;right:0;top:0;z-index:9999;display:flex;align-items:center;justify-content:center;gap:14px;'
+    +'padding:10px 16px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;font-size:13px;'
+    +'background:#FFF3E4;color:#8A4B0A;border-bottom:1px solid #E8BE87;box-shadow:0 2px 10px rgba(38,51,46,.12)';
+  d.innerHTML='<span>Отчёт обновился '+v+'. У вас открыта версия от '+APP_VERSION+'.</span>'
+    +'<button onclick="ixReloadFresh()" style="padding:5px 14px;font-size:12.5px;font-weight:700;border:none;border-radius:7px;background:#076D51;color:#fff;cursor:pointer;font-family:inherit">Загрузить новую</button>'
+    +'<button onclick="this.parentNode.remove()" style="padding:5px 12px;font-size:12.5px;border:1px solid #E8BE87;border-radius:7px;background:transparent;color:#8A4B0A;cursor:pointer;font-family:inherit">Позже</button>';
+  document.body.appendChild(d);
+}
+function ixReloadFresh(){
+  const u=location.href.split('#')[0].replace(/[?&]v=\d+/,'').replace(/\?$/,'');
+  location.replace(u+(u.indexOf('?')>=0?'&':'?')+'v='+Date.now());
+}
+async function ixCheckVersion(){
+  if(location.protocol==='file:')return;
+  try{
+    const r=await fetch(location.pathname+'?cb='+Date.now(),{cache:'no-store'});
+    if(!r.ok)return;
+    const m=(await r.text()).match(/const APP_VERSION='([^']+)'/);
+    if(m&&m[1]&&m[1]!==APP_VERSION)ixVerBanner(m[1]);
+  }catch(e){}
+}
+let ixVerLast=0;
+function ixCheckThrottled(){const n=Date.now();if(n-ixVerLast<120000)return;ixVerLast=n;ixCheckVersion();}
+window.addEventListener('load',()=>{ixVerLast=Date.now();setTimeout(ixCheckVersion,1500);});
+window.addEventListener('focus',ixCheckThrottled);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)ixCheckThrottled();});
+</script>
 </head>
 <body>
 <div class="hdr">
@@ -730,6 +765,38 @@ function ixWeek(iso){
 }
 // ── KPI ───────────────────────────────────────────────
 const fm=n=>Math.abs(Math.round(n)).toLocaleString('ru-RU');
+
+/* Длинные названия из банка не влезают в колонку: сокращаем форму собственности
+   и отрезаем хвост с расчётным счётом. Полное имя остаётся в подсказке. */
+function ixShortCtr(name){
+  let v=String(name==null?'':name).trim();
+  if(!v)return v;
+  const full=v;
+  v=v.replace(/\s+/g,' ')
+     .replace(/(^|["«\s])ОБЩЕСТВО\s+С\s+ОГРАНИЧЕННОЙ\s+ОТВЕТСТВЕННОСТЬЮ/gi,'$1ООО')
+     .replace(/(^|["«\s])ПУБЛИЧНОЕ\s+АКЦИОНЕРНОЕ\s+ОБЩЕСТВО/gi,'$1ПАО')
+     .replace(/(^|["«\s])НЕПУБЛИЧНОЕ\s+АКЦИОНЕРНОЕ\s+ОБЩЕСТВО/gi,'$1НАО')
+     .replace(/(^|["«\s])ЗАКРЫТОЕ\s+АКЦИОНЕРНОЕ\s+ОБЩЕСТВО/gi,'$1ЗАО')
+     .replace(/(^|["«\s])ОТКРЫТОЕ\s+АКЦИОНЕРНОЕ\s+ОБЩЕСТВО/gi,'$1ОАО')
+     .replace(/(^|["«\s])АКЦИОНЕРНОЕ\s+ОБЩЕСТВО/gi,'$1АО')
+     .replace(/(^|["«\s])ИНДИВИДУАЛЬНЫЙ\s+ПРЕДПРИНИМАТЕЛЬ/gi,'$1ИП')
+     .replace(/(^|["«\s])АВТОНОМНАЯ\s+НЕКОММЕРЧЕСКАЯ\s+ОРГАНИЗАЦИЯ/gi,'$1АНО')
+     .replace(/(^|["«\s])ФЕДЕРАЛЬНОЕ\s+ГОСУДАРСТВЕННОЕ\s+(УНИТАРНОЕ\s+)?ПРЕДПРИЯТИЕ/gi,'$1ФГУП')
+     .replace(/(^|["«\s])ГОСУДАРСТВЕННОЕ\s+БЮДЖЕТНОЕ\s+УЧРЕЖДЕНИЕ/gi,'$1ГБУ')
+     .replace(/\s*(Р\/?С|Р\/СЧ|Л\/?С)\s*\d[\d\s]*.*$/i,'')          /* «Р/С 4070… в ПАО Сбербанк г Москва» */
+     .replace(/\s+в\s+(ПАО|АО|ООО|Банк)\s.*$/i,'')
+     .replace(/\s*ИНН\s*\d+.*$/i,'')
+     .replace(/\s+/g,' ').trim();
+  return v||full;
+}
+/* ячейка с названием: короткое имя видно, полное — в подсказке */
+function ixCtrCell(name,style){
+  const short=ixShortCtr(name);
+  const t=String(name==null?'':name).trim();
+  const title=short!==t?' title="'+t.replace(/"/g,'&quot;')+'"':'';
+  return '<td'+(style?' style="'+style+'"':'')+title+'>'+short+'</td>';
+}
+
 function agg(txns,cols){
   const ks=cols.map(c=>c.key);
   const zero=()=>Object.fromEntries(ks.map(k=>[k,0]));
@@ -818,7 +885,7 @@ function buildDDS(){
     const aid='ac'+ai;
     h+=`<tr class="r-exp l1 hid" id="ra" onclick="tgl('${aid}')"><td style="padding-left:20px"><span class="chev-d" id="ic-${aid}">▶</span>${acc}</td>${wC(ad.tot,false)}</tr>`;
     Object.entries(ad.ctrs).sort((a,b)=>S(b[1])-S(a[1])).forEach(([ctr,cv])=>{
-      h+=`<tr class="l3 hid" id="${aid}"><td>${ctr}</td>${wC(cv,false)}</tr>`;
+      h+=`<tr class="l3 hid" id="${aid}">${ixCtrCell(ctr)}${wC(cv,false)}</tr>`;
     });
   });
 
@@ -870,14 +937,14 @@ function buildDDS(){
       const hasDays=ops.length>0;
       const ctrC=mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:${hasDays?600:400}">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn" style="font-weight:${hasDays?600:400}">${fm(Math.abs(S(cv)))}</td>`;
       if(hasDays){
-        h+=`<tr class="r-exp l3 hid" id="${sid}" data-par="oo" onclick="tgl('${did}')"><td style="padding-left:52px"><span class="chev-d" id="ic-${did}">▶</span>${ctr}</td>${ctrC}</tr>`;
+        h+=`<tr class="r-exp l3 hid" id="${sid}" data-par="oo" onclick="tgl('${did}')"><td style="padding-left:52px" title="${String(ctr).replace(/"/g,'&quot;')}"><span class="chev-d" id="ic-${did}">▶</span>${ixShortCtr(ctr)}</td>${ctrC}</tr>`;
         ops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
           const fdd=d=>{const p=d.split('-');return p[2]+'.'+p[1];};
           const opC=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`;
           h+=`<tr class="hid r-op-day" id="${did}" data-par="${sid}" style="background:#F7FAF9"><td style="padding-left:68px;font-size:11px;color:#64736D">${fdd(op.d)}&nbsp;<span style="background:rgba(255,107,107,.16);color:#A82F2F;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opC}</tr>`;
         });
       } else {
-        h+=`<tr class="l3 hid" id="${sid}" data-par="oo"><td style="padding-left:52px">${ctr}</td>${ctrC}</tr>`;
+        h+=`<tr class="l3 hid" id="${sid}" data-par="oo">${ixCtrCell(ctr,'padding-left:52px')}${ctrC}</tr>`;
       }
     });
   });
@@ -908,7 +975,7 @@ function buildDDS(){
       const sid='iv'+si;
       const stC=mc?ks.map(k=>(sv.tot[k]||0)?`<td class="vn">${fm(Math.abs(sv.tot[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:700">${fm(Math.abs(S(sv.tot)))}</td>`:`<td class="vn" style="font-weight:700">${fm(Math.abs(S(sv.tot)))}</td>`;
       h+=`<tr class="r-exp r-stat-inv l1" onclick="tgl('${sid}')"><td><span class="chev-d" id="ic-${sid}">▶</span>${st}<span class="tag" style="background:rgba(34,211,238,.16);color:#28778A">инвест.</span></td>${stC}</tr>`;
-      Object.entries(sv.ctrs).forEach(([ctr,cv])=>{h+=`<tr class="l3 hid" id="${sid}"><td>${ctr}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn">${fm(Math.abs(S(cv)))}</td>`}</tr>`;});
+      Object.entries(sv.ctrs).forEach(([ctr,cv])=>{h+=`<tr class="l3 hid" id="${sid}">${ixCtrCell(ctr)}${mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn">${fm(Math.abs(S(cv)))}</td>`}</tr>`;});
     });
   } else h+=`<tr class="l1"><td>Инвестиционные операции</td>${mc?cols.map(()=>`<td class="vd">—</td>`).join('')+`<td class="vd">—</td>`:`<td class="vd">—</td>`}</tr>`;
   h+=`<tr class="r-sub"><td style="color:#28778A;font-size:12.5px">Итого инвестиционная</td>${wC(d.inv,false)}</tr>`;
@@ -961,7 +1028,7 @@ function buildDDS(){
       Object.entries(divOut).sort((a,b)=>S(a[1].cols)-S(b[1].cols)).forEach(([ctr,cv],ci)=>{
         const cid='dout'+ci;
         const ctrC=mc?ks.map(k=>(cv.cols[k]||0)?`<td class="vn">${fm(Math.abs(cv.cols[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:600">${fm(Math.abs(S(cv.cols)))}</td>`:`<td class="vn" style="font-weight:600">${fm(Math.abs(S(cv.cols)))}</td>`;
-        h+=`<tr class="r-exp l3 hid" id="dd_out" onclick="tgl('${cid}')"><td><span class="chev-d" id="ic-${cid}">▶</span>${ctr}</td>${ctrC}</tr>`;
+        h+=`<tr class="r-exp l3 hid" id="dd_out" onclick="tgl('${cid}')"><td title="${String(ctr).replace(/"/g,'&quot;')}"><span class="chev-d" id="ic-${cid}">▶</span>${ixShortCtr(ctr)}</td>${ctrC}</tr>`;
         // Детализация: дата + счёт + сумма
         cv.ops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
           const opCols=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`;
@@ -977,7 +1044,7 @@ function buildDDS(){
       Object.entries(divIn).sort((a,b)=>S(b[1].cols)-S(a[1].cols)).forEach(([ctr,cv],ci)=>{
         const cid='din'+ci;
         const ctrC=mc?ks.map(k=>(cv.cols[k]||0)?`<td class="vp">${fm(cv.cols[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp" style="font-weight:600">${fm(S(cv.cols))}</td>`:`<td class="vp" style="font-weight:600">${fm(S(cv.cols))}</td>`;
-        h+=`<tr class="r-exp l3 hid" id="dd_in" onclick="tgl('${cid}')"><td><span class="chev-d" id="ic-${cid}">▶</span>${ctr}</td>${ctrC}</tr>`;
+        h+=`<tr class="r-exp l3 hid" id="dd_in" onclick="tgl('${cid}')"><td title="${String(ctr).replace(/"/g,'&quot;')}"><span class="chev-d" id="ic-${cid}">▶</span>${ixShortCtr(ctr)}</td>${ctrC}</tr>`;
         cv.ops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
           const opCols=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vp" style="font-size:11px">${fm(op.s)}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp" style="font-size:11px">${fm(op.s)}</td>`:`<td class="vp" style="font-size:11px">${fm(op.s)}</td>`;
           h+=`<tr class="hid" id="${cid}" style="background:#EDF6F2"><td style="padding-left:68px;font-size:11px;color:#64736D">${fdd(op.d)}&nbsp;&nbsp;<span style="background:#DCEFE7;color:#12704F;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opCols}</tr>`;
@@ -998,7 +1065,7 @@ function buildDDS(){
       h+=`<tr class="r-exp l1" onclick="tgl('${sid}')"><td><span class="chev-d" id="ic-${sid}">▶</span>${st}</td>${stC}</tr>`;
       Object.entries(sv.ctrs).sort((a,b)=>S(b[1])-S(a[1])).forEach(([ctr,cv])=>{
         const cC=mc?ks.map(k=>(cv[k]||0)?`<td class="vp" style="font-size:11px">${fm(cv[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp" style="font-size:11px">${fm(S(cv))}</td>`:`<td class="vp" style="font-size:11px">${fm(S(cv))}</td>`;
-        h+=`<tr class="l3 hid" id="${sid}"><td style="padding-left:40px;font-size:11.5px;color:#5E6D67">${ctr}</td>${cC}</tr>`;
+        h+=`<tr class="l3 hid" id="${sid}">${ixCtrCell(ctr,'padding-left:40px;font-size:11.5px;color:#5E6D67')}${cC}</tr>`;
       });
     });
     h+=`<tr class="r-sub"><td style="color:#28778A;font-size:12.5px">Итого прочие поступления</td>${wC(d.oth,false)}</tr>`;
@@ -1021,7 +1088,7 @@ function buildDDS(){
     const aC=mc?ks.map(k=>(av.tot[k]||0)?`<td class="vp">${fm(av.tot[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp" style="font-weight:500">${fm(S(av.tot))}</td>`:`<td class="vp" style="font-weight:500">${fm(S(av.tot))}</td>`;
     h+=`<tr class="l1 hid" id="mvi" style="background:#EDF6F2"><td style="padding-left:20px">${acc}</td>${aC}</tr>`;
     Object.entries(av.ctrs).filter(([,cv])=>S(cv)>0).sort((a,b)=>S(b[1])-S(a[1])).slice(0,10).forEach(([ctr,cv])=>{
-      h+=`<tr class="l3 hid" id="mvi"><td>${ctr}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vp">${fm(cv[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp">${fm(S(cv))}</td>`:`<td class="vp">${fm(S(cv))}</td>`}</tr>`;
+      h+=`<tr class="l3 hid" id="mvi">${ixCtrCell(ctr)}${mc?ks.map(k=>(cv[k]||0)?`<td class="vp">${fm(cv[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp">${fm(S(cv))}</td>`:`<td class="vp">${fm(S(cv))}</td>`}</tr>`;
     });
   });
 
@@ -1032,7 +1099,7 @@ function buildDDS(){
     const aC=mc?ks.map(k=>(av.tot[k]||0)?`<td class="vn">${fm(Math.abs(av.tot[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:500">${fm(Math.abs(S(av.tot)))}</td>`:`<td class="vn" style="font-weight:500">${fm(Math.abs(S(av.tot)))}</td>`;
     h+=`<tr class="l1 hid" id="mvo" style="background:#FBEEEE"><td style="padding-left:20px">${acc}</td>${aC}</tr>`;
     Object.entries(av.ctrs).filter(([,cv])=>S(cv)!==0).sort((a,b)=>S(a[1])-S(b[1])).slice(0,10).forEach(([ctr,cv])=>{
-      h+=`<tr class="l3 hid" id="mvo"><td>${ctr}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn">${fm(Math.abs(S(cv)))}</td>`}</tr>`;
+      h+=`<tr class="l3 hid" id="mvo">${ixCtrCell(ctr)}${mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn">${fm(Math.abs(S(cv)))}</td>`}</tr>`;
     });
   });
 
@@ -2112,7 +2179,7 @@ function pfCtrRows(from,to,man,mode){
   let h='';
   list.forEach(k=>{
     const share=tf?(agg[k].s/tf*100).toFixed(1)+' %':'—';
-    const nm='<span style="color:#64736D;font-size:11.5px">'+pfE(k)+'</span>'
+    const nm='<span style="color:#5E6D67;font-size:11.5px">'+pfE(ixShortCtr(k))+'</span>'
       +' <span style="color:#5F6D67;font-size:10.5px">· '+agg[k].n+' пл. · '+agg[k].last.split('-').reverse().join('.')+'</span>';
     if(mode==='marg'){
       h+='<tr class="pf-ctr" style="'+bg+'"><td></td><td style="padding-left:22px">'+nm+'</td>'
