@@ -591,35 +591,274 @@ function updInfo(){
 
 // ── KPI ───────────────────────────────────────────────
 const fm=n=>Math.abs(Math.round(n)).toLocaleString('ru-RU');
-// Объединение дублей контрагентов (одна и та же компания, разное написание:
-// из справочника vs распознанное скриптом из выписки — разный регистр,
-// ё/е, порядок слов "ООО Рога и копыта" vs "Рога и копыта ООО").
-const CTR_DISPLAY={};
-function ctrCanon(raw){
-  if(!raw) return raw;
-  // \b не работает как граница слова для кириллицы в JS-регэкспах (нет юникодных
-  // \w), поэтому вручную окружаем строку пробелами и матчим формы между пробелами.
-  let s=' '+String(raw).toUpperCase().replace(/Ё/g,'Е')+' ';
-  s=s.replace(/["'«».,]/g,' ');
-  s=s.replace(/\s+/g,' ');
-  s=s.replace(/ (ООО|ИП|АО|ОАО|ЗАО|ПАО|ЧП|ИНДИВИДУАЛЬНЫЙ ПРЕДПРИНИМАТЕЛЬ) /g,' ');
-  s=s.replace(/\s+/g,' ').trim();
-  s=s.replace(/[\s-]/g,''); // «КЕХ ЕКОММЕРЦ» vs «КехЕКоммерц» — сравниваем и без пробелов/дефисов
-  return s||String(raw).toUpperCase().replace(/Ё/g,'Е').trim();
+// Единые наименования для отчёта и выгрузок. Названия из выписок имеют приоритет.
+const CTR_BANK_NAMES=[
+  "АО Ривьера",
+  "АО Альфа-Банк",
+  "АО АЛЬФА-БАНК",
+  "АО ВОСТОК-СЕРВИС-СПЕЦКОМПЛЕКТ",
+  "АО ИМПУЛЬС",
+  "АО ЛСЦ ПИИ МИКРО",
+  "АО МЭЛ",
+  "ИНДИВИДУАЛЬНЫЙ ПРЕДПРИНИМАТЕЛЬ АКОБЯН СПАРТАК МЕРУЖАНОВИЧ",
+  "ИНДИВИДУАЛЬНЫЙ ПРЕДПРИНИМАТЕЛЬ КОМЛЕВА ЕЛЕНА ВЯЧЕСЛАВОВНА",
+  "ИНДИВИДУАЛЬНЫЙ ПРЕДПРИНИМАТЕЛЬ ПАВЛЮТКИНА ИНГА СЕРГЕЕВНА",
+  "ИНДИВИДУАЛЬНЫЙ ПРЕДПРИНИМАТЕЛЬ РАДАЕВ ВАСИЛИЙ АЛЕКСАНДРОВИЧ",
+  "Индивидуальный предприниматель Цыпушкин Анатолий Александрович",
+  "ИП БУТАРЕВ ВЛАДИСЛАВ ВЛАДИМИРОВИЧ",
+  "ИП ЗАВГОРОДНИЙ АНТОН МИХАЙЛОВИЧ",
+  "ИП Коробейникова Алёна Андреевна",
+  "ИП Кремнёв Денис Игоревич",
+  "ИП КРЕМНЁВ ДЕНИС ИГОРЕВИЧ",
+  "ИП МАМАТОВ МАКСИМ НИКОЛАЕВИЧ",
+  "ИП МАТВЕЕВ ИЛЬЯ СЕРГЕЕВИЧ",
+  "ИП ФИШЕР ОЛЕГ ВЛАДИМИРОВИЧ",
+  "Казначейство России (ФНС России)",
+  "Коробейникова Алёна Андреевна",
+  "КОРОБЕЙНИКОВА АЛЁНА АНДРЕЕВНА (ИП)",
+  "Макан Юлия Юрьевна",
+  "Макаров Андрей Алексеевич",
+  "Макарова Ирина Викторовна",
+  "Минченко Николай Евгеньевич",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ А-ГРУПП",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ \"БГ ИНТЕРЬЕР\"",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ ИНЖИНИРИНГ ГРУПП",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ ИНТЕР СЕРВИС",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ ЛЮМИУМ",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ НАУЧНО ПРОИЗВОДСТВЕННОЕ ПРЕДПРИЯТИЕ АНАЛИТИЧЕСКИЕ СИСТЕМЫ",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ \"ПРОИЗВОДСТВЕННО-КОММЕРЧЕСКАЯ ФИРМА \"РКОНТРОЛЬ",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ РОМАН КАРАКЯН ГРУПП",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ ТИТАН",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ ЭВЕРЕСТ",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ ПСК ЭНЕРГОМОНТАЖ",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ СК ГРАДСТРОЙ",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ СПОРТИВНАЯ АРХИТЕКТУРА",
+  "ООО АвтоДорСтрой",
+  "ООО АЗИМУТ",
+  "ООО Банк Точка",
+  "ООО ВГВ ДОРСТРОЙ",
+  "ООО ВИДЖО",
+  "ООО ВК ДОСТАВКА",
+  "ООО ГЛАВСТРОЙПРОЕКТ",
+  "ООО ДЖИ ЭЛЬ ИНВЕСТ",
+  "ООО ИИСУЗ",
+  "ООО ИНЖИМАКС",
+  "ООО ИСКОН ПРОЕКТ",
+  "ООО МБГ-СИ",
+  "ООО Прайдекс Констракшн",
+  "ООО РИВНЕ ГРУПП",
+  "ООО \"РСУ \"ОСТРОВЕЦКОЕ",
+  "ООО СИНОПСИС",
+  "ООО СТАТУС-СТРОЙ",
+  "ООО ТЕРМОИНЖЕНИРИНГ",
+  "ООО ФСП-ТЕХ ИНЖИНИРИНГ",
+  "ООО 1С-БИТРИКС",
+  "ООО АБАШСТРОЙ",
+  "ООО АНТИБЕТОН ГРУПП",
+  "ООО АСК-38",
+  "ООО БК-ТРОФИ",
+  "ООО ВЕЛДИНГ-НДТ",
+  "ООО ВМО-ПРОЕКТ",
+  "ООО ВСЕИНСТРУМЕНТЫ.РУ",
+  "ООО ГАММАСТРОЙ+",
+  "ООО ГРИНС",
+  "ООО ДСК СТРОЙКОНСТРУКЦИЯ",
+  "ООО ИНЖИНИРИНГ ГРУПП",
+  "ООО ИСКРАСЕРВИС.РУ",
+  "ООО КЕХ ЕКОММЕРЦ",
+  "ООО КОМУС",
+  "ООО МВТС",
+  "ООО МЕТРИКОН",
+  "ООО МКС",
+  "ООО МОДУС",
+  "ООО НетКом-Р",
+  "ООО НИЦ ДСМ",
+  "ООО ОНТАР",
+  "ООО ПЕРВАЯ ЛАБОРАТОРИЯ",
+  "ООО ПРОАЛМАЗ",
+  "ООО РЕАЛ СОФТ ЭО",
+  "ООО СКБ СТРОЙПРИБОР",
+  "ООО СОГЛАСОВАНО",
+  "ООО ССМ",
+  "ООО ТЕНЗОР",
+  "ООО ТСК ЛИДОР",
+  "ООО ФАСАД-РФ",
+  "ООО ФОРТОТЕСТ",
+  "ООО ФРЕЙМЛЕСС СТУДИО",
+  "ООО ХОРС",
+  "ООО Хэдхантер",
+  "ООО ЭНЕРГОПРОМ",
+  "ООО ЯНДЕКС",
+  "ООО ACHK",
+  "ООО ATC",
+  "ОСФР ПО Г. МОСКВЕ И МОСКОВСКОЙ ОБЛАСТИ",
+  "Сурин Андрей Сергеевич",
+  "УПРАВЛЕНИЕ НЕДВИЖИМОСТЬЮ АО",
+  "УФК по г. Москве (МОСП по ВАШ №3 ГУФССП России по г. Москве л/с 05731А93940)",
+  "УФК по г. Москве (ОСФР по г. Москве и Московской области, л/с 04734Ф73010)",
+  "Чуднов Илья Анатольевич",
+];
+const CTR_REGISTER_NAMES=[
+  "ООО Зилант",
+  "Лигал Опиньон Групп ООО",
+  "Девелопер Билдинг ООО",
+  "Миром-Строй ООО",
+  "ООО \"Миром-Строй\"",
+  "Воздвижение ООО",
+  "ООО Мебельные решения",
+  "ООО Альфа",
+  "ИП Пыряев Владимир Олегович",
+  "ООО Сервисстрой-1",
+  "ООО ЛИГАЛ ОПИНЬОН ГРУПП",
+  "ООО СТРОЙКОМПЛЕКС",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ ИНВЕСТПРОЕКТ",
+  "Общество с ограниченной ответственностью А.Элит-групп",
+  "ООО СУ-93",
+  "ООО СМУ ИНЖМАГИСТРАЛЬ",
+  "ООО АСК КОМПЛЕКС",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ СТРОНГ БИЛДЕР",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ СПЕЦСТРОЙ",
+  "ООО Девелопер Билдинг",
+  "ООО ПСК ГК ГОРОД",
+  "ООО КС-ПРО",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ МЕБЕЛЬНЫЕ РЕШЕНИЯ",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ СПЕЦИНЖЗАЩИТА",
+  "ООО ИНВЕСТПРОЕКТ",
+  "ООО МИРОМ-СТРОЙ",
+  "ООО ФОРТРЕСС",
+  "ООО КРИСМА ТРЕЙД",
+  "ООО ЕВРОСТРОЙПОДРЯД",
+  "Общество с ограниченной ответственностью ГорИнжСтрой",
+  "ООО СТАРКОМ",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ СТРОЙМОНТАЖ",
+  "ИП ПЫРЯЕВ ВЛАДИМИР ОЛЕГОВИЧ",
+  "АО АЛЬФАСТРАХОВАНИЕ",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ КУЗНЕЦКАЯ СТРОИТЕЛЬНАЯ КОМПАНИЯ",
+  "ПАО МЕГАФОН",
+  "ООО АЗ",
+  "ООО ВИЗИТ",
+  "ООО ВОЗДВИЖЕНИЕ",
+  "ООО ЭНТЕЗА",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ ЭНТЕЗА",
+  "ООО ГАРФИН",
+  "ИП КОЗЛАН ИОН",
+  "ООО \"НПК \"ТЕСЛА",
+  "ООО ПК РЕПЕР",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ МОСКОВСКАЯ ИНВЕСТИЦИОННО-СТРОИТЕЛЬНАЯ КОМПАНИЯ",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ МАСТЕР КОММУНИКАЦИЙ",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ НОВОТЕКПРО",
+  "ООО СЗ ПТС-7",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ АЛЬФА",
+  "ПУБЛИЧНОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО МЕГАФОН",
+  "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ СОЛБЕР ИНЖИНИРИНГ",
+  "ООО СОВРЕМЕННЫЕ ТЕХНОЛОГИИ",
+  "ООО НТЦ Радтехнология",
+  "АО НЭТУАН РУС",
+  "ООО ЛСЦ \"Металлы и сплавы\"",
+  "ООО МЕТАЛЛФОРС",
+  "ООО ЭВРИКА",
+  "ИНДИВИДУАЛЬНЫЙ ПРЕДПРИНИМАТЕЛЬ КОЗЛАН ИОН",
+  "ООО АльфаСтрой",
+  "ООО Т-ЛИЗИНГ",
+  "ООО ЛАРГУСС",
+  "ООО ОМП-ИНЖИНИРИНГ",
+  "ООО ПРИОРИТЕТ-ТЕХНО",
+  "ООО ДЕГМА",
+  "ООО ВЫСОКО СТРОЙ",
+  "ООО ЛСЦ МЕТАЛЛЫ И СПЛАВЫ",
+  "ООО ЭКОГРИНЭКСПЕРТ",
+];
+const CTR_ALIASES=[
+  ["ПАО МЕГАФОН","Столичный филиал ПАО МегаФон"],
+  ["ООО ИНЖИНИРИНГ ГРУПП","Инжинниринг Групп"],
+  ["ИП БУТАРЕВ ВЛАДИСЛАВ ВЛАДИМИРОВИЧ","ИП Бутарев","Бутарев Владислав В ИП"],
+  ["ИП МАТВЕЕВ ИЛЬЯ СЕРГЕЕВИЧ","ИП Матвеев"],
+  ["ИНДИВИДУАЛЬНЫЙ ПРЕДПРИНИМАТЕЛЬ РАДАЕВ ВАСИЛИЙ АЛЕКСАНДРОВИЧ","ИП Радаев"],
+  ["ИП ПЫРЯЕВ ВЛАДИМИР ОЛЕГОВИЧ","Пыряев Владимир О. ИП"],
+  ["КОРОБЕЙНИКОВА АЛЁНА АНДРЕЕВНА (ИП)","Коробейникова"],
+  ["Сурин Андрей Сергеевич","Сурин А"],
+  ["Макаров Андрей Алексеевич","Макаров Андрей А."],
+  ["ООО РЕАЛ СОФТ ЭО","Реал Софт"],
+  ["ООО ВСЕИНСТРУМЕНТЫ.РУ","ВсеИнструменты"],
+  ["ООО Хэдхантер","Хед-Хантер","КАЗАНСКИЙ ФИЛИАЛ ООО ХЭДХАНТЕР"],
+  ["ООО Сервисстрой-1","Сервистрой 1"],
+  ["Сервисстрой-2","Сервистрой 2"],
+  ["ООО ТЕХСТРОЙМОНТАЖ","Техстроймонтаж(Элером)"],
+  ["Элером","Элером(Элером)"],
+  ["ООО НТЦ Радтехнология","Научно-технологический центр радтехнологии"],
+];
+
+function ctrClean(raw){
+  const name=String(raw||'').split(/\t(?=\d{10,12}\t)|\s+Р\/С\s+(?=\d{20}(?:\s|$))/i)[0].trim();
+  return (name.match(/"/g)||[]).length%2 ? name.replace(/"/g,'') : name;
 }
-function ctrScore(raw){
-  // выше балл — "лучше" вариант для показа: с организационно-правовой формой и подлиннее
-  let sc=raw.length;
-  if(/^(ООО|ИП|АО|ОАО|ЗАО|ПАО)\b/i.test(raw.trim()))sc+=50;
-  return sc;
+
+function ctrParts(raw){
+  const name=ctrClean(raw).normalize('NFKC').toUpperCase().replace(/Ё/g,'Е')
+    .replace(/["'«»„“”.,()]/g,' ').replace(/\s+/g,' ').trim()
+    .replace(/^ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ /,'ООО ')
+    .replace(/^ПУБЛИЧНОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО /,'ПАО ')
+    .replace(/^АКЦИОНЕРНОЕ ОБЩЕСТВО /,'АО ')
+    .replace(/^ИНДИВИДУАЛЬНЫЙ ПРЕДПРИНИМАТЕЛЬ /,'ИП ');
+  const form=name.match(/^(ООО|ИП|АО|ОАО|ЗАО|ПАО|ЧП) | (ООО|ИП|АО|ОАО|ЗАО|ПАО|ЧП)$/);
+  const body=form ? name.replace(form[0],'') : name;
+  return {form:form?.[0].trim()||'', base:body.replace(/[\s‐‑–—-]/g,'')||name||ctrClean(raw)};
 }
-function ctrKey(raw){
-  const key=ctrCanon(raw);
-  if(!key)return raw;
-  if(!CTR_DISPLAY[key]||ctrScore(raw)>ctrScore(CTR_DISPLAY[key]))CTR_DISPLAY[key]=raw;
-  return key;
+
+const ctrAliases=new Map(CTR_ALIASES.flatMap(([name,...aliases])=>
+  aliases.map(alias=>[ctrParts(alias).base,ctrParts(name)])));
+
+function ctrIdentity(raw){
+  const parts=ctrParts(raw);
+  const alias=ctrAliases.get(parts.base);
+  return alias&&(!parts.form||!alias.form||parts.form===alias.form) ? alias : parts;
 }
-function ctrLabel(key){return CTR_DISPLAY[key]!==undefined?CTR_DISPLAY[key]:key;}
+
+function makeCtrDirectory(rawNames){
+  const forms=new Map();
+  const display=new Map();
+  const sources=[
+    [rawNames,0],
+    [CTR_REGISTER_NAMES,2],
+    [CTR_BANK_NAMES,4],
+    [CTR_ALIASES.map(([name])=>name),6],
+  ];
+  // Названия с разными явно указанными правовыми формами остаются в разных группах.
+  for(const [names] of sources){
+    for(const raw of names){
+      const {form,base}=ctrIdentity(raw);
+      if(!form)continue;
+      if(!forms.has(base))forms.set(base,new Set());
+      forms.get(base).add(form);
+    }
+  }
+  const key=raw=>{
+    const {form,base}=ctrIdentity(raw);
+    return forms.get(base)?.size>1 ? base+'|'+form : base;
+  };
+  for(const [names,priority] of sources){
+    for(const raw of names){
+      const name=ctrClean(raw);
+      if(!name)continue;
+      const id=key(raw), score=priority+Number(Boolean(ctrParts(raw).form));
+      const current=display.get(id);
+      if(!current||score>current.score||(score===current.score&&name<current.name)){
+        display.set(id,{name,score});
+      }
+    }
+  }
+  return {key,label:id=>display.get(id)?.name||id};
+}
+
+function makeTxnCtrDirectory(){
+  return makeCtrDirectory([...new Set(TXNS.map(r=>r.ctr)),'Б/к','—']);
+}
+let txnCtrDirectory=makeTxnCtrDirectory();
+function ctrKey(raw){return txnCtrDirectory.key(raw);}
+function ctrLabel(key){return txnCtrDirectory.label(key);}
+function ctrHtml(key){
+  return ctrLabel(key).replace(/[&<>]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]));
+}
 function agg(txns,cols){
   const ks=cols.map(c=>c.key);
   const zero=()=>Object.fromEntries(ks.map(k=>[k,0]));
@@ -699,7 +938,7 @@ function buildDDS(){
     const aid='ac'+ai;
     h+=`<tr class="r-exp l1 hid" id="ra" onclick="tgl('${aid}')"><td style="padding-left:20px"><span class="chev-d" id="ic-${aid}">▶</span>${acc}</td>${wC(ad.tot,false)}</tr>`;
     Object.entries(ad.ctrs).sort((a,b)=>S(b[1])-S(a[1])).forEach(([ctr,cv])=>{
-      h+=`<tr class="l3 hid" id="${aid}"><td>${ctrLabel(ctr)}</td>${wC(cv,false)}</tr>`;
+      h+=`<tr class="l3 hid" id="${aid}"><td>${ctrHtml(ctr)}</td>${wC(cv,false)}</tr>`;
     });
   });
 
@@ -751,14 +990,14 @@ function buildDDS(){
       const hasDays=ops.length>0;
       const ctrC=mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:${hasDays?600:400}">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn" style="font-weight:${hasDays?600:400}">${fm(Math.abs(S(cv)))}</td>`;
       if(hasDays){
-        h+=`<tr class="r-exp l3 hid" id="${sid}" data-par="oo" onclick="tgl('${did}')"><td style="padding-left:52px"><span class="chev-d" id="ic-${did}">▶</span>${ctrLabel(ctr)}</td>${ctrC}</tr>`;
+        h+=`<tr class="r-exp l3 hid" id="${sid}" data-par="oo" onclick="tgl('${did}')"><td style="padding-left:52px"><span class="chev-d" id="ic-${did}">▶</span>${ctrHtml(ctr)}</td>${ctrC}</tr>`;
         ops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
           const fdd=d=>{const p=d.split('-');return p[2]+'.'+p[1];};
           const opC=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`;
           h+=`<tr class="hid r-op-day" id="${did}" data-par="${sid}" style="background:#F5F9F7"><td style="padding-left:68px;font-size:11px;color:#66766E">${fdd(op.d)}&nbsp;<span style="background:rgba(255,107,107,.16);color:#B91C1C;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opC}</tr>`;
         });
       } else {
-        h+=`<tr class="l3 hid" id="${sid}" data-par="oo"><td style="padding-left:52px">${ctrLabel(ctr)}</td>${ctrC}</tr>`;
+        h+=`<tr class="l3 hid" id="${sid}" data-par="oo"><td style="padding-left:52px">${ctrHtml(ctr)}</td>${ctrC}</tr>`;
       }
     });
   });
@@ -789,7 +1028,7 @@ function buildDDS(){
       const sid='iv'+si;
       const stC=mc?ks.map(k=>(sv.tot[k]||0)?`<td class="vn">${fm(Math.abs(sv.tot[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:700">${fm(Math.abs(S(sv.tot)))}</td>`:`<td class="vn" style="font-weight:700">${fm(Math.abs(S(sv.tot)))}</td>`;
       h+=`<tr class="r-exp r-stat-inv l1" onclick="tgl('${sid}')"><td><span class="chev-d" id="ic-${sid}">▶</span>${st}<span class="tag" style="background:rgba(34,211,238,.16);color:#0E7490">инвест.</span></td>${stC}</tr>`;
-      Object.entries(sv.ctrs).forEach(([ctr,cv])=>{h+=`<tr class="l3 hid" id="${sid}"><td>${ctrLabel(ctr)}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn">${fm(Math.abs(S(cv)))}</td>`}</tr>`;});
+      Object.entries(sv.ctrs).forEach(([ctr,cv])=>{h+=`<tr class="l3 hid" id="${sid}"><td>${ctrHtml(ctr)}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn">${fm(Math.abs(S(cv)))}</td>`}</tr>`;});
     });
   } else h+=`<tr class="l1"><td>Инвестиционные операции</td>${mc?cols.map(()=>`<td class="vd">—</td>`).join('')+`<td class="vd">—</td>`:`<td class="vd">—</td>`}</tr>`;
   h+=`<tr class="r-sub"><td style="color:#0e7490;font-size:12.5px">Итого инвестиционная</td>${wC(d.inv,false)}</tr>`;
@@ -842,7 +1081,7 @@ function buildDDS(){
       Object.entries(divOut).sort((a,b)=>S(a[1].cols)-S(b[1].cols)).forEach(([ctr,cv],ci)=>{
         const cid='dout'+ci;
         const ctrC=mc?ks.map(k=>(cv.cols[k]||0)?`<td class="vn">${fm(Math.abs(cv.cols[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:600">${fm(Math.abs(S(cv.cols)))}</td>`:`<td class="vn" style="font-weight:600">${fm(Math.abs(S(cv.cols)))}</td>`;
-        h+=`<tr class="r-exp l3 hid" id="dd_out" onclick="tgl('${cid}')"><td><span class="chev-d" id="ic-${cid}">▶</span>${ctrLabel(ctr)}</td>${ctrC}</tr>`;
+        h+=`<tr class="r-exp l3 hid" id="dd_out" onclick="tgl('${cid}')"><td><span class="chev-d" id="ic-${cid}">▶</span>${ctrHtml(ctr)}</td>${ctrC}</tr>`;
         // Детализация: дата + счёт + сумма
         cv.ops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
           const opCols=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`:`<td class="vn" style="font-size:11px">${fm(Math.abs(op.s))}</td>`;
@@ -858,7 +1097,7 @@ function buildDDS(){
       Object.entries(divIn).sort((a,b)=>S(b[1].cols)-S(a[1].cols)).forEach(([ctr,cv],ci)=>{
         const cid='din'+ci;
         const ctrC=mc?ks.map(k=>(cv.cols[k]||0)?`<td class="vp">${fm(cv.cols[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp" style="font-weight:600">${fm(S(cv.cols))}</td>`:`<td class="vp" style="font-weight:600">${fm(S(cv.cols))}</td>`;
-        h+=`<tr class="r-exp l3 hid" id="dd_in" onclick="tgl('${cid}')"><td><span class="chev-d" id="ic-${cid}">▶</span>${ctrLabel(ctr)}</td>${ctrC}</tr>`;
+        h+=`<tr class="r-exp l3 hid" id="dd_in" onclick="tgl('${cid}')"><td><span class="chev-d" id="ic-${cid}">▶</span>${ctrHtml(ctr)}</td>${ctrC}</tr>`;
         cv.ops.sort((a,b)=>a.d.localeCompare(b.d)).forEach(op=>{
           const opCols=mc?ks.map(k=>k===cKey(op,cols)?`<td class="vp" style="font-size:11px">${fm(op.s)}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp" style="font-size:11px">${fm(op.s)}</td>`:`<td class="vp" style="font-size:11px">${fm(op.s)}</td>`;
           h+=`<tr class="hid" id="${cid}" style="background:#f0fdf4"><td style="padding-left:68px;font-size:11px;color:#66766E">${fdd(op.d)}&nbsp;&nbsp;<span style="background:#dcfce7;color:#166534;border-radius:3px;padding:1px 5px;font-size:10px">${op.acc}</span></td>${opCols}</tr>`;
@@ -885,7 +1124,7 @@ function buildDDS(){
     const aC=mc?ks.map(k=>(av.tot[k]||0)?`<td class="vp">${fm(av.tot[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp" style="font-weight:500">${fm(S(av.tot))}</td>`:`<td class="vp" style="font-weight:500">${fm(S(av.tot))}</td>`;
     h+=`<tr class="l1 hid" id="mvi" style="background:#f0fdf4"><td style="padding-left:20px">${acc}</td>${aC}</tr>`;
     Object.entries(av.ctrs).filter(([,cv])=>S(cv)>0).sort((a,b)=>S(b[1])-S(a[1])).slice(0,10).forEach(([ctr,cv])=>{
-      h+=`<tr class="l3 hid" id="mvi"><td>${ctrLabel(ctr)}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vp">${fm(cv[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp">${fm(S(cv))}</td>`:`<td class="vp">${fm(S(cv))}</td>`}</tr>`;
+      h+=`<tr class="l3 hid" id="mvi"><td>${ctrHtml(ctr)}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vp">${fm(cv[k])}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vp">${fm(S(cv))}</td>`:`<td class="vp">${fm(S(cv))}</td>`}</tr>`;
     });
   });
 
@@ -896,7 +1135,7 @@ function buildDDS(){
     const aC=mc?ks.map(k=>(av.tot[k]||0)?`<td class="vn">${fm(Math.abs(av.tot[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn" style="font-weight:500">${fm(Math.abs(S(av.tot)))}</td>`:`<td class="vn" style="font-weight:500">${fm(Math.abs(S(av.tot)))}</td>`;
     h+=`<tr class="l1 hid" id="mvo" style="background:#fff1f2"><td style="padding-left:20px">${acc}</td>${aC}</tr>`;
     Object.entries(av.ctrs).filter(([,cv])=>S(cv)!==0).sort((a,b)=>S(a[1])-S(b[1])).slice(0,10).forEach(([ctr,cv])=>{
-      h+=`<tr class="l3 hid" id="mvo"><td>${ctrLabel(ctr)}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn">${fm(Math.abs(S(cv)))}</td>`}</tr>`;
+      h+=`<tr class="l3 hid" id="mvo"><td>${ctrHtml(ctr)}</td>${mc?ks.map(k=>(cv[k]||0)?`<td class="vn">${fm(Math.abs(cv[k]))}</td>`:`<td class="vd">—</td>`).join('')+`<td class="vn">${fm(Math.abs(S(cv)))}</td>`:`<td class="vn">${fm(Math.abs(S(cv)))}</td>`}</tr>`;
     });
   });
 
@@ -1094,6 +1333,7 @@ async function refreshDDSData(){
 
     if(parsed===0)throw new Error(`Ни одна строка не распознана. Строк всего: ${lines.length}, пропущено: ${skipped}. Проверьте доступ к таблице.`);
     TXNS.length=0;newT.forEach(t=>TXNS.push(t));
+    txnCtrDirectory=makeTxnCtrDirectory();
     document.getElementById('pinfo').textContent=`Обновлено: ${parsed} операций`;
     // Если в выбранном году есть данные за более поздние месяцы — переключаемся на последний
     if(pMode==='month'){const ms=gMos(pYear);if(ms.length&&!ms.includes(pMonth))pMonth=ms[ms.length-1];}
@@ -1163,7 +1403,7 @@ function exportExcel(){
       Object.entries(d.rec_by_acc).sort((a,b)=>S(b[1].tot)-S(a[1].tot)).forEach(([acc,av])=>{
         addRow('  '+acc,av.tot,false,'  ');
         Object.entries(av.ctrs).sort((a,b)=>S(b[1])-S(a[1])).forEach(([ctr,cv])=>{
-          addRow('    '+ctr,cv,false,'    ');
+          addRow('    '+ctrLabel(ctr),cv,false,'    ');
         });
       });
       // ФОТ
@@ -1178,7 +1418,7 @@ function exportExcel(){
       opE.forEach(([st,sv])=>{
         addRow('  '+st,sv.tot,true,'  ');
         Object.entries(sv.ctrs).sort((a,b)=>S(a[1])-S(b[1])).forEach(([ctr,cv])=>{
-          addRow('    '+ctr,cv,true,'    ');
+          addRow('    '+ctrLabel(ctr),cv,true,'    ');
         });
       });
       // Итого опер
@@ -1222,7 +1462,7 @@ function exportExcel(){
 
       // ── Лист 2: Транзакции ──
       const txnRows=[['Дата','Год','Месяц','Неделя','Сумма','Категория','Счёт','Статья','Контрагент','ФОТ (сотрудник)']];
-      txns.forEach(r=>txnRows.push([r.d,r.y,r.m,r.w,r.s,r.cat,r.acc,r.stat,r.ctr,r.fot]));
+      txns.forEach(r=>txnRows.push([r.d,r.y,r.m,r.w,r.s,r.cat,r.acc,r.stat,r.ctr?ctrLabel(ctrKey(r.ctr)):r.ctr,r.fot]));
       const ws2=XLSX.utils.aoa_to_sheet(txnRows);
       ws2['!cols']=[{wch:12},{wch:6},{wch:6},{wch:6},{wch:14},{wch:10},{wch:22},{wch:30},{wch:30},{wch:20}];
       XLSX.utils.book_append_sheet(wb,ws2,'Транзакции');
@@ -1472,6 +1712,12 @@ async function pfLoad(withPlan){
       out.push({d:ds,s:s,op:(c[iO]||'').trim(),st:stV,ctr:ctrV,man:man||PF_NOMAN,co:coV,nds:ndsV,snd:sndV,sub:subV,marg:sndV-subV});
     }
     if(!out.length)throw new Error('Из листа «Свод по счетам» не распознана ни одна строка.');
+    const ctrDirectory=makeCtrDirectory([...new Set(out.map(r=>r.ctr))]);
+    for(const row of out){
+      row.rawCtr=row.ctr;
+      row.ctr=ctrDirectory.label(ctrDirectory.key(row.ctr));
+      if(iC<0)row.co=row.ctr;
+    }
     PF.rows=out;
 
     /* план из листа таблицы */
@@ -1538,7 +1784,7 @@ function pfPlanMonthsAll(){
 }
 function pfPlanMonths(){return Object.keys(PF.plan);}
 function pfExcluded(r){
-  const c=pfNorm(r.ctr);
+  const c=pfNorm(r.rawCtr??r.ctr);
   return PF.excludeCtr.some(x=>{const n=pfNorm(x);return n&&c.indexOf(n)>=0;});
 }
 function pfFacts(){
